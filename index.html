@@ -186,6 +186,11 @@ async function markAdminRembourse(id){
   if(error) alert('Erreur: '+error.message);
   await loadAll();
 }
+async function markCloturee(id){
+  const {error} = await sb.from('transactions').update({statut:'CLOTUREE'}).eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
 async function toggleUserStatut(id, current){
   const {error} = await sb.from('profiles').update({statut: current==='actif'?'inactif':'actif'}).eq('id', id);
   if(error) alert('Erreur: '+error.message);
@@ -199,6 +204,16 @@ async function toggleCanEdit(id, current){
 async function saveRates(rates){
   const {error} = await sb.from('rates').upsert({date: todayKey(), ...rates}, {onConflict:'date'});
   if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+async function resetApp(){
+  if(!isEditor()) return;
+  const confirmText = prompt("⚠️ Ceci supprime DÉFINITIVEMENT toutes les transactions et tous les taux enregistrés (les comptes utilisateurs sont conservés).\n\nTapez REINITIALISER en majuscules pour confirmer :");
+  if(confirmText !== 'REINITIALISER'){ return; }
+  const {error: e1} = await sb.from('transactions').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  const {error: e2} = await sb.from('rates').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(e1 || e2){ alert('Erreur: '+((e1&&e1.message)||(e2&&e2.message))); return; }
+  alert('Application réinitialisée — toutes les transactions et tous les taux ont été effacés.');
   await loadAll();
 }
 
@@ -215,6 +230,19 @@ function dashboardStats(){
   const todayTx = txs.filter(t=>t.date===todayKey());
   return {enAttenteRemb, rembourse, profitTotal, todayCount:todayTx.length};
 }
+function todayStats(){
+  const todayTx = state.transactions.filter(t=>t.date===todayKey());
+  const profitJour = todayTx.reduce((s,t)=>{ const p=profitOf(t); return s+(p||0); },0);
+  const volumeBifJour = todayTx.reduce((s,t)=> s+(t.montant_bif_verse||0),0);
+  const parDevise = {};
+  todayTx.forEach(t=>{ parDevise[t.devise] = (parDevise[t.devise]||0) + (t.montant_origine||0); });
+  const parAdmin = {};
+  todayTx.forEach(t=>{ parAdmin[t.admin] = (parAdmin[t.admin]||0) + 1; });
+  const parAgent = {};
+  todayTx.forEach(t=>{ parAgent[t.agent] = (parAgent[t.agent]||0) + 1; });
+  const enAttenteJour = todayTx.filter(t=>t.statut==='AGENT_PAYE').length;
+  return {count: todayTx.length, profitJour, volumeBifJour, parDevise, parAdmin, parAgent, enAttenteJour};
+}
 
 /* ---------- RENDU ---------- */
 function render(){
@@ -230,6 +258,7 @@ function render(){
       ${navBtn('transactions','◆ Transactions')}
       ${navBtn('rates','◆ Taux du jour')}
       ${navBtn('users','◆ Utilisateurs', !isEditor())}
+      ${navBtn('settings','◆ Paramètres')}
       <div class="whoami">
         <label>Connecté en tant que</label>
         <div style="margin-top:6px; font-size:14px;">${state.profile ? state.profile.nom : state.session.user.email}</div>
@@ -274,10 +303,12 @@ function renderPage(){
   if(state.page==='transactions') return pageTransactions();
   if(state.page==='rates') return pageRates();
   if(state.page==='users') return pageUsers();
+  if(state.page==='settings') return pageSettings();
 }
 
 function pageDashboard(){
   const s = dashboardStats();
+  const ts = todayStats();
   return `
     <div class="pagehead"><div>
       <h1>Tableau de bord</h1>
@@ -290,12 +321,51 @@ function pageDashboard(){
       <div class="stat"><div class="label">Profit total (BIF)</div><div class="val mono ${s.profitTotal>=0?'good':'bad'}">${fmt(s.profitTotal)}</div></div>
     </div>
     <div class="card">
-      <h2>⚠ Opérations agent payé, admin pas encore remboursé</h2>
-      ${tableTransactions(state.transactions.filter(t=>t.statut==='AGENT_PAYE'))}
+      <h2>📊 Statistiques du jour — ${todayKey()}</h2>
+      <div class="grid" style="margin-bottom:0;">
+        <div class="stat"><div class="label">Opérations aujourd'hui</div><div class="val mono">${ts.count}</div></div>
+        <div class="stat"><div class="label">Profit du jour (BIF)</div><div class="val mono ${ts.profitJour>=0?'good':'bad'}">${fmt(ts.profitJour)}</div></div>
+        <div class="stat"><div class="label">BIF versé aux récepteurs</div><div class="val mono">${fmt(ts.volumeBifJour)}</div></div>
+        <div class="stat"><div class="label">Encore en attente aujourd'hui</div><div class="val mono ${ts.enAttenteJour>0?'bad':''}">${ts.enAttenteJour}</div></div>
+      </div>
+      <div class="formrow" style="margin-top:18px;">
+        <div>
+          <h3>Volume par devise</h3>
+          <table><tbody>
+            ${Object.keys(ts.parDevise).length ? Object.entries(ts.parDevise).map(([k,v])=>`<tr><td>${k}</td><td class="mono">${fmt(v)}</td></tr>`).join('') : '<tr><td class="empty">Aucune opération aujourd\u2019hui</td></tr>'}
+          </tbody></table>
+        </div>
+        <div>
+          <h3>Opérations par admin</h3>
+          <table><tbody>
+            ${Object.keys(ts.parAdmin).length ? Object.entries(ts.parAdmin).map(([k,v])=>`<tr><td>${k}</td><td class="mono">${v}</td></tr>`).join('') : '<tr><td class="empty">—</td></tr>'}
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+    ${(() => {
+      const mesResp = state.profile ? state.transactions.filter(t=>t.statut==='AGENT_PAYE' && t.admin===state.profile.nom) : [];
+      return mesResp.length ? `
+        <div class="card" style="border-color:var(--bad);">
+          <h2>🔴 Vous devez envoyer l'argent à l'agent — ${mesResp.length} opération(s)</h2>
+          ${tableTransactions(mesResp, true)}
+        </div>` : '';
+    })()}
+    ${(() => {
+      const mesAConfirmer = state.profile ? state.transactions.filter(t=>t.statut==='ADMIN_REMBOURSE' && t.agent===state.profile.nom) : [];
+      return mesAConfirmer.length ? `
+        <div class="card" style="border-color:var(--gold);">
+          <h2>🟡 À confirmer — l'admin dit vous avoir remboursé, ${mesAConfirmer.length} opération(s)</h2>
+          ${tableTransactions(mesAConfirmer, true)}
+        </div>` : '';
+    })()}
+    <div class="card">
+      <h2>⚠ Toutes les opérations en attente (agent payé, admin pas encore remboursé)</h2>
+      ${tableTransactions(state.transactions.filter(t=>t.statut==='AGENT_PAYE'), true)}
     </div>
     <div class="card">
       <h2>Dernières opérations</h2>
-      ${tableTransactions(state.transactions.slice(0,8))}
+      ${tableTransactions(state.transactions.slice(0,8), true)}
     </div>
   `;
 }
@@ -362,7 +432,8 @@ function tableTransactions(list, withActions){
       <td><span class="stamp ${st.cls}">${st.label}</span></td>
       ${withActions ? `<td>
         ${t.statut==='DEMANDEE' ? `<button class="btn small" onclick="markAgentPaye('${t.id}')">Agent a payé</button>` : ''}
-        ${t.statut==='AGENT_PAYE' ? (isEditor() ? `<button class="btn small" onclick="markAdminRembourse('${t.id}')">Rembourser agent</button>` : `<span class="badge-role">Réservé aux admins</span>`) : ''}
+        ${t.statut==='AGENT_PAYE' ? (isEditor() ? `<button class="btn small" onclick="markAdminRembourse('${t.id}')">Rembourser agent</button>` : `<span class="badge-role">Attente admin</span>`) : ''}
+        ${t.statut==='ADMIN_REMBOURSE' ? (state.profile && state.profile.nom===t.agent ? `<button class="btn small" onclick="markCloturee('${t.id}')">J'ai bien reçu</button>` : `<span class="badge-role">Attente confirmation agent</span>`) : ''}
       </td>` : ''}
     </tr>`;
   }).join('')}
@@ -420,6 +491,36 @@ function pageUsers(){
   `;
 }
 
+function pageSettings(){
+  return `
+    <div class="pagehead"><div>
+      <h1>Paramètres</h1>
+      <p>Votre compte</p>
+    </div></div>
+    <div class="card" style="max-width:420px;">
+      <h3>Compte connecté</h3>
+      <div style="font-size:14px; margin-bottom:4px;">${state.profile ? state.profile.nom : ''}</div>
+      <div style="font-size:13px; color:var(--text-dim); margin-bottom:20px;">${state.session.user.email}</div>
+      <h2>Changer mon mot de passe</h2>
+      <form id="passwordForm">
+        <div class="field" style="margin-bottom:12px;"><label>Nouveau mot de passe</label><input type="password" name="password" minlength="6" required></div>
+        <div class="field" style="margin-bottom:16px;"><label>Confirmer le nouveau mot de passe</label><input type="password" name="password2" minlength="6" required></div>
+        <div id="pwFeedback" style="font-size:12.5px; margin-bottom:12px;"></div>
+        <button class="btn" type="submit">Mettre à jour le mot de passe</button>
+      </form>
+    </div>
+    ${isEditor() ? `
+    <div class="card" style="max-width:420px; border-color:var(--bad);">
+      <h2 style="color:var(--bad);">⚠ Zone dangereuse</h2>
+      <p style="font-size:13px; color:var(--text-dim); margin-bottom:16px;">
+        Réinitialise l'application : supprime toutes les transactions et tous les taux enregistrés.
+        Utile pour repartir de zéro après une phase de test. Les comptes utilisateurs ne sont pas affectés.
+      </p>
+      <button class="btn danger" onclick="resetApp()">Réinitialiser l'application</button>
+    </div>` : ''}
+  `;
+}
+
 function attachPageHandlers(){
   const txForm = document.getElementById('txForm');
   if(txForm) txForm.onsubmit = (e)=>{
@@ -440,6 +541,18 @@ function attachPageHandlers(){
     const rates = {};
     ['EUR','USD','CAD','AED','KES','USDT'].forEach(c=>{ const v=f.get(c); if(v) rates[c]=parseFloat(v); });
     saveRates(rates);
+  };
+  const passwordForm = document.getElementById('passwordForm');
+  if(passwordForm) passwordForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    const f = new FormData(passwordForm);
+    const fb = document.getElementById('pwFeedback');
+    const p1 = f.get('password'), p2 = f.get('password2');
+    if(p1 !== p2){ fb.style.color='var(--bad)'; fb.textContent = 'Les deux mots de passe ne correspondent pas.'; return; }
+    const {error} = await sb.auth.updateUser({password: p1});
+    if(error){ fb.style.color='var(--bad)'; fb.textContent = 'Erreur: '+error.message; return; }
+    fb.style.color='var(--good)'; fb.textContent = 'Mot de passe mis à jour avec succès.';
+    passwordForm.reset();
   };
 }
 
