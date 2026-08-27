@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlashRemit — Livre de Caisse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101b19;
+    --paper:#f2ede1;
+    --surface:#0f2d29;
+    --surface-2:#153934;
+    --line: rgba(242,237,225,0.12);
+    --gold:#c9a227;
+    --gold-soft: rgba(201,162,39,0.18);
+    --good:#5fae7a;
+    --bad:#c0553f;
+    --text:#f2ede1;
+    --text-dim: rgba(242,237,225,0.6);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--ink); color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3, .disp{ font-family:'Fraunces',serif; font-weight:600; letter-spacing:-0.01em; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  #app{ display:flex; min-height:100vh; }
+
+  /* SIDEBAR */
+  nav.side{
+    width:220px; flex-shrink:0; background:var(--surface);
+    border-right:1px solid var(--line); padding:24px 14px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .brand{ padding:0 10px 22px 10px; }
+  .brand .disp{ font-size:19px; color:var(--gold); line-height:1.15;}
+  .brand .sub{ font-size:11px; color:var(--text-dim); letter-spacing:0.08em; text-transform:uppercase; margin-top:4px;}
+  .navbtn{
+    background:none; border:none; color:var(--text-dim); text-align:left;
+    padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer;
+    font-family:'Inter',sans-serif; display:flex; align-items:center; gap:9px;
+  }
+  .navbtn:hover{ background:var(--gold-soft); color:var(--text); }
+  .navbtn.active{ background:var(--gold-soft); color:var(--gold); font-weight:600; }
+  .navbtn .lock{ margin-left:auto; opacity:0.5; font-size:12px; }
+  .navbtn:disabled{ opacity:0.35; cursor:not-allowed; }
+
+  .whoami{ margin-top:auto; border-top:1px solid var(--line); padding-top:16px; }
+  .whoami label{ font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
+  select{
+    width:100%; background:var(--surface-2); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; margin-top:6px;
+  }
+  .rolechip{ display:inline-block; font-size:10px; margin-top:8px; padding:3px 8px; border-radius:20px; background:var(--gold-soft); color:var(--gold); text-transform:uppercase; letter-spacing:0.06em; }
+
+  /* MAIN */
+  main{ flex:1; padding:32px 40px; max-width:1180px; }
+  .pagehead{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; }
+  .pagehead h1{ font-size:26px; margin:0; }
+  .pagehead p{ color:var(--text-dim); margin:6px 0 0 0; font-size:13.5px; }
+
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+  .stat{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; }
+  .stat .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); }
+  .stat .val{ font-size:24px; margin-top:6px; }
+  .stat .val.good{ color:var(--good); } .stat .val.bad{ color:var(--bad); }
+
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:20px; }
+  .card h2{ font-size:16px; margin:0 0 14px 0; }
+  .card h3{font-size: 13px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin:0 0 12px 0; font-family:'Inter',sans-serif; font-weight:600;}
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; color:var(--text-dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tr:last-child td{ border-bottom:none; }
+  tr:hover td{ background:rgba(255,255,255,0.02); }
+
+  .stamp{ display:inline-block; padding:3px 9px; border-radius:20px; font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase; font-weight:700; border:1.5px solid; }
+  .s-demandee{ color:#e0b84a; border-color:#e0b84a; }
+  .s-agentpaye{ color:#5fa8d3; border-color:#5fa8d3; }
+  .s-rembourse{ color:var(--good); border-color:var(--good); }
+  .s-cloturee{ color:var(--text-dim); border-color:var(--line); }
+
+  .btn{ background:var(--gold); color:#241c05; border:none; padding:10px 16px; border-radius:8px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:'Inter',sans-serif;}
+  .btn:hover{ filter:brightness(1.08); }
+  .btn.ghost{ background:none; border:1px solid var(--line); color:var(--text); }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .btn.danger{ background:var(--bad); color:#fff; }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  .formrow{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .formrow.wide{ grid-template-columns:1fr; }
+  .field label{ font-size:11.5px; color:var(--text-dim); display:block; margin-bottom:5px; }
+  input{ width:100%; background:var(--surface-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; }
+
+  .lockednote{ display:flex; align-items:center; gap:10px; color:var(--text-dim); background:var(--surface-2); border:1px dashed var(--line); border-radius:var(--radius); padding:18px; font-size:13px; }
+  .badge-role{ font-size:10px; padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--text-dim); margin-left:6px; }
+  .empty{ color:var(--text-dim); font-size:13px; padding:20px 0; text-align:center; }
+  ::placeholder{ color: rgba(242,237,225,0.35); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ================================
+   CONFIGURATION SUPABASE — à remplir
+   ================================ */
+const SUPABASE_URL = 'https://oeyzapqyyzdvwzoezisv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9leXphcHF5eXpkdnd6b2V6aXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MzgzMDcsImV4cCI6MjEwMzQxNDMwN30.IGZbDI0KpzG-hjZDFghTiMi9c84Lsfdbof0ej_qhyRw';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ---------- ETAT ---------- */
+let state = {
+  session: null,
+  profile: null,
+  profiles: [],
+  transactions: [],
+  rates: {},
+  page: 'dashboard',
+  authError: '',
+};
+
+const STATUTS = {
+  DEMANDEE: {label:'Demandée', cls:'s-demandee'},
+  AGENT_PAYE: {label:'Agent payé', cls:'s-agentpaye'},
+  ADMIN_REMBOURSE: {label:'Admin remboursé', cls:'s-rembourse'},
+  CLOTUREE: {label:'Clôturée', cls:'s-cloturee'},
+};
+
+function fmt(n){ return (Math.round((n||0)*100)/100).toLocaleString('fr-FR'); }
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function isEditor(){ return !!(state.profile && state.profile.can_edit); }
+
+/* ---------- AUTH ---------- */
+async function signIn(email, password){
+  state.authError = '';
+  const {data, error} = await sb.auth.signInWithPassword({email, password});
+  if(error){ state.authError = "Email ou mot de passe incorrect."; render(); return; }
+  await afterLogin(data.session);
+}
+async function signOut(){
+  await sb.auth.signOut();
+  state.session = null; state.profile = null;
+  render();
+}
+async function afterLogin(session){
+  state.session = session;
+  const {data: profile} = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  state.profile = profile;
+  await loadAll();
+}
+
+/* ---------- CHARGEMENT DONNEES ---------- */
+async function loadAll(){
+  const [{data: profiles}, {data: txs}, {data: rates}] = await Promise.all([
+    sb.from('profiles').select('*').order('nom'),
+    sb.from('transactions').select('*').order('created_at', {ascending:false}),
+    sb.from('rates').select('*').order('date', {ascending:false}).limit(1),
+  ]);
+  state.profiles = profiles || [];
+  state.transactions = txs || [];
+  state.rates = (rates && rates[0]) || {};
+  render();
+}
+
+/* ---------- ACTIONS ---------- */
+async function addTransaction(tx){
+  const {error} = await sb.from('transactions').insert(tx);
+  if(error){ alert('Erreur: '+error.message); return; }
+  await loadAll();
+}
+async function markAgentPaye(id){
+  const {error} = await sb.from('transactions').update({statut:'AGENT_PAYE'}).eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+async function markAdminRembourse(id){
+  const {error} = await sb.from('transactions').update({statut:'ADMIN_REMBOURSE'}).eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+async function toggleUserStatut(id, current){
+  const {error} = await sb.from('profiles').update({statut: current==='actif'?'inactif':'actif'}).eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+async function toggleCanEdit(id, current){
+  const {error} = await sb.from('profiles').update({can_edit: !current}).eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+async function saveRates(rates){
+  const {error} = await sb.from('rates').upsert({date: todayKey(), ...rates}, {onConflict:'date'});
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+
+/* ---------- CALCULS ---------- */
+function profitOf(tx){
+  if(tx.montant_bif_equivalent==null || tx.montant_bif_verse==null) return null;
+  return tx.montant_bif_equivalent - tx.montant_bif_verse;
+}
+function dashboardStats(){
+  const txs = state.transactions;
+  const enAttenteRemb = txs.filter(t=>t.statut==='AGENT_PAYE').length;
+  const rembourse = txs.filter(t=>t.statut==='ADMIN_REMBOURSE'||t.statut==='CLOTUREE').length;
+  const profitTotal = txs.reduce((s,t)=>{ const p=profitOf(t); return s+(p||0); },0);
+  const todayTx = txs.filter(t=>t.date===todayKey());
+  return {enAttenteRemb, rembourse, profitTotal, todayCount:todayTx.length};
+}
+
+/* ---------- RENDU ---------- */
+function render(){
+  const app = document.getElementById('app');
+  if(!state.session){ app.innerHTML = renderLogin(); attachLoginHandlers(); return; }
+  app.innerHTML = `
+    <nav class="side">
+      <div class="brand">
+        <div class="disp">FlashRemit</div>
+        <div class="sub">Livre de caisse · France · Burundi</div>
+      </div>
+      ${navBtn('dashboard','◆ Tableau de bord')}
+      ${navBtn('transactions','◆ Transactions')}
+      ${navBtn('rates','◆ Taux du jour')}
+      ${navBtn('users','◆ Utilisateurs', !isEditor())}
+      <div class="whoami">
+        <label>Connecté en tant que</label>
+        <div style="margin-top:6px; font-size:14px;">${state.profile ? state.profile.nom : state.session.user.email}</div>
+        <div class="rolechip">${isEditor() ? 'Accès admin complet' : 'Accès limité'}</div>
+        <button class="btn ghost small" style="margin-top:12px; width:100%;" onclick="signOut()">Se déconnecter</button>
+      </div>
+    </nav>
+    <main>${renderPage()}</main>
+  `;
+  attachPageHandlers();
+}
+
+function renderLogin(){
+  return `
+  <div style="display:flex; align-items:center; justify-content:center; min-height:100vh; width:100%;">
+    <div class="card" style="width:340px;">
+      <div class="disp" style="color:var(--gold); font-size:22px; margin-bottom:4px;">FlashRemit</div>
+      <div style="color:var(--text-dim); font-size:13px; margin-bottom:20px;">Connexion à votre compte</div>
+      <form id="loginForm">
+        <div class="field" style="margin-bottom:12px;"><label>Email</label><input type="email" name="email" required></div>
+        <div class="field" style="margin-bottom:16px;"><label>Mot de passe</label><input type="password" name="password" required></div>
+        ${state.authError ? `<div style="color:var(--bad); font-size:12.5px; margin-bottom:12px;">${state.authError}</div>` : ''}
+        <button class="btn" type="submit" style="width:100%;">Se connecter</button>
+      </form>
+    </div>
+  </div>`;
+}
+function attachLoginHandlers(){
+  const f = document.getElementById('loginForm');
+  if(f) f.onsubmit = (e)=>{ e.preventDefault(); const fd = new FormData(f); signIn(fd.get('email'), fd.get('password')); };
+}
+
+function navBtn(id, label, disabled){
+  return `<button class="navbtn ${state.page===id?'active':''}" ${disabled?'disabled':''} onclick="${disabled?'':`setPage('${id}')`}">
+    ${label} ${disabled?'<span class="lock">🔒</span>':''}
+  </button>`;
+}
+function setPage(id){ state.page=id; render(); }
+
+function renderPage(){
+  if(state.page==='dashboard') return pageDashboard();
+  if(state.page==='transactions') return pageTransactions();
+  if(state.page==='rates') return pageRates();
+  if(state.page==='users') return pageUsers();
+}
+
+function pageDashboard(){
+  const s = dashboardStats();
+  return `
+    <div class="pagehead"><div>
+      <h1>Tableau de bord</h1>
+      <p>Vue d'ensemble du contrôle et du profit</p>
+    </div></div>
+    <div class="grid">
+      <div class="stat"><div class="label">Opérations aujourd'hui</div><div class="val mono">${s.todayCount}</div></div>
+      <div class="stat"><div class="label">En attente de remboursement agent</div><div class="val mono ${s.enAttenteRemb>0?'bad':''}">${s.enAttenteRemb}</div></div>
+      <div class="stat"><div class="label">Opérations remboursées</div><div class="val mono good">${s.rembourse}</div></div>
+      <div class="stat"><div class="label">Profit total (BIF)</div><div class="val mono ${s.profitTotal>=0?'good':'bad'}">${fmt(s.profitTotal)}</div></div>
+    </div>
+    <div class="card">
+      <h2>⚠ Opérations agent payé, admin pas encore remboursé</h2>
+      ${tableTransactions(state.transactions.filter(t=>t.statut==='AGENT_PAYE'))}
+    </div>
+    <div class="card">
+      <h2>Dernières opérations</h2>
+      ${tableTransactions(state.transactions.slice(0,8))}
+    </div>
+  `;
+}
+
+function pageTransactions(){
+  return `
+    <div class="pagehead"><div>
+      <h1>Transactions</h1>
+      <p>Enregistrer et suivre chaque opération</p>
+    </div></div>
+    <div class="card">
+      <h2>Nouvelle transaction</h2>
+      <form id="txForm">
+        <div class="formrow">
+          <div class="field"><label>Client (envoyeur)</label><input name="client" required></div>
+          <div class="field"><label>Récepteur (Burundi)</label><input name="recepteur" required></div>
+        </div>
+        <div class="formrow">
+          <div class="field"><label>Devise d'origine</label>
+            <select name="devise"><option>EUR</option><option>USD</option><option>CAD</option><option>AED</option></select>
+          </div>
+          <div class="field"><label>Montant origine</label><input type="number" step="0.01" name="montant_origine" required></div>
+        </div>
+        <div class="formrow">
+          <div class="field"><label>Montant BIF équivalent (reçu/vendu)</label><input type="number" step="0.01" name="montant_bif_equivalent" required></div>
+          <div class="field"><label>Montant BIF versé au récepteur</label><input type="number" step="0.01" name="montant_bif_verse" required></div>
+        </div>
+        <div class="formrow">
+          <div class="field"><label>Admin responsable</label>
+            <select name="admin">${state.profiles.filter(u=>u.role==='ADMIN'&&u.statut==='actif').map(u=>`<option>${u.nom}</option>`).join('')}</select>
+          </div>
+          <div class="field"><label>Agent assigné</label>
+            <select name="agent">${state.profiles.filter(u=>u.role==='AGENT'&&u.statut==='actif').map(u=>`<option>${u.nom}</option>`).join('')}</select>
+          </div>
+        </div>
+        <button class="btn" type="submit">Enregistrer la transaction</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Toutes les transactions</h2>
+      ${tableTransactions(state.transactions, true)}
+    </div>
+  `;
+}
+
+function tableTransactions(list, withActions){
+  if(!list.length) return `<div class="empty">Aucune transaction pour l'instant.</div>`;
+  return `<table><thead><tr>
+    <th>Date</th><th>Client</th><th>Récepteur</th><th>Origine</th><th>BIF équiv.</th><th>BIF versé</th><th>Profit</th><th>Admin</th><th>Agent</th><th>Statut</th>${withActions?'<th></th>':''}
+  </tr></thead><tbody>
+  ${list.map(t=>{
+    const p = profitOf(t);
+    const st = STATUTS[t.statut];
+    return `<tr>
+      <td class="mono">${t.date}</td>
+      <td>${t.client}</td>
+      <td>${t.recepteur}</td>
+      <td class="mono">${fmt(t.montant_origine)} ${t.devise}</td>
+      <td class="mono">${fmt(t.montant_bif_equivalent)}</td>
+      <td class="mono">${fmt(t.montant_bif_verse)}</td>
+      <td class="mono ${p>=0?'good':'bad'}" style="color:${p>=0?'var(--good)':'var(--bad)'}">${p==null?'—':fmt(p)}</td>
+      <td>${t.admin}</td>
+      <td>${t.agent}</td>
+      <td><span class="stamp ${st.cls}">${st.label}</span></td>
+      ${withActions ? `<td>
+        ${t.statut==='DEMANDEE' ? `<button class="btn small" onclick="markAgentPaye('${t.id}')">Agent a payé</button>` : ''}
+        ${t.statut==='AGENT_PAYE' ? (isEditor() ? `<button class="btn small" onclick="markAdminRembourse('${t.id}')">Rembourser agent</button>` : `<span class="badge-role">Réservé aux admins</span>`) : ''}
+      </td>` : ''}
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+function pageRates(){
+  const today = state.rates[todayKey()] || {};
+  return `
+    <div class="pagehead"><div>
+      <h1>Taux du jour</h1>
+      <p>Utilisés pour convertir vers le BIF — ${todayKey()}</p>
+    </div></div>
+    <div class="card" style="max-width:520px;">
+      ${isEditor() ? `
+        <form id="ratesForm">
+          ${['EUR','USD','CAD','AED','KES','USDT'].map(c=>`
+            <div class="formrow wide">
+              <div class="field"><label>1 ${c} = ? BIF</label><input type="number" step="0.01" name="${c}" value="${today[c]||''}"></div>
+            </div>`).join('')}
+          <button class="btn" type="submit">Enregistrer les taux du jour</button>
+        </form>
+      ` : `<div class="lockednote">🔒 Seuls Pacifique et Dargus peuvent modifier les taux.</div>`}
+    </div>
+    <div class="card">
+      <h3>Taux actuellement enregistrés</h3>
+      <table><thead><tr><th>Devise</th><th>Valeur en BIF</th></tr></thead><tbody>
+        ${Object.keys(today).length ? Object.entries(today).map(([k,v])=>`<tr><td>${k}</td><td class="mono">${fmt(v)}</td></tr>`).join('') : '<tr><td colspan="2" class="empty">Aucun taux enregistré aujourd’hui.</td></tr>'}
+      </tbody></table>
+    </div>
+  `;
+}
+
+function pageUsers(){
+  return `
+    <div class="pagehead"><div>
+      <h1>Utilisateurs</h1>
+      <p>Gestion des comptes — réservé à Pacifique et Dargus</p>
+    </div></div>
+    <div class="lockednote" style="margin-bottom:20px;">
+      ℹ️ Pour créer un nouveau compte (nouvel agent ou admin), allez dans votre projet Supabase → <strong>Authentication → Add user</strong>. Un profil est créé automatiquement ici — modifiez ensuite son nom, son rôle et ses droits ci-dessous.
+    </div>
+    <div class="card">
+      <h2>Comptes existants</h2>
+      <table><thead><tr><th>Nom</th><th>Rôle</th><th>Pays</th><th>Statut</th><th>Droit d'édition</th><th></th></tr></thead><tbody>
+        ${state.profiles.map(u=>`<tr>
+          <td>${u.nom} ${u.can_edit?'<span class="badge-role">édition app</span>':''}</td>
+          <td>${u.role}</td><td>${u.pays}</td>
+          <td><span class="stamp ${u.statut==='actif'?'s-rembourse':'s-cloturee'}">${u.statut}</span></td>
+          <td><button class="btn small ghost" onclick="toggleCanEdit('${u.id}', ${u.can_edit})">${u.can_edit?'Retirer':'Accorder'}</button></td>
+          <td><button class="btn small ghost" onclick="toggleUserStatut('${u.id}', '${u.statut}')">${u.statut==='actif'?'Désactiver':'Réactiver'}</button></td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  `;
+}
+
+function attachPageHandlers(){
+  const txForm = document.getElementById('txForm');
+  if(txForm) txForm.onsubmit = (e)=>{
+    e.preventDefault();
+    const f = new FormData(txForm);
+    addTransaction({
+      client: f.get('client'), recepteur: f.get('recepteur'), devise: f.get('devise'),
+      montant_origine: parseFloat(f.get('montant_origine')),
+      montant_bif_equivalent: parseFloat(f.get('montant_bif_equivalent')),
+      montant_bif_verse: parseFloat(f.get('montant_bif_verse')),
+      admin: f.get('admin'), agent: f.get('agent'),
+    });
+  };
+  const ratesForm = document.getElementById('ratesForm');
+  if(ratesForm) ratesForm.onsubmit = (e)=>{
+    e.preventDefault();
+    const f = new FormData(ratesForm);
+    const rates = {};
+    ['EUR','USD','CAD','AED','KES','USDT'].forEach(c=>{ const v=f.get(c); if(v) rates[c]=parseFloat(v); });
+    saveRates(rates);
+  };
+}
+
+/* ---------- DEMARRAGE ---------- */
+(async function boot(){
+  const {data: {session}} = await sb.auth.getSession();
+  if(session){ await afterLogin(session); } else { render(); }
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === 'SIGNED_OUT'){ state.session=null; state.profile=null; render(); }
+  });
+})();
+</script>
+</body>
+</html>
