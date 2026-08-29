@@ -123,6 +123,7 @@ let state = {
   profiles: [],
   transactions: [],
   rates: {},
+  movements: [],
   page: 'dashboard',
   authError: '',
 };
@@ -159,14 +160,16 @@ async function afterLogin(session){
 
 /* ---------- CHARGEMENT DONNEES ---------- */
 async function loadAll(){
-  const [{data: profiles}, {data: txs}, {data: rates}] = await Promise.all([
+  const [{data: profiles}, {data: txs}, {data: rates}, {data: movements}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
     sb.from('transactions').select('*').order('created_at', {ascending:false}),
     sb.from('rates').select('*').order('date', {ascending:false}).limit(1),
+    sb.from('movements').select('*').order('created_at', {ascending:false}),
   ]);
   state.profiles = profiles || [];
   state.transactions = txs || [];
   state.rates = (rates && rates[0]) || {};
+  state.movements = movements || [];
   render();
 }
 
@@ -208,13 +211,37 @@ async function saveRates(rates){
 }
 async function resetApp(){
   if(!isEditor()) return;
-  const confirmText = prompt("⚠️ Ceci supprime DÉFINITIVEMENT toutes les transactions et tous les taux enregistrés (les comptes utilisateurs sont conservés).\n\nTapez REINITIALISER en majuscules pour confirmer :");
+  const confirmText = prompt("⚠️ Ceci supprime DÉFINITIVEMENT toutes les transactions, tous les taux et tous les mouvements internes enregistrés (les comptes utilisateurs sont conservés).\n\nTapez REINITIALISER en majuscules pour confirmer :");
   if(confirmText !== 'REINITIALISER'){ return; }
   const {error: e1} = await sb.from('transactions').delete().neq('id','00000000-0000-0000-0000-000000000000');
   const {error: e2} = await sb.from('rates').delete().neq('id','00000000-0000-0000-0000-000000000000');
-  if(e1 || e2){ alert('Erreur: '+((e1&&e1.message)||(e2&&e2.message))); return; }
-  alert('Application réinitialisée — toutes les transactions et tous les taux ont été effacés.');
+  const {error: e3} = await sb.from('movements').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(e1 || e2 || e3){ alert('Erreur: '+((e1&&e1.message)||(e2&&e2.message)||(e3&&e3.message))); return; }
+  alert('Application réinitialisée — toutes les transactions, taux et mouvements ont été effacés.');
   await loadAll();
+}
+async function addMovement(mv){
+  const {error} = await sb.from('movements').insert(mv);
+  if(error){ alert('Erreur: '+error.message); return; }
+  await loadAll();
+}
+async function deleteMovement(id){
+  if(!isEditor()) return;
+  const {error} = await sb.from('movements').delete().eq('id', id);
+  if(error) alert('Erreur: '+error.message);
+  await loadAll();
+}
+function computeBalances(){
+  const bal = {}; // { nom: { devise: montant } }
+  const add = (nom, devise, delta) => {
+    if(!bal[nom]) bal[nom] = {};
+    bal[nom][devise] = (bal[nom][devise]||0) + delta;
+  };
+  state.movements.forEach(m=>{
+    add(m.de, m.devise, -m.montant);
+    add(m.vers, m.devise, m.montant);
+  });
+  return bal;
 }
 
 /* ---------- CALCULS ---------- */
@@ -227,8 +254,10 @@ function dashboardStats(){
   const enAttenteRemb = txs.filter(t=>t.statut==='AGENT_PAYE').length;
   const rembourse = txs.filter(t=>t.statut==='ADMIN_REMBOURSE'||t.statut==='CLOTUREE').length;
   const profitTotal = txs.reduce((s,t)=>{ const p=profitOf(t); return s+(p||0); },0);
+  const profitDubai = txs.filter(t=>t.canal==='DUBAI').reduce((s,t)=>{ const p=profitOf(t); return s+(p||0); },0);
+  const profitFrance = txs.filter(t=>t.canal!=='DUBAI').reduce((s,t)=>{ const p=profitOf(t); return s+(p||0); },0);
   const todayTx = txs.filter(t=>t.date===todayKey());
-  return {enAttenteRemb, rembourse, profitTotal, todayCount:todayTx.length};
+  return {enAttenteRemb, rembourse, profitTotal, profitDubai, profitFrance, todayCount:todayTx.length};
 }
 function todayStats(){
   const todayTx = state.transactions.filter(t=>t.date===todayKey());
@@ -256,6 +285,7 @@ function render(){
       </div>
       ${navBtn('dashboard','◆ Tableau de bord')}
       ${navBtn('transactions','◆ Transactions')}
+      ${navBtn('movements','◆ Mouvements internes')}
       ${navBtn('rates','◆ Taux du jour')}
       ${navBtn('users','◆ Utilisateurs', !isEditor())}
       ${navBtn('settings','◆ Paramètres')}
@@ -301,6 +331,7 @@ function setPage(id){ state.page=id; render(); }
 function renderPage(){
   if(state.page==='dashboard') return pageDashboard();
   if(state.page==='transactions') return pageTransactions();
+  if(state.page==='movements') return pageMovements();
   if(state.page==='rates') return pageRates();
   if(state.page==='users') return pageUsers();
   if(state.page==='settings') return pageSettings();
@@ -319,6 +350,10 @@ function pageDashboard(){
       <div class="stat"><div class="label">En attente de remboursement agent</div><div class="val mono ${s.enAttenteRemb>0?'bad':''}">${s.enAttenteRemb}</div></div>
       <div class="stat"><div class="label">Opérations remboursées</div><div class="val mono good">${s.rembourse}</div></div>
       <div class="stat"><div class="label">Profit total (BIF)</div><div class="val mono ${s.profitTotal>=0?'good':'bad'}">${fmt(s.profitTotal)}</div></div>
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="label">Profit — canal France (BIF)</div><div class="val mono ${s.profitFrance>=0?'good':'bad'}">${fmt(s.profitFrance)}</div></div>
+      <div class="stat"><div class="label">Profit — canal Dubaï (BIF)</div><div class="val mono ${s.profitDubai>=0?'good':'bad'}">${fmt(s.profitDubai)}</div></div>
     </div>
     <div class="card">
       <h2>📊 Statistiques du jour — ${todayKey()}</h2>
@@ -380,6 +415,15 @@ function pageTransactions(){
       <h2>Nouvelle transaction</h2>
       <form id="txForm">
         <div class="formrow">
+          <div class="field"><label>Canal</label>
+            <select name="canal" id="canalSelect">
+              <option value="FRANCE">France (via admin)</option>
+              <option value="DUBAI">Dubaï (collecteur, sans admin)</option>
+            </select>
+          </div>
+          <div class="field" id="collecteurField" style="display:none;"><label>Nom du collecteur (Dubaï)</label><input name="collecteur" placeholder="ex. Ahmed"></div>
+        </div>
+        <div class="formrow">
           <div class="field"><label>Client (envoyeur)</label><input name="client" required></div>
           <div class="field"><label>Récepteur (Burundi)</label><input name="recepteur" required></div>
         </div>
@@ -393,9 +437,12 @@ function pageTransactions(){
           <div class="field"><label>Montant BIF équivalent (reçu/vendu)</label><input type="number" step="0.01" name="montant_bif_equivalent" required></div>
           <div class="field"><label>Montant BIF versé au récepteur</label><input type="number" step="0.01" name="montant_bif_verse" required></div>
         </div>
-        <div class="formrow">
-          <div class="field"><label>Admin responsable</label>
-            <select name="admin">${state.profiles.filter(u=>u.role==='ADMIN'&&u.statut==='actif').map(u=>`<option>${u.nom}</option>`).join('')}</select>
+        <div class="formrow" id="adminField">
+          <div class="field"><label>Admin responsable (laisser vide si direct client → agent)</label>
+            <select name="admin">
+              <option value="">— Aucun (transaction directe) —</option>
+              ${state.profiles.filter(u=>u.role==='ADMIN'&&u.statut==='actif').map(u=>`<option>${u.nom}</option>`).join('')}
+            </select>
           </div>
           <div class="field"><label>Agent assigné</label>
             <select name="agent">${state.profiles.filter(u=>u.role==='AGENT'&&u.statut==='actif').map(u=>`<option>${u.nom}</option>`).join('')}</select>
@@ -414,30 +461,88 @@ function pageTransactions(){
 function tableTransactions(list, withActions){
   if(!list.length) return `<div class="empty">Aucune transaction pour l'instant.</div>`;
   return `<table><thead><tr>
-    <th>Date</th><th>Client</th><th>Récepteur</th><th>Origine</th><th>BIF équiv.</th><th>BIF versé</th><th>Profit</th><th>Admin</th><th>Agent</th><th>Statut</th>${withActions?'<th></th>':''}
+    <th>Date</th><th>Canal</th><th>Client</th><th>Récepteur</th><th>Origine</th><th>BIF équiv.</th><th>BIF versé</th><th>Profit</th><th>Admin</th><th>Agent</th><th>Statut</th>${withActions?'<th></th>':''}
   </tr></thead><tbody>
   ${list.map(t=>{
     const p = profitOf(t);
     const st = STATUTS[t.statut];
     return `<tr>
       <td class="mono">${t.date}</td>
+      <td>${t.canal==='DUBAI' ? `🇦🇪 Dubaï${t.collecteur?' ('+t.collecteur+')':''}` : 'France'}</td>
       <td>${t.client}</td>
       <td>${t.recepteur}</td>
       <td class="mono">${fmt(t.montant_origine)} ${t.devise}</td>
       <td class="mono">${fmt(t.montant_bif_equivalent)}</td>
       <td class="mono">${fmt(t.montant_bif_verse)}</td>
       <td class="mono ${p>=0?'good':'bad'}" style="color:${p>=0?'var(--good)':'var(--bad)'}">${p==null?'—':fmt(p)}</td>
-      <td>${t.admin}</td>
+      <td>${t.admin || '<span class="badge-role">Direct</span>'}</td>
       <td>${t.agent}</td>
       <td><span class="stamp ${st.cls}">${st.label}</span></td>
       ${withActions ? `<td>
         ${t.statut==='DEMANDEE' ? `<button class="btn small" onclick="markAgentPaye('${t.id}')">Agent a payé</button>` : ''}
-        ${t.statut==='AGENT_PAYE' ? (isEditor() ? `<button class="btn small" onclick="markAdminRembourse('${t.id}')">Rembourser agent</button>` : `<span class="badge-role">Attente admin</span>`) : ''}
+        ${t.statut==='AGENT_PAYE' && t.admin ? (isEditor() ? `<button class="btn small" onclick="markAdminRembourse('${t.id}')">Rembourser agent</button>` : `<span class="badge-role">Attente admin</span>`) : ''}
+        ${t.statut==='AGENT_PAYE' && !t.admin ? (state.profile && state.profile.nom===t.agent ? `<button class="btn small" onclick="markCloturee('${t.id}')">Clôturer (direct)</button>` : `<span class="badge-role">Direct — attente agent</span>`) : ''}
         ${t.statut==='ADMIN_REMBOURSE' ? (state.profile && state.profile.nom===t.agent ? `<button class="btn small" onclick="markCloturee('${t.id}')">J'ai bien reçu</button>` : `<span class="badge-role">Attente confirmation agent</span>`) : ''}
       </td>` : ''}
     </tr>`;
   }).join('')}
   </tbody></table>`;
+}
+
+function pageMovements(){
+  const bal = computeBalances();
+  const personnes = state.profiles.filter(u=>u.statut==='actif');
+  return `
+    <div class="pagehead"><div>
+      <h1>Mouvements internes</h1>
+      <p>Argent partagé entre agents, entre admins, ou reçu d'un collecteur (ex. Dubaï) — pour suivre qui doit quoi à qui</p>
+    </div></div>
+    <div class="card">
+      <h2>Nouveau mouvement</h2>
+      <form id="movForm">
+        <div class="formrow">
+          <div class="field"><label>De (qui envoie)</label>
+            <select name="de">${personnes.map(u=>`<option>${u.nom}</option>`).join('')}<option value="__autre__">Autre (préciser)</option></select>
+          </div>
+          <div class="field"><label>Vers (qui reçoit)</label>
+            <select name="vers">${personnes.map(u=>`<option>${u.nom}</option>`).join('')}<option value="__autre__">Autre (préciser)</option></select>
+          </div>
+        </div>
+        <div class="formrow" id="autreNoms" style="display:none;">
+          <div class="field"><label>Nom "De" (si Autre)</label><input name="de_autre" placeholder="ex. Collecteur Dubaï"></div>
+          <div class="field"><label>Nom "Vers" (si Autre)</label><input name="vers_autre" placeholder="ex. Collecteur Dubaï"></div>
+        </div>
+        <div class="formrow">
+          <div class="field"><label>Devise</label>
+            <select name="devise"><option>USDT</option><option>KES</option><option>BIF</option><option>EUR</option><option>USD</option><option>CAD</option><option>AED</option></select>
+          </div>
+          <div class="field"><label>Montant</label><input type="number" step="0.01" name="montant" required></div>
+        </div>
+        <div class="formrow wide">
+          <div class="field"><label>Note (optionnel — ex. "reçu avant paiement récepteur")</label><input name="note" placeholder="ex. Collecteur Dubaï → Naomie, avant paiement client"></div>
+        </div>
+        <button class="btn" type="submit">Enregistrer le mouvement</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Soldes actuels (reçu − envoyé, par devise)</h3>
+      <table><thead><tr><th>Personne</th><th>Devise</th><th>Solde</th></tr></thead><tbody>
+        ${Object.keys(bal).length ? Object.entries(bal).flatMap(([nom, devs])=>Object.entries(devs).map(([dev,val])=>
+          `<tr><td>${nom}</td><td>${dev}</td><td class="mono ${val>=0?'good':'bad'}" style="color:${val>=0?'var(--good)':'var(--bad)'}">${fmt(val)}</td></tr>`
+        )).join('') : '<tr><td colspan="3" class="empty">Aucun mouvement enregistré.</td></tr>'}
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h2>Historique des mouvements</h2>
+      <table><thead><tr><th>Date</th><th>De</th><th>Vers</th><th>Devise</th><th>Montant</th><th>Note</th>${isEditor()?'<th></th>':''}</tr></thead><tbody>
+        ${state.movements.length ? state.movements.map(m=>`<tr>
+          <td class="mono">${m.date}</td><td>${m.de}</td><td>${m.vers}</td><td>${m.devise}</td>
+          <td class="mono">${fmt(m.montant)}</td><td style="color:var(--text-dim); font-size:12px;">${m.note||''}</td>
+          ${isEditor()?`<td><button class="btn small ghost" onclick="deleteMovement('${m.id}')">Supprimer</button></td>`:''}
+        </tr>`).join('') : `<tr><td colspan="${isEditor()?7:6}" class="empty">Aucun mouvement pour l'instant.</td></tr>`}
+      </tbody></table>
+    </div>
+  `;
 }
 
 function pageRates(){
@@ -479,13 +584,15 @@ function pageUsers(){
     <div class="card">
       <h2>Comptes existants</h2>
       <table><thead><tr><th>Nom</th><th>Rôle</th><th>Pays</th><th>Statut</th><th>Droit d'édition</th><th></th></tr></thead><tbody>
-        ${state.profiles.map(u=>`<tr>
-          <td>${u.nom} ${u.can_edit?'<span class="badge-role">édition app</span>':''}</td>
+        ${state.profiles.map(u=>{
+          const locked = u.protected && (!state.profile || state.profile.nom !== u.nom);
+          return `<tr>
+          <td>${u.nom} ${u.can_edit?'<span class="badge-role">édition app</span>':''} ${u.protected?'<span class="badge-role">🔒 protégé</span>':''}</td>
           <td>${u.role}</td><td>${u.pays}</td>
           <td><span class="stamp ${u.statut==='actif'?'s-rembourse':'s-cloturee'}">${u.statut}</span></td>
-          <td><button class="btn small ghost" onclick="toggleCanEdit('${u.id}', ${u.can_edit})">${u.can_edit?'Retirer':'Accorder'}</button></td>
-          <td><button class="btn small ghost" onclick="toggleUserStatut('${u.id}', '${u.statut}')">${u.statut==='actif'?'Désactiver':'Réactiver'}</button></td>
-        </tr>`).join('')}
+          <td><button class="btn small ghost" ${locked?'disabled':''} onclick="toggleCanEdit('${u.id}', ${u.can_edit})">${u.can_edit?'Retirer':'Accorder'}</button></td>
+          <td><button class="btn small ghost" ${locked?'disabled':''} onclick="toggleUserStatut('${u.id}', '${u.statut}')">${u.statut==='actif'?'Désactiver':'Réactiver'}</button></td>
+        </tr>`;}).join('')}
       </tbody></table>
     </div>
   `;
@@ -522,17 +629,43 @@ function pageSettings(){
 }
 
 function attachPageHandlers(){
+  const movForm = document.getElementById('movForm');
+  if(movForm) movForm.onsubmit = (e)=>{
+    e.preventDefault();
+    const f = new FormData(movForm);
+    const de = f.get('de')==='__autre__' ? f.get('de_autre') : f.get('de');
+    const vers = f.get('vers')==='__autre__' ? f.get('vers_autre') : f.get('vers');
+    if(!de || !vers){ alert('Merci de préciser les deux noms.'); return; }
+    addMovement({ date: todayKey(), de, vers, devise: f.get('devise'), montant: parseFloat(f.get('montant')), note: f.get('note')||null });
+  };
+  ['de','vers'].forEach(name=>{
+    const sel = document.querySelector(`select[name="${name}"]`);
+    if(sel) sel.onchange = ()=>{
+      const box = document.getElementById('autreNoms');
+      const anyAutre = document.querySelector('select[name="de"]')?.value==='__autre__' || document.querySelector('select[name="vers"]')?.value==='__autre__';
+      if(box) box.style.display = anyAutre ? 'grid' : 'none';
+    };
+  });
   const txForm = document.getElementById('txForm');
   if(txForm) txForm.onsubmit = (e)=>{
     e.preventDefault();
     const f = new FormData(txForm);
+    const canal = f.get('canal') || 'FRANCE';
     addTransaction({
       client: f.get('client'), recepteur: f.get('recepteur'), devise: f.get('devise'),
       montant_origine: parseFloat(f.get('montant_origine')),
       montant_bif_equivalent: parseFloat(f.get('montant_bif_equivalent')),
       montant_bif_verse: parseFloat(f.get('montant_bif_verse')),
-      admin: f.get('admin'), agent: f.get('agent'),
+      admin: canal==='DUBAI' ? null : (f.get('admin') || null),
+      agent: f.get('agent'),
+      canal, collecteur: canal==='DUBAI' ? (f.get('collecteur')||null) : null,
     });
+  };
+  const canalSelect = document.getElementById('canalSelect');
+  if(canalSelect) canalSelect.onchange = ()=>{
+    const isDubai = canalSelect.value === 'DUBAI';
+    document.getElementById('collecteurField').style.display = isDubai ? 'block' : 'none';
+    document.getElementById('adminField').style.display = isDubai ? 'none' : 'grid';
   };
   const ratesForm = document.getElementById('ratesForm');
   if(ratesForm) ratesForm.onsubmit = (e)=>{
