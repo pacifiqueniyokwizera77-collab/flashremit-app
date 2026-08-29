@@ -102,6 +102,27 @@
   .badge-role{ font-size:10px; padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--text-dim); margin-left:6px; }
   .empty{ color:var(--text-dim); font-size:13px; padding:20px 0; text-align:center; }
   ::placeholder{ color: rgba(242,237,225,0.35); }
+
+  /* ---------- RESPONSIVE (mobile / tablette) ---------- */
+  @media (max-width: 900px){
+    #app{ flex-direction:column; }
+    nav.side{ width:100%; border-right:none; border-bottom:1px solid var(--line); padding:16px; }
+    .brand{ padding-bottom:14px; }
+    .whoami{ margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+    main{ padding:20px 16px; }
+    .grid{ grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+    .pagehead{ flex-direction:column; align-items:flex-start; gap:6px; }
+    .pagehead h1{ font-size:21px; }
+    .card{ padding:16px; }
+    table{ display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; }
+    .formrow{ grid-template-columns:1fr; gap:10px; }
+    .navbtn{ padding:12px; font-size:15px; }
+  }
+  @media (max-width: 480px){
+    .grid{ grid-template-columns:1fr; }
+    main{ padding:16px 12px; }
+    .stat .val{ font-size:20px; }
+  }
 </style>
 </head>
 <body>
