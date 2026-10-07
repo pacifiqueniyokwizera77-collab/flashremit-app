@@ -2,555 +2,855 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E3B35">
 <title>Pax International Travels and Services</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23B8892B'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='36' font-weight='700' text-anchor='middle' fill='%230E3B35'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#101b19;
-    --paper:#f2ede1;
-    --surface:#0f2d29;
-    --surface-2:#153934;
-    --line: rgba(242,237,225,0.12);
-    --gold:#c9a227;
-    --gold-soft: rgba(201,162,39,0.18);
-    --good:#5fae7a;
-    --bad:#c0553f;
-    --info:#5fa8d3;
-    --text:#f2ede1;
-    --text-dim: rgba(242,237,225,0.6);
-    --radius: 10px;
+    --bg:#F2F5F4;
+    --surface:#FFFFFF;
+    --surface-2:#F6F8F7;
+    --line:#E0E7E4;
+    --ink:#13201E;
+    --muted:#5D6D69;
+    --brand:#0E3B35;
+    --brand-2:#145248;
+    --brand-soft:#E5EFEC;
+    --gold:#B8892B;
+    --gold-soft:#F7EFDD;
+    --good:#1E7A4C;  --good-soft:#E5F3EB;
+    --bad:#B42318;   --bad-soft:#FBEAE8;
+    --warn:#8A5A00;  --warn-soft:#FFF3D6;
+    --info:#1D5FA8;  --info-soft:#E8F0FB;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--ink); color:var(--text);
-    font-family:'Inter',sans-serif;
-    -webkit-font-smoothing:antialiased;
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  button,input,select{font:inherit;color:inherit;}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .num,td,.kpi .v,.convert b{font-variant-numeric:tabular-nums;}
+  svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ---------- Shell ---------- */
+  .shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;}
+  .side{position:sticky;top:0;height:100vh;background:var(--brand);color:#E6EFEC;display:flex;flex-direction:column;gap:2px;padding:22px 14px 18px;overflow-y:auto;}
+  .logo{display:flex;gap:11px;align-items:center;}
+  .side .logo{padding:2px 8px 26px;}
+  .mark{width:38px;height:38px;border-radius:10px;background:var(--gold);color:var(--brand);display:grid;place-items:center;font-family:'Fraunces',serif;font-weight:700;font-size:20px;flex:none;}
+  .wordmark b{display:block;font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:#fff;letter-spacing:-.01em;line-height:1.1;}
+  .wordmark span{display:block;font-size:12px;color:#A7C1BA;margin-top:2px;}
+  .navlink{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:9px;border:0;background:none;color:#C6D8D3;cursor:pointer;text-align:left;font-weight:600;font-size:14px;}
+  .navlink:hover{background:rgba(255,255,255,.07);color:#fff;}
+  .navlink.active{background:#fff;color:var(--brand);}
+  .navlink .badge{margin-left:auto;}
+  .badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--bad);color:#fff;font-size:11.5px;font-weight:800;display:inline-grid;place-items:center;line-height:1;}
+  .me{display:flex;gap:10px;align-items:center;}
+  .side .me{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:16px 6px 0;}
+  .avatar{width:36px;height:36px;border-radius:50%;background:var(--gold-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;border:0;cursor:default;}
+  .me .who{min-width:0;flex:1;}
+  .me .who b{display:block;color:#fff;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .me .who span{font-size:12px;color:#A7C1BA;}
+  .iconbtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--muted);flex:none;}
+  .side .iconbtn,.topbar .iconbtn{background:transparent;border-color:rgba(255,255,255,.2);color:#D3E2DE;}
+  .topbar{display:none;}
+  main{padding:30px 36px 56px;max-width:1220px;width:100%;}
+
+  /* ---------- Page header ---------- */
+  .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .pagehead h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15;}
+  .pagehead p{margin:5px 0 0;color:var(--muted);}
+  .pagehead .actions{justify-content:flex-start;}
+
+  /* ---------- KPI ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 16px;min-width:0;}
+  .kpi .k{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;font-weight:600;}
+  .kpi .chip{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);flex:none;}
+  .kpi .chip svg.i{width:16px;height:16px;}
+  .kpi .v{font-size:22px;font-weight:800;margin-top:10px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kpi .v small{font-size:13px;font-weight:700;color:var(--muted);margin-left:3px;}
+  .kpi .h{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .kpi.hl{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .kpi.hl .k,.kpi.hl .h,.kpi.hl .v small{color:#B4CBC5;}
+  .kpi.hl .chip{background:rgba(255,255,255,.1);color:var(--gold);}
+  .v.good{color:var(--good);} .v.bad{color:var(--bad);} .v.gold{color:var(--gold);}
+  .kpi.hl .v.bad{color:#FFB4A8;} .kpi.hl .v.good{color:#9FE0BC;}
+
+  /* ---------- Panels ---------- */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden;}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .panel-h h2{margin:0;font-size:15.5px;font-weight:800;display:flex;gap:9px;align-items:center;}
+  .panel-h h2 svg.i{color:var(--brand);}
+  .panel-b{padding:18px;}
+  .panel.flag-bad{border-left:4px solid var(--bad);}
+  .panel.flag-bad .panel-h h2 svg.i{color:var(--bad);}
+  .panel.flag-warn{border-left:4px solid var(--gold);}
+  .panel.flag-warn .panel-h h2 svg.i{color:var(--gold);}
+  .panel.calm .panel-h{border-bottom:0;}
+  .count{font-weight:700;color:var(--muted);font-size:13px;}
+
+  /* ---------- Tables ---------- */
+  .tblwrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);}
+  td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:hover td{background:#FAFBFB;}
+  tfoot td{font-weight:800;border-top:1px solid var(--line);background:var(--surface-2);}
+  th.r,td.r{text-align:right;white-space:nowrap;}
+  .sub{font-size:12.5px;color:var(--muted);}
+  .strong{font-weight:700;}
+  .bif{font-weight:800;color:var(--brand);}
+  .cell-good{color:var(--good);font-weight:700;} .cell-bad{color:var(--bad);font-weight:700;} .cell-gold{color:var(--gold);font-weight:700;}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .pill svg.i{width:13px;height:13px;stroke-width:2.2;}
+  .pill.attente{background:var(--warn-soft);color:var(--warn);}
+  .pill.payee{background:var(--good-soft);color:var(--good);}
+  .pill.annulee{background:var(--surface-2);color:var(--muted);}
+  .pill.envoye{background:var(--info-soft);color:var(--info);}
+  .pill.role{background:var(--brand-soft);color:var(--brand);}
+
+  /* ---------- Buttons ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 16px;border-radius:9px;border:1px solid transparent;background:var(--brand);color:#fff;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;text-decoration:none;}
+  .btn:hover{background:var(--brand-2);}
+  .btn.gold{background:var(--gold);} .btn.gold:hover{background:#A57A24;}
+  .btn.ghost{background:var(--surface);border-color:var(--line);color:var(--ink);} .btn.ghost:hover{background:var(--surface-2);}
+  .btn.good{background:var(--good);} .btn.good:hover{background:#196640;}
+  .btn.danger{background:var(--bad);}
+  .btn.sm{height:32px;padding:0 11px;font-size:13px;border-radius:8px;gap:5px;}
+  .btn.sm svg.i{width:15px;height:15px;}
+  .btn.sq{width:32px;padding:0;}
+  .btn.block{width:100%;}
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  td .actions{flex-wrap:nowrap;}
+  .linkbtn{background:none;border:0;color:var(--brand);font-weight:700;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;font-size:13.5px;}
+
+  /* ---------- Forms ---------- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;min-width:0;}
+  .field label{font-size:13px;font-weight:700;color:#33433F;}
+  .field .hint{font-size:12.5px;color:var(--muted);}
+  input,select{height:44px;width:100%;padding:0 12px;border:1px solid #CBD6D2;border-radius:9px;background:#fff;font-size:15px;}
+  input[readonly]{background:var(--surface-2);}
+  input:focus,select:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px rgba(14,59,53,.13);}
+  .legend{font-size:14px;font-weight:800;margin:4px 0 12px;display:flex;align-items:center;gap:8px;color:var(--brand);}
+  .sep{height:1px;background:var(--line);margin:6px 0 18px;}
+
+  /* conversion strip: the signature element */
+  .convert{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1.2fr);align-items:center;gap:12px;background:var(--brand);color:#fff;border-radius:12px;padding:18px 20px;margin:4px 0 8px;}
+  .convert .step span{display:block;font-size:12.5px;color:#A7C1BA;}
+  .convert .step b{display:block;font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .convert .step.final b{color:var(--gold);font-size:25px;}
+  .convert .op{font-size:12.5px;font-weight:700;color:#D6E4E0;text-align:center;white-space:nowrap;}
+  .convert .op svg.i{display:block;margin:0 auto 3px;color:var(--gold);}
+  .convert-note{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
+
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  .filters select,.filters input{width:auto;min-width:170px;height:40px;font-size:14px;}
+  .filters .search{position:relative;flex:1;min-width:220px;}
+  .filters .search input{width:100%;padding-left:38px;}
+  .filters .search svg.i{position:absolute;left:12px;top:11px;color:var(--muted);}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin-bottom:10px;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chipbtn{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;color:var(--ink);flex:none;}
+  .chipbtn.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .range{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px;}
+  .range .field{margin:0;}
+  .range input,.range select{height:40px;font-size:14px;}
+
+  .note{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;color:var(--muted);font-size:13.5px;line-height:1.55;}
+  .note b{color:var(--ink);}
+  .empty{padding:30px 16px;text-align:center;color:var(--muted);}
+  .empty svg.i{width:28px;height:28px;color:#A8B6B2;display:block;margin:0 auto 8px;}
+  .linkbox{display:flex;gap:8px;}
+  .linkbox input{font-size:13px;}
+
+  /* mobile cards (hidden on desktop) */
+  .cards{display:none;}
+  .tcard{padding:14px 16px;border-bottom:1px solid var(--line);}
+  .tcard:last-child{border-bottom:0;}
+  .tcard .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
+  .tcard .name{font-weight:800;}
+  .tcard .meta{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .tcard .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .tcard .bif{font-size:16px;white-space:nowrap;}
+  .mini{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:10px;}
+  .mini div span{display:block;font-size:12px;color:var(--muted);}
+  .mini div b{font-size:14.5px;}
+
+  /* ---------- Auth ---------- */
+  .auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);}
+  .auth-brand{background:var(--brand);color:#fff;padding:44px 52px;display:flex;flex-direction:column;justify-content:space-between;gap:40px;}
+  .auth-brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:42px;line-height:1.08;margin:0 0 26px;letter-spacing:-.02em;max-width:520px;}
+  .route{display:flex;align-items:center;gap:12px;font-weight:800;font-size:15px;max-width:440px;}
+  .route .dash{flex:1;height:0;border-top:2px dashed rgba(255,255,255,.3);}
+  .route svg.i{color:var(--gold);width:22px;height:22px;}
+  .auth-brand .foot{color:#A7C1BA;font-size:13.5px;}
+  .auth-main{display:grid;place-items:center;padding:36px 20px;}
+  .auth-card{width:100%;max-width:400px;}
+  .auth-card h2{font-size:24px;font-weight:800;margin:0 0 6px;letter-spacing:-.01em;}
+  .auth-card .lead{color:var(--muted);margin:0 0 22px;}
+  .auth-card .switch{text-align:center;margin-top:18px;color:var(--muted);font-size:13.5px;}
+  .rowline{display:flex;justify-content:flex-end;margin:-4px 0 16px;}
+  .msg{border-radius:9px;padding:11px 13px;font-size:13.5px;margin-bottom:16px;display:flex;gap:9px;align-items:flex-start;}
+  .msg svg.i{margin-top:1px;}
+  .msg.bad{background:var(--bad-soft);color:var(--bad);}
+  .msg.ok{background:var(--good-soft);color:var(--good);}
+  .waiting{text-align:center;}
+  .waiting .disc{width:56px;height:56px;border-radius:50%;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;margin:0 auto 16px;}
+  .waiting .disc svg.i{width:26px;height:26px;}
+
+  /* ---------- Mobile nav ---------- */
+  .tabbar{display:none;}
+  .sheet-bg{position:fixed;inset:0;background:rgba(9,26,23,.45);z-index:50;display:flex;align-items:flex-end;}
+  .sheet{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:8px 14px calc(18px + env(safe-area-inset-bottom));max-height:86vh;overflow:auto;}
+  .sheet .grab{width:42px;height:4px;border-radius:2px;background:#D3DCD9;margin:6px auto 14px;}
+  .sheet .me{padding:4px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .sheet .me .who b{color:var(--ink);} .sheet .me .who span{color:var(--muted);}
+  .sheet .navlink{color:var(--ink);padding:13px 12px;font-size:15px;}
+  .sheet .navlink:hover{background:var(--surface-2);color:var(--ink);}
+  .sheet .navlink.active{background:var(--brand-soft);color:var(--brand);}
+  .sheet .navlink.out{color:var(--bad);}
+
+  #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100% - 32px);}
+  .toast{background:var(--ink);color:#fff;padding:11px 16px;border-radius:10px;font-weight:700;font-size:14px;display:flex;gap:9px;align-items:center;box-shadow:0 10px 28px rgba(0,0,0,.2);}
+  .toast svg.i{color:#9FE0BC;}
+  .toast.bad{background:var(--bad);} .toast.bad svg.i{color:#fff;}
+  @media (prefers-reduced-motion:no-preference){
+    .toast{animation:pop .22s ease-out;}
+    .sheet{animation:up .22s ease-out;}
+    @keyframes pop{from{opacity:0;transform:translateY(8px);}}
+    @keyframes up{from{transform:translateY(40px);opacity:.6;}}
   }
-  h1,h2,h3, .disp{ font-family:'Fraunces',serif; font-weight:600; letter-spacing:-0.01em; }
-  .mono{ font-family:'JetBrains Mono',monospace; }
-  #app{ display:flex; min-height:100vh; }
 
-  /* SIDEBAR */
-  nav.side{
-    width:230px; flex-shrink:0; background:var(--surface);
-    border-right:1px solid var(--line); padding:24px 14px;
-    display:flex; flex-direction:column; gap:4px;
+  @media (max-width:1120px){
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
   }
-  .brand{ padding:0 10px 22px 10px; }
-  .brand .disp{ font-size:19px; color:var(--gold); line-height:1.15;}
-  .brand .sub{ font-size:11px; color:var(--text-dim); letter-spacing:0.08em; text-transform:uppercase; margin-top:4px;}
-  .navbtn{
-    background:none; border:none; color:var(--text-dim); text-align:left;
-    padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer;
-    font-family:'Inter',sans-serif; display:flex; align-items:center; gap:9px;
-  }
-  .navbtn:hover{ background:var(--gold-soft); color:var(--text); }
-  .navbtn.active{ background:var(--gold-soft); color:var(--gold); font-weight:600; }
-  .navbtn .count{ margin-left:auto; background:var(--bad); color:#fff; font-size:11px; font-weight:700; border-radius:20px; padding:1px 7px; }
-
-  .whoami{ margin-top:auto; border-top:1px solid var(--line); padding-top:16px; }
-  .whoami label{ font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); }
-  select{
-    width:100%; background:var(--surface-2); color:var(--text); border:1px solid var(--line);
-    border-radius:8px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px;
-  }
-  .rolechip{ display:inline-block; font-size:10px; margin-top:8px; padding:3px 8px; border-radius:20px; background:var(--gold-soft); color:var(--gold); text-transform:uppercase; letter-spacing:0.06em; }
-
-  /* MAIN */
-  main{ flex:1; padding:32px 40px; max-width:1240px; min-width:0; }
-  .pagehead{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; gap:16px; }
-  .pagehead h1{ font-size:26px; margin:0; }
-  .pagehead p{ color:var(--text-dim); margin:6px 0 0 0; font-size:13.5px; }
-
-  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
-  .grid.g3{ grid-template-columns:repeat(3,1fr); }
-  .stat{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; }
-  .stat .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); }
-  .stat .val{ font-size:22px; margin-top:6px; }
-  .stat .hint{ font-size:11.5px; color:var(--text-dim); margin-top:4px; }
-  .val.good{ color:var(--good); } .val.bad{ color:var(--bad); } .val.gold{ color:var(--gold); }
-
-  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:20px; }
-  .card.alert{ border-color:var(--bad); }
-  .card.warn{ border-color:var(--gold); }
-  .card h2{ font-size:16px; margin:0 0 14px 0; }
-  .card h3{font-size: 13px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin:0 0 12px 0; font-family:'Inter',sans-serif; font-weight:600;}
-
-  .tablewrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
-  th{ text-align:left; color:var(--text-dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; padding:8px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
-  td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  td.num, th.num{ text-align:right; white-space:nowrap; }
-  tr:last-child td{ border-bottom:none; }
-  tr:hover td{ background:rgba(255,255,255,0.02); }
-  tfoot td{ font-weight:700; border-top:1px solid var(--line); }
-  .sub2{ font-size:11.5px; color:var(--text-dim); }
-
-  .stamp{ display:inline-block; padding:3px 9px; border-radius:20px; font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase; font-weight:700; border:1.5px solid; white-space:nowrap; }
-  .s-attente{ color:#e0b84a; border-color:#e0b84a; }
-  .s-payee{ color:var(--good); border-color:var(--good); }
-  .s-annulee{ color:var(--text-dim); border-color:var(--line); }
-  .s-envoye{ color:var(--info); border-color:var(--info); }
-
-  .btn{ background:var(--gold); color:#241c05; border:none; padding:10px 16px; border-radius:8px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap; }
-  .btn:hover{ filter:brightness(1.08); }
-  .btn.ghost{ background:none; border:1px solid var(--line); color:var(--text); }
-  .btn.good{ background:var(--good); color:#08210f; }
-  .btn.small{ padding:5px 10px; font-size:12px; }
-  .btn.danger{ background:var(--bad); color:#fff; }
-  .btn:disabled{ opacity:0.4; cursor:not-allowed; }
-  .btnrow{ display:flex; gap:6px; flex-wrap:wrap; }
-
-  .formrow{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-  .formrow.r3{ grid-template-columns:1fr 1fr 1fr; }
-  .formrow.wide{ grid-template-columns:1fr; }
-  .field label{ font-size:11.5px; color:var(--text-dim); display:block; margin-bottom:5px; }
-  input{ width:100%; background:var(--surface-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-family:'Inter',sans-serif; font-size:13.5px; }
-  .calc{ background:var(--surface-2); border:1px dashed var(--gold); border-radius:var(--radius); padding:14px 16px; margin:4px 0 16px; font-size:13.5px; line-height:1.7; }
-  .calc b{ color:var(--gold); }
-
-  .lockednote{ color:var(--text-dim); background:var(--surface-2); border:1px dashed var(--line); border-radius:var(--radius); padding:16px; font-size:13px; line-height:1.55; }
-  .badge-role{ font-size:10px; padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--text-dim); margin-left:6px; white-space:nowrap; }
-  .empty{ color:var(--text-dim); font-size:13px; padding:20px 0; text-align:center; }
-  .filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
-  .filters select{ width:auto; min-width:150px; }
-  .linkbox{ display:flex; gap:8px; align-items:center; }
-  .linkbox input{ font-family:'JetBrains Mono',monospace; font-size:12px; }
-  .msg-ok{ color:var(--good); font-size:13px; margin-top:12px; }
-  .msg-bad{ color:var(--bad); font-size:13px; margin-top:12px; }
-  ::placeholder{ color: rgba(242,237,225,0.35); }
-
-  /* ---------- RESPONSIVE (mobile / tablette) ---------- */
-  @media (max-width: 900px){
-    #app{ flex-direction:column; }
-    nav.side{ width:100%; border-right:none; border-bottom:1px solid var(--line); padding:16px; }
-    .brand{ padding-bottom:14px; }
-    .whoami{ margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
-    main{ padding:20px 16px; }
-    .grid, .grid.g3{ grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
-    .pagehead{ flex-direction:column; align-items:flex-start; gap:6px; }
-    .pagehead h1{ font-size:21px; }
-    .card{ padding:16px; }
-    .formrow, .formrow.r3{ grid-template-columns:1fr; gap:10px; }
-    .navbtn{ padding:12px; font-size:15px; }
-  }
-  @media (max-width: 480px){
-    .grid, .grid.g3{ grid-template-columns:1fr; }
-    main{ padding:16px 12px; }
-    .stat .val{ font-size:20px; }
+  @media (max-width:860px){
+    body{font-size:15px;}
+    .shell{display:block;}
+    .side{display:none;}
+    .topbar{display:flex;position:sticky;top:0;z-index:20;align-items:center;justify-content:space-between;gap:10px;background:var(--brand);color:#fff;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));}
+    .topbar .mark{width:32px;height:32px;font-size:17px;border-radius:9px;}
+    .topbar .wordmark b{font-size:16px;}
+    .topbar .wordmark span{font-size:11.5px;}
+    main{padding:18px 14px calc(100px + env(safe-area-inset-bottom));}
+    .pagehead{margin-bottom:16px;}
+    .pagehead h1{font-size:22px;}
+    .pagehead .desk-only{display:none;}
+    .kpis{gap:10px;margin-bottom:16px;}
+    .kpi{padding:13px;}
+    .kpi .v{font-size:19px;margin-top:8px;}
+    .panel-h{padding:13px 14px;}
+    .panel-b{padding:14px;}
+    .only-desk{display:none;}
+    .cards{display:block;}
+    .grid2,.grid3{grid-template-columns:1fr;}
+    .convert{grid-template-columns:1fr;gap:4px;padding:16px;}
+    .convert .op{text-align:left;display:flex;gap:6px;align-items:center;padding:2px 0;}
+    .convert .op svg.i{margin:0;transform:rotate(90deg);}
+    .filters{gap:8px;}
+    .filters select,.filters input{flex:1 1 140px;min-width:0;}
+    .filters .search{flex-basis:100%;}
+    .range .field{flex:1 1 130px;}
+    .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+    .tab{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0;cursor:pointer;position:relative;}
+    .tab svg.i{width:23px;height:23px;}
+    .tab.active{color:var(--brand);}
+    .tab .badge{position:absolute;top:-1px;left:calc(50% + 5px);min-width:18px;height:18px;font-size:10px;padding:0 5px;}
+    .tab.fab .disc{width:50px;height:50px;border-radius:15px;background:var(--gold);color:#fff;display:grid;place-items:center;margin-top:-22px;box-shadow:0 6px 18px rgba(184,137,43,.4);}
+    .tab.fab .disc svg.i{width:26px;height:26px;stroke-width:2.2;}
+    .tab.fab.active{color:var(--gold);}
+    .auth{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
+    form .btn.gold[type=submit]{width:100%;}
+    .auth-brand{padding:22px 20px 24px;gap:18px;}
+    .auth-brand h1,.auth-brand .foot{display:none;}
+    .auth-main{place-items:start center;padding:26px 18px 40px;}
   }
 </style>
 </head>
 <body>
 <div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ================================
-   CONFIGURATION SUPABASE
+   CONFIGURATION
    ================================ */
+const INITIAL_HASH = location.hash; // read before Supabase consumes the URL
 const SUPABASE_URL = 'https://oeyzapqyyzdvwzoezisv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9leXphcHF5eXpkdnd6b2V6aXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MzgzMDcsImV4cCI6MjEwMzQxNDMwN30.IGZbDI0KpzG-hjZDFghTiMi9c84Lsfdbof0ej_qhyRw';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* Taux par défaut AED → USD (1 USD = 3,66 AED) */
-const DEFAULT_AED_USD = 3.66;
-/* Le montant BIF est arrondi vers le bas au multiple de 50 BIF */
-const BIF_ROUND_STEP = 50;
-const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash (Bujumbura)'];
-const ROLES = { ADMIN:'Admin', BUJA:'Bujumbura (validation)', AGENT:'Agent Dubaï' };
+const DEFAULT_AED_USD = 3.66;   // 1 USD = 3,66 AED
+const BIF_ROUND_STEP = 50;      // montant BIF arrondi au multiple de 50 inférieur
+const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash à Bujumbura'];
+const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï' };
 
-/* ---------- ETAT ---------- */
-let state = {
-  session: null,
-  profile: null,
-  profiles: [],
-  transactions: [],
-  versements: [],
-  page: 'dashboard',
-  authView: (location.hash === '#inscription') ? 'signup' : 'login',
-  authError: '',
-  authInfo: '',
-  filters: { agent:'', statut:'', periode:'tout' },
+/* ---------- Icons (inline SVG, 24px grid) ---------- */
+const ICONS = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  list:'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  key:'<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/>',
+  wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M16 14h.01"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+  plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>',
+  phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
 };
+function ic(n, extra=''){ return `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICONS[n]||''}</svg>`; }
+
+/* ---------- State ---------- */
+let state = {
+  session:null, profile:null, profiles:[], transactions:[], versements:[],
+  page:'dashboard', sheet:false,
+  authView: INITIAL_HASH.includes('inscription') ? 'signup' : 'login',
+  recovery: /type=recovery/.test(INITIAL_HASH),
+  authError:'', authInfo:'',
+  txf:{ q:'', agent:'', statut:'', periode:'all' },
+  vsf:{ agent:'', periode:'all' },
+  st:{ preset:'today', from:'', to:'', agent:'', group:'day' },
+};
+(function readHashError(){
+  const m = INITIAL_HASH.match(/error_description=([^&]+)/);
+  if(!m) return;
+  const raw = decodeURIComponent(m[1].replace(/\+/g,' '));
+  state.authError = /expired|invalid/i.test(raw)
+    ? "Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau."
+    : raw;
+  state.recovery = false;
+})();
 
 const TX_STATUTS = {
-  EN_ATTENTE: {label:'À payer', cls:'s-attente'},
-  PAYEE:      {label:'Payée ✓', cls:'s-payee'},
-  ANNULEE:    {label:'Annulée', cls:'s-annulee'},
+  EN_ATTENTE:{ label:'À payer', cls:'attente', icon:'hourglass' },
+  PAYEE:{ label:'Payée', cls:'payee', icon:'check' },
+  ANNULEE:{ label:'Annulée', cls:'annulee', icon:'x' },
 };
 const VS_STATUTS = {
-  ENVOYE: {label:'Envoyé — à confirmer', cls:'s-envoye'},
-  RECU:   {label:'Reçu ✓', cls:'s-payee'},
+  ENVOYE:{ label:'À confirmer', cls:'envoye', icon:'hourglass' },
+  RECU:{ label:'Reçu', cls:'payee', icon:'check' },
 };
 
-/* ---------- OUTILS ---------- */
+/* ---------- Helpers ---------- */
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmt(n, dec=2){ const v = Number(n)||0; return v.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:dec}); }
-function fmtBif(n){ return fmt(n, 0) + ' BIF'; }
-function fmtAed(n){ return fmt(n, 2) + ' AED'; }
-function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function monthKey(){ return todayKey().slice(0,7); }
-function fmtDate(d){ if(!d) return ''; const [y,m,j] = String(d).slice(0,10).split('-'); return `${j}/${m}/${y}`; }
-function fmtDateTime(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function fmt(n, dec=2){ return (Number(n)||0).toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:dec}); }
+const pad = n => String(n).padStart(2,'0');
+function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function parseYmd(s){ const [y,m,d] = String(s).slice(0,10).split('-').map(Number); return new Date(y, m-1, d); }
+function addDays(s, n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); }
+function today(){ return ymd(new Date()); }
+function weekStart(s){ const d = parseYmd(s); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ymd(d); }
+function fmtDate(s){ if(!s) return ''; const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
+function fmtDT(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleDateString('fr-FR')+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function longToday(){ return cap(new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long', year:'numeric'})); }
+function initials(n){ return String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function firstName(n){ return String(n||'').trim().split(/\s+/)[0]; }
+function siteUrl(){ return location.origin + location.pathname; }
+function signupLink(){ return siteUrl() + '#inscription'; }
 function role(){ return state.profile ? state.profile.role : null; }
 function isAdmin(){ return role()==='ADMIN'; }
 function isBuja(){ return role()==='BUJA'; }
 function isStaff(){ return isAdmin() || isBuja(); }
 function isAgent(){ return role()==='AGENT'; }
-function signupLink(){ return location.origin + location.pathname + '#inscription'; }
+function profileById(id){ return state.profiles.find(p=>p.id===id); }
 
-/* Calcul : AED ÷ taux AED/USD = USD ; USD × taux USD/BIF = BIF (arrondi vers le bas au multiple de 50) */
+function presetRange(p){
+  const t = today();
+  switch(p){
+    case 'today': return [t, t];
+    case 'yesterday': { const y = addDays(t,-1); return [y, y]; }
+    case 'week': return [weekStart(t), t];
+    case 'last7': return [addDays(t,-6), t];
+    case 'month': return [t.slice(0,8)+'01', t];
+    case 'lastmonth': { const d = parseYmd(t.slice(0,8)+'01'); d.setDate(0); const e = ymd(d); return [e.slice(0,8)+'01', e]; }
+    default: return ['2000-01-01', '2999-12-31'];
+  }
+}
+function inRange(d, r){ return !r || (d >= r[0] && d <= r[1]); }
+
+/* AED ÷ taux AED/USD = USD ; USD × taux USD/BIF = BIF, arrondi au multiple de 50 inférieur */
 function computeTx(aed, tauxAedUsd, tauxUsdBif){
   aed = Number(aed)||0; tauxAedUsd = Number(tauxAedUsd)||0; tauxUsdBif = Number(tauxUsdBif)||0;
-  if(!aed || !tauxAedUsd || !tauxUsdBif) return {usd:0, bifExact:0, bif:0};
+  if(!aed || !tauxAedUsd || !tauxUsdBif) return { usd: aed && tauxAedUsd ? aed/tauxAedUsd : 0, bifExact:0, bif:0 };
   const usd = aed / tauxAedUsd;
   const bifExact = usd * tauxUsdBif;
-  const bif = Math.floor(bifExact / BIF_ROUND_STEP) * BIF_ROUND_STEP;
-  return {usd, bifExact, bif};
+  return { usd, bifExact, bif: Math.floor(bifExact / BIF_ROUND_STEP) * BIF_ROUND_STEP };
 }
 
-function inPeriod(dateStr){
-  const p = state.filters.periode;
-  if(p==='jour') return dateStr === todayKey();
-  if(p==='mois') return String(dateStr).slice(0,7) === monthKey();
-  return true;
+function toast(msg, kind='ok'){
+  const box = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind==='bad' ? ' bad' : '');
+  el.innerHTML = ic(kind==='bad' ? 'alert' : 'check') + '<span></span>';
+  el.querySelector('span').textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>el.remove(), 3400);
 }
 
-/* ---------- AUTH ---------- */
+/* ---------- Auth ---------- */
+function friendlyAuthError(error){
+  const m = (error && error.message) || '';
+  if(/rate limit/i.test(m)) return "Trop de demandes en peu de temps. Réessayez dans une heure, ou demandez à l'administrateur de créer votre accès.";
+  if(/already registered|already been registered/i.test(m)) return "Un compte existe déjà avec cet email. Connectez-vous, ou utilisez « Mot de passe oublié ».";
+  if(/confirm/i.test(m)) return "Votre email n'est pas encore confirmé. Ouvrez le lien reçu par email, ou demandez à l'administrateur de valider votre compte.";
+  if(/invalid login|invalid credentials/i.test(m)) return "Email ou mot de passe incorrect.";
+  if(/password/i.test(m) && /6/.test(m)) return "Le mot de passe doit contenir au moins 6 caractères.";
+  return m || "Une erreur est survenue. Réessayez.";
+}
 async function signIn(email, password){
-  state.authError = ''; state.authInfo = '';
-  const {data, error} = await sb.auth.signInWithPassword({email, password});
-  if(error){
-    state.authError = /confirm/i.test(error.message)
-      ? "Votre email n'est pas encore confirmé. Ouvrez le lien reçu par email, puis reconnectez-vous."
-      : "Email ou mot de passe incorrect.";
-    render(); return;
-  }
+  state.authError=''; state.authInfo='';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ state.authError = friendlyAuthError(error); render(); return; }
   await afterLogin(data.session);
 }
 async function signUp(nom, email, password){
-  state.authError = ''; state.authInfo = '';
-  const {data, error} = await sb.auth.signUp({
-    email, password,
-    options: { data: { nom }, emailRedirectTo: location.origin + location.pathname }
-  });
-  if(error){ state.authError = 'Erreur : ' + error.message; render(); return; }
+  state.authError=''; state.authInfo='';
+  const { data, error } = await sb.auth.signUp({ email, password, options:{ data:{ nom }, emailRedirectTo: siteUrl() } });
+  if(error){ state.authError = friendlyAuthError(error); render(); return; }
+  history.replaceState(null,'',location.pathname);
   if(data.session){ await afterLogin(data.session); return; }
   state.authView = 'login';
-  state.authInfo = "Compte créé ✅ Confirmez votre adresse en cliquant sur le lien reçu par email. Ensuite, l'administrateur activera votre accès.";
-  history.replaceState(null, '', location.pathname);
+  state.authInfo = "Compte créé. Confirmez votre adresse avec le lien reçu par email, puis connectez-vous. L'administrateur activera ensuite votre accès.";
   render();
+}
+async function sendReset(email){
+  state.authError=''; state.authInfo='';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: siteUrl() });
+  if(error){ state.authError = friendlyAuthError(error); render(); return; }
+  state.authInfo = "Si un compte existe avec cet email, un lien pour choisir un nouveau mot de passe vient d'être envoyé. Pensez à regarder dans les spams.";
+  render();
+}
+async function setNewPassword(p1, p2){
+  state.authError='';
+  if(p1 !== p2){ state.authError = 'Les deux mots de passe ne correspondent pas.'; render(); return; }
+  const { data, error } = await sb.auth.updateUser({ password: p1 });
+  if(error){ state.authError = friendlyAuthError(error); render(); return; }
+  state.recovery = false;
+  history.replaceState(null,'',location.pathname);
+  toast('Mot de passe enregistré');
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) await afterLogin(session); else render();
 }
 async function signOut(){
   await sb.auth.signOut();
-  state.session = null; state.profile = null;
+  state.session=null; state.profile=null; state.sheet=false; state.page='dashboard';
   render();
 }
 async function afterLogin(session){
   state.session = session;
-  const {data: profile} = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
   state.profile = profile;
-  if(location.hash === '#inscription') history.replaceState(null, '', location.pathname);
-  if(profile && profile.statut === 'actif') await loadAll(); else render();
+  if(profile && profile.statut==='actif') await loadAll(); else render();
 }
 
-/* ---------- CHARGEMENT DONNEES ---------- */
+/* ---------- Data ---------- */
 async function loadAll(){
-  const [{data: profiles}, {data: txs, error: e1}, {data: vs, error: e2}] = await Promise.all([
+  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
-    sb.from('transactions').select('*').order('created_at', {ascending:false}),
-    sb.from('versements').select('*').order('created_at', {ascending:false}),
+    sb.from('transactions').select('*').order('created_at',{ascending:false}),
+    sb.from('versements').select('*').order('created_at',{ascending:false}),
   ]);
-  if(e1 || e2) console.error(e1 || e2);
+  if(e1 || e2) toast('Chargement incomplet : ' + ((e1||e2).message), 'bad');
   state.profiles = profiles || [];
   state.transactions = txs || [];
   state.versements = vs || [];
   render();
 }
+async function refresh(){ await loadAll(); toast('Données à jour'); }
 
-/* ---------- ACTIONS ---------- */
-async function run(promise){
-  const {error} = await promise;
-  if(error){ alert('Erreur : ' + error.message); return false; }
+async function run(promise, okMsg){
+  const { error } = await promise;
+  if(error){ toast(error.message, 'bad'); return false; }
   await loadAll();
+  if(okMsg) toast(okMsg);
   return true;
 }
-async function addTransaction(tx){
-  return run(sb.from('transactions').insert({
-    ...tx, agent_id: state.profile.id, agent_nom: state.profile.nom, date: todayKey(),
-  }));
+function addTransaction(tx){
+  return run(sb.from('transactions').insert({ ...tx, agent_id: state.profile.id, agent_nom: state.profile.nom, date: today() }), 'Transaction enregistrée');
 }
-async function markPayee(id){
-  if(!confirm("Confirmer que le bénéficiaire a bien été payé ?")) return;
-  await run(sb.from('transactions').update({statut:'PAYEE', valide_par: state.profile.nom, valide_le: new Date().toISOString()}).eq('id', id));
+function markPayee(id){
+  const t = state.transactions.find(x=>x.id===id);
+  if(!confirm(`Confirmer que ${t ? t.beneficiaire : 'le bénéficiaire'} a reçu ${t ? fmt(t.montant_bif,0)+' BIF' : 'son argent'} ?`)) return;
+  run(sb.from('transactions').update({ statut:'PAYEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() }).eq('id', id), 'Transaction marquée payée');
 }
-async function markAttente(id){
-  if(!confirm("Remettre cette transaction « à payer » ?")) return;
-  await run(sb.from('transactions').update({statut:'EN_ATTENTE', valide_par: null, valide_le: null}).eq('id', id));
+function markAttente(id){
+  if(!confirm('Remettre cette transaction « à payer » ?')) return;
+  run(sb.from('transactions').update({ statut:'EN_ATTENTE', valide_par:null, valide_le:null }).eq('id', id), 'Transaction remise à payer');
 }
-async function markAnnulee(id){
-  if(!confirm("Annuler cette transaction ? Elle ne comptera plus dans les totaux.")) return;
-  await run(sb.from('transactions').update({statut:'ANNULEE', valide_par: state.profile.nom, valide_le: new Date().toISOString()}).eq('id', id));
+function markAnnulee(id){
+  if(!confirm('Annuler cette transaction ? Elle ne comptera plus dans les totaux.')) return;
+  run(sb.from('transactions').update({ statut:'ANNULEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() }).eq('id', id), 'Transaction annulée');
 }
-async function deleteTransaction(id){
-  if(!confirm("Supprimer définitivement cette transaction ?")) return;
-  await run(sb.from('transactions').delete().eq('id', id));
+function deleteTransaction(id){
+  if(!confirm('Supprimer définitivement cette transaction ?')) return;
+  run(sb.from('transactions').delete().eq('id', id), 'Transaction supprimée');
 }
-async function addVersement(v){
-  return run(sb.from('versements').insert({
-    ...v, agent_id: state.profile.id, agent_nom: state.profile.nom, date: todayKey(),
-  }));
+function addVersement(v){
+  return run(sb.from('versements').insert({ ...v, agent_id: state.profile.id, agent_nom: state.profile.nom, date: today() }), 'Envoi enregistré');
 }
-async function confirmVersement(id){
-  if(!confirm("Confirmer que cet argent a bien été reçu à Bujumbura ?")) return;
-  await run(sb.from('versements').update({statut:'RECU', confirme_par: state.profile.nom, confirme_le: new Date().toISOString()}).eq('id', id));
+function confirmVersement(id){
+  if(!confirm('Confirmer que cet argent est bien arrivé à Bujumbura ?')) return;
+  run(sb.from('versements').update({ statut:'RECU', confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Réception confirmée');
 }
-async function unconfirmVersement(id){
-  if(!confirm("Annuler la confirmation de réception ?")) return;
-  await run(sb.from('versements').update({statut:'ENVOYE', confirme_par: null, confirme_le: null}).eq('id', id));
+function unconfirmVersement(id){
+  if(!confirm('Annuler la confirmation de réception ?')) return;
+  run(sb.from('versements').update({ statut:'ENVOYE', confirme_par:null, confirme_le:null }).eq('id', id), 'Confirmation annulée');
 }
-async function deleteVersement(id){
-  if(!confirm("Supprimer cet envoi ?")) return;
-  await run(sb.from('versements').delete().eq('id', id));
+function deleteVersement(id){
+  if(!confirm('Supprimer cet envoi ?')) return;
+  run(sb.from('versements').delete().eq('id', id), 'Envoi supprimé');
 }
 async function activateUser(id){
   const sel = document.getElementById('role-'+id);
   const r = sel ? sel.value : 'AGENT';
-  const pays = r==='AGENT' ? 'Dubaï' : 'Burundi';
-  await run(sb.from('profiles').update({statut:'actif', role:r, pays, can_edit: r==='ADMIN'}).eq('id', id));
+  const ok = await run(sb.from('profiles').update({ statut:'actif', role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : 'Burundi' }).eq('id', id));
+  if(!ok) return;
+  await sb.rpc('admin_confirm_user', { target:id });
+  const p = profileById(id);
+  toast(`Accès donné à ${p ? p.nom : "l'utilisateur"}`);
 }
-async function setUserRole(id, r){
-  await run(sb.from('profiles').update({role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : 'Burundi'}).eq('id', id));
+function refuseUser(id){
+  const p = profileById(id);
+  if(!confirm(`Refuser la demande de ${p ? p.nom : 'cette personne'} ? Son compte restera bloqué.`)) return;
+  run(sb.from('profiles').update({ statut:'inactif' }).eq('id', id), 'Demande refusée');
 }
-async function toggleUserStatut(id, current){
-  await run(sb.from('profiles').update({statut: current==='actif' ? 'inactif' : 'actif'}).eq('id', id));
+function setUserRole(id, r){
+  run(sb.from('profiles').update({ role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : 'Burundi' }).eq('id', id), 'Rôle mis à jour');
 }
-async function renameUser(id, current){
-  const nom = prompt('Nouveau nom :', current);
-  if(!nom || !nom.trim() || nom.trim()===current) return;
-  await run(sb.from('profiles').update({nom: nom.trim()}).eq('id', id));
+function toggleUserStatut(id){
+  const p = profileById(id); if(!p) return;
+  const next = p.statut==='actif' ? 'inactif' : 'actif';
+  if(next==='inactif' && !confirm(`Désactiver l'accès de ${p.nom} ? Son historique est conservé.`)) return;
+  run(sb.from('profiles').update({ statut: next }).eq('id', id), next==='actif' ? 'Accès réactivé' : 'Accès désactivé');
 }
-async function refuseUser(id, nom){
-  if(!confirm(`Refuser et supprimer la demande d'accès de ${nom} ?`)) return;
-  await run(sb.from('profiles').delete().eq('id', id));
+function renameUser(id){
+  const p = profileById(id); if(!p) return;
+  const nom = prompt('Nouveau nom :', p.nom);
+  if(!nom || !nom.trim() || nom.trim()===p.nom) return;
+  run(sb.from('profiles').update({ nom: nom.trim() }).eq('id', id), 'Nom mis à jour');
+}
+async function resetUserPassword(id){
+  const p = profileById(id); if(!p) return;
+  const pw = prompt(`Nouveau mot de passe pour ${p.nom} (6 caractères minimum) :`);
+  if(pw === null) return;
+  if(pw.length < 6){ toast('Le mot de passe doit contenir au moins 6 caractères', 'bad'); return; }
+  const { error } = await sb.rpc('admin_set_password', { target:id, new_password: pw });
+  if(error){ toast(error.message, 'bad'); return; }
+  toast(`Mot de passe changé. Transmettez-le à ${firstName(p.nom)}.`);
 }
 
-/* ---------- CALCULS ---------- */
-/* Bilan par agent : clients, montants encaissés, frais, envoyé à Naomie, reste chez l'agent */
-function bilanAgents(){
-  const map = {};
-  const ensure = (id, nom) => {
-    if(!map[id]) map[id] = { id, nom, nbClients:0, aed:0, frais:0, usd:0, bif:0, bifPaye:0, nbAPayer:0, envoyeRecu:0, envoyeAttente:0 };
-    return map[id];
-  };
-  state.profiles.filter(p=>p.role==='AGENT' && p.statut!=='en_attente').forEach(p=>ensure(p.id, p.nom));
-  state.transactions.filter(t=>t.statut!=='ANNULEE' && inPeriod(t.date)).forEach(t=>{
-    const a = ensure(t.agent_id, t.agent_nom);
-    a.nbClients++; a.aed += +t.montant_aed; a.frais += +t.frais_aed; a.usd += +t.montant_usd; a.bif += +t.montant_bif;
-    if(t.statut==='PAYEE') a.bifPaye += +t.montant_bif; else a.nbAPayer++;
-  });
-  state.versements.filter(v=>inPeriod(v.date)).forEach(v=>{
-    const a = ensure(v.agent_id, v.agent_nom);
-    if(v.statut==='RECU') a.envoyeRecu += +v.montant_aed; else a.envoyeAttente += +v.montant_aed;
-  });
-  return Object.values(map).map(a=>({ ...a, encaisse: a.aed + a.frais, reste: a.aed + a.frais - a.envoyeRecu }))
-    .sort((x,y)=>x.nom.localeCompare(y.nom));
-}
-function totals(list){
-  return list.reduce((s,a)=>{ Object.keys(a).forEach(k=>{ if(typeof a[k]==='number') s[k]=(s[k]||0)+a[k]; }); return s; }, {});
-}
+/* ---------- Calculations ---------- */
 function txAPayer(){ return state.transactions.filter(t=>t.statut==='EN_ATTENTE'); }
 function vsAConfirmer(){ return state.versements.filter(v=>v.statut==='ENVOYE'); }
 function pendingUsers(){ return state.profiles.filter(p=>p.statut==='en_attente'); }
+function activeTx(range, agentId){
+  return state.transactions.filter(t=>t.statut!=='ANNULEE' && inRange(t.date, range) && (!agentId || t.agent_id===agentId));
+}
+function sum(list, k){ return list.reduce((s,x)=>s + (Number(x[k])||0), 0); }
 
-/* ---------- RENDU ---------- */
-function render(){
-  const app = document.getElementById('app');
-  if(!state.session){ app.innerHTML = renderAuth(); attachAuthHandlers(); return; }
-  if(!state.profile || state.profile.statut !== 'actif'){ app.innerHTML = renderWaiting(); return; }
-
-  const nAPayer = txAPayer().length, nVs = vsAConfirmer().length, nUsers = pendingUsers().length;
-  const nav = [];
-  nav.push(navBtn('dashboard','◆ Tableau de bord'));
-  if(isAgent() || isAdmin()) nav.push(navBtn('new','＋ Nouvelle transaction'));
-  nav.push(navBtn('transactions', isAgent() ? '◆ Mes transactions' : '◆ Transactions', isStaff() ? nAPayer : 0));
-  nav.push(navBtn('versements', isAgent() ? '◆ Envois à Naomie' : '◆ Argent reçu de Dubaï', isStaff() ? nVs : 0));
-  if(isStaff()) nav.push(navBtn('bilan','◆ Bilan par agent'));
-  if(isAdmin()) nav.push(navBtn('users','◆ Utilisateurs', nUsers));
-  nav.push(navBtn('settings','◆ Mon compte'));
-
-  app.innerHTML = `
-    <nav class="side">
-      <div class="brand">
-        <div class="disp">Pax International<br><span style="font-size:0.62em; color:var(--text-dim); font-family:Inter,sans-serif; font-weight:500;">Travels and Services</span></div>
-        <div class="sub">Dubaï → Bujumbura</div>
-      </div>
-      ${nav.join('')}
-      <div class="whoami">
-        <label>Connecté en tant que</label>
-        <div style="margin-top:6px; font-size:14px;">${esc(state.profile.nom)}</div>
-        <div class="rolechip">${esc(ROLES[role()] || role())}</div>
-        <button class="btn ghost small" style="margin-top:12px; width:100%;" onclick="signOut()">Se déconnecter</button>
-      </div>
-    </nav>
-    <main>${renderPage()}</main>
-  `;
-  attachPageHandlers();
+/* Per-agent summary: clients, amounts, fees, sent to Naomie, remaining with the agent */
+function bilan(range, agentId){
+  const map = {};
+  const ensure = (id, nom) => (map[id] ||= { id, nom, n:0, aed:0, frais:0, usd:0, bif:0, aPayer:0, envoye:0, envoyeAttente:0 });
+  if(!agentId) state.profiles.filter(p=>p.role==='AGENT' && p.statut==='actif').forEach(p=>ensure(p.id, p.nom));
+  activeTx(range, agentId).forEach(t=>{
+    const a = ensure(t.agent_id, t.agent_nom);
+    a.n++; a.aed += +t.montant_aed; a.frais += +t.frais_aed; a.usd += +t.montant_usd; a.bif += +t.montant_bif;
+    if(t.statut==='EN_ATTENTE') a.aPayer++;
+  });
+  state.versements.filter(v=>inRange(v.date, range) && (!agentId || v.agent_id===agentId)).forEach(v=>{
+    const a = ensure(v.agent_id, v.agent_nom);
+    if(v.statut==='RECU') a.envoye += +v.montant_aed; else a.envoyeAttente += +v.montant_aed;
+  });
+  return Object.values(map)
+    .map(a=>({ ...a, encaisse: a.aed + a.frais, reste: a.aed + a.frais - a.envoye }))
+    .sort((x,y)=>x.nom.localeCompare(y.nom));
+}
+function totals(list){
+  const t = {};
+  list.forEach(a=>Object.keys(a).forEach(k=>{ if(typeof a[k]==='number') t[k] = (t[k]||0) + a[k]; }));
+  return t;
 }
 
-function renderAuth(){
-  const signup = state.authView === 'signup';
-  return `
-  <div style="display:flex; align-items:center; justify-content:center; min-height:100vh; width:100%; padding:16px;">
-    <div class="card" style="width:100%; max-width:380px;">
-      <div class="disp" style="color:var(--gold); font-size:22px; margin-bottom:4px;">Pax International<br><span style="font-size:0.62em; color:var(--text-dim); font-family:Inter,sans-serif; font-weight:500;">Travels and Services</span></div>
-      <div style="color:var(--text-dim); font-size:13px; margin-bottom:20px;">${signup ? 'Créer mon compte agent' : 'Connexion à votre compte'}</div>
-      <form id="authForm">
-        ${signup ? `<div class="field" style="margin-bottom:12px;"><label>Nom complet</label><input name="nom" required autocomplete="name" placeholder="ex. Jean Ndayishimiye"></div>` : ''}
-        <div class="field" style="margin-bottom:12px;"><label>Email</label><input type="email" name="email" required autocomplete="email"></div>
-        <div class="field" style="margin-bottom:16px;"><label>Mot de passe${signup?' (6 caractères minimum)':''}</label><input type="password" name="password" minlength="6" required autocomplete="${signup?'new-password':'current-password'}"></div>
-        ${state.authError ? `<div class="msg-bad" style="margin:0 0 12px;">${esc(state.authError)}</div>` : ''}
-        ${state.authInfo ? `<div class="msg-ok" style="margin:0 0 12px;">${esc(state.authInfo)}</div>` : ''}
-        <button class="btn" type="submit" style="width:100%;">${signup ? 'Créer mon compte' : 'Se connecter'}</button>
-      </form>
-      <div style="text-align:center; margin-top:16px; font-size:13px;">
-        ${signup
-          ? `Déjà un compte ? <a href="#" id="toLogin" style="color:var(--gold);">Se connecter</a>`
-          : `Nouvel agent ? <a href="#" id="toSignup" style="color:var(--gold);">Créer un compte</a>`}
+/* ---------- Navigation ---------- */
+function navItems(){
+  const r = role();
+  const items = [{ id:'dashboard', label:'Accueil', icon:'home' }];
+  if(r!=='BUJA') items.push({ id:'new', label:'Nouvelle transaction', short:'Nouvelle', icon:'plus' });
+  items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
+  items.push({ id:'versements', label: r==='AGENT' ? 'Envois à Naomie' : 'Fonds reçus de Dubaï', short: r==='AGENT' ? 'Envois' : 'Fonds', icon: r==='AGENT' ? 'send' : 'inbox', badge: r!=='AGENT' ? vsAConfirmer().length : 0 });
+  items.push({ id:'stats', label: r==='AGENT' ? 'Mes statistiques' : 'Statistiques', short:'Stats', icon:'chart' });
+  if(r==='ADMIN') items.push({ id:'users', label:'Utilisateurs', icon:'users', badge: pendingUsers().length });
+  items.push({ id:'account', label:'Mon compte', icon:'user' });
+  return items;
+}
+function setPage(id){ state.page = id; state.sheet = false; render(); window.scrollTo(0,0); }
+function openSheet(){ state.sheet = true; render(); }
+function closeSheet(e){ if(!e || e.target.classList.contains('sheet-bg')){ state.sheet = false; render(); } }
+
+/* ---------- Render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  if(state.recovery && !state.session){ state.recovery = false; state.authError = state.authError || 'Ce lien a expiré. Demandez-en un nouveau.'; state.authView='forgot'; }
+  if(state.recovery){ app.innerHTML = authLayout(recoveryCard()); attachAuthHandlers(); return; }
+  if(!state.session){ app.innerHTML = authLayout(authCard()); attachAuthHandlers(); return; }
+  if(!state.profile || state.profile.statut!=='actif'){ app.innerHTML = authLayout(waitingCard()); return; }
+
+  const items = navItems();
+  const p = state.profile;
+  const tabIds = isBuja() ? ['dashboard','transactions','versements','stats'] : ['dashboard','transactions','new','stats'];
+  const tabs = tabIds.map(id=>items.find(i=>i.id===id)).filter(Boolean);
+  const menuBadge = items.filter(i=>!tabIds.includes(i.id)).reduce((s,i)=>s+(i.badge||0),0);
+  const menuActive = !tabIds.includes(state.page);
+
+  app.innerHTML = `
+  <div class="shell">
+    <aside class="side">
+      <div class="logo">${brandMark()}</div>
+      ${items.map(i=>`<button class="navlink ${state.page===i.id?'active':''}" onclick="setPage('${i.id}')">${ic(i.icon)}<span>${i.label}</span>${i.badge?`<span class="badge">${i.badge}</span>`:''}</button>`).join('')}
+      <div class="me">
+        <div class="avatar">${esc(initials(p.nom))}</div>
+        <div class="who"><b>${esc(p.nom)}</b><span>${esc(ROLES[p.role]||p.role)}</span></div>
+        <button class="iconbtn" onclick="refresh()" title="Actualiser" aria-label="Actualiser">${ic('refresh')}</button>
+        <button class="iconbtn" onclick="signOut()" title="Se déconnecter" aria-label="Se déconnecter">${ic('logout')}</button>
       </div>
+    </aside>
+    <div>
+      <header class="topbar">
+        <div class="logo">${brandMark()}</div>
+        <button class="iconbtn" onclick="refresh()" aria-label="Actualiser">${ic('refresh')}</button>
+      </header>
+      <main>${renderPage()}</main>
     </div>
+  </div>
+  <nav class="tabbar" aria-label="Navigation">
+    ${tabs.map(t=> t.id==='new'
+      ? `<button class="tab fab ${state.page==='new'?'active':''}" onclick="setPage('new')"><span class="disc">${ic('plus')}</span>${t.short}</button>`
+      : `<button class="tab ${state.page===t.id?'active':''}" onclick="setPage('${t.id}')">${ic(t.icon)}${t.short||t.label}${t.badge?`<span class="badge">${t.badge}</span>`:''}</button>`).join('')}
+    <button class="tab ${menuActive?'active':''}" onclick="openSheet()">${ic('menu')}Menu${menuBadge?`<span class="badge">${menuBadge}</span>`:''}</button>
+  </nav>
+  ${state.sheet ? `
+  <div class="sheet-bg" onclick="closeSheet(event)">
+    <div class="sheet" role="dialog" aria-label="Menu">
+      <div class="grab"></div>
+      <div class="me"><div class="avatar">${esc(initials(p.nom))}</div><div class="who"><b>${esc(p.nom)}</b><span>${esc(ROLES[p.role]||p.role)}</span></div></div>
+      ${items.map(i=>`<button class="navlink ${state.page===i.id?'active':''}" onclick="setPage('${i.id}')">${ic(i.icon)}<span>${i.label}</span>${i.badge?`<span class="badge">${i.badge}</span>`:''}</button>`).join('')}
+      <button class="navlink out" onclick="signOut()">${ic('logout')}<span>Se déconnecter</span></button>
+    </div>
+  </div>` : ''}`;
+  attachPageHandlers();
+}
+function brandMark(){
+  return `<div class="mark">P</div><div class="wordmark"><b>Pax International</b><span>Travels and Services</span></div>`;
+}
+
+/* ---------- Auth views ---------- */
+function authLayout(inner){
+  return `
+  <div class="auth">
+    <section class="auth-brand">
+      <div class="logo">${brandMark()}</div>
+      <div>
+        <h1>Vos transferts de Dubaï vers Bujumbura, suivis au franc près.</h1>
+        <div class="route"><span>Dubaï</span><span class="dash"></span>${ic('plane')}<span class="dash"></span><span>Bujumbura</span></div>
+      </div>
+      <div class="foot">Espace réservé aux agents et à l'équipe Pax International.</div>
+    </section>
+    <section class="auth-main"><div class="auth-card">${inner}</div></section>
   </div>`;
+}
+function messages(){
+  return `${state.authError ? `<div class="msg bad">${ic('alert')}<span>${esc(state.authError)}</span></div>` : ''}
+          ${state.authInfo ? `<div class="msg ok">${ic('check')}<span>${esc(state.authInfo)}</span></div>` : ''}`;
+}
+function authCard(){
+  const v = state.authView;
+  if(v==='signup') return `
+    <h2>Créer mon compte agent</h2>
+    <p class="lead">Après votre inscription, l'administrateur active votre accès.</p>
+    ${messages()}
+    <form id="authForm" data-view="signup">
+      <div class="field"><label for="f-nom">Nom complet</label><input id="f-nom" name="nom" required autocomplete="name" placeholder="Ex. Jean Ndayishimiye"></div>
+      <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" name="email" required autocomplete="email" inputmode="email"></div>
+      <div class="field"><label for="f-pw">Mot de passe</label><input id="f-pw" type="password" name="password" minlength="6" required autocomplete="new-password"><span class="hint">6 caractères minimum</span></div>
+      <button class="btn block" type="submit">Créer mon compte</button>
+    </form>
+    <div class="switch">Déjà un compte ? <button class="linkbtn" data-go="login">Se connecter</button></div>`;
+  if(v==='forgot') return `
+    <h2>Mot de passe oublié</h2>
+    <p class="lead">Saisissez votre email : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+    ${messages()}
+    <form id="authForm" data-view="forgot">
+      <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" name="email" required autocomplete="email" inputmode="email"></div>
+      <button class="btn block" type="submit">${ic('mail')}Envoyer le lien</button>
+    </form>
+    <div class="note" style="margin-top:16px;">Pas d'email après quelques minutes ? Demandez à l'administrateur de vous définir un nouveau mot de passe.</div>
+    <div class="switch"><button class="linkbtn" data-go="login">Retour à la connexion</button></div>`;
+  return `
+    <h2>Connexion</h2>
+    <p class="lead">Accédez à votre espace Pax International.</p>
+    ${messages()}
+    <form id="authForm" data-view="login">
+      <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" name="email" required autocomplete="email" inputmode="email"></div>
+      <div class="field"><label for="f-pw">Mot de passe</label><input id="f-pw" type="password" name="password" required autocomplete="current-password"></div>
+      <div class="rowline"><button type="button" class="linkbtn" data-go="forgot">Mot de passe oublié ?</button></div>
+      <button class="btn block" type="submit">Se connecter</button>
+    </form>
+    <div class="switch">Nouvel agent ? <button class="linkbtn" data-go="signup">Créer un compte</button></div>`;
+}
+function recoveryCard(){
+  return `
+    <h2>Nouveau mot de passe</h2>
+    <p class="lead">Choisissez votre nouveau mot de passe.</p>
+    ${messages()}
+    <form id="authForm" data-view="recovery">
+      <div class="field"><label for="f-pw">Nouveau mot de passe</label><input id="f-pw" type="password" name="password" minlength="6" required autocomplete="new-password"><span class="hint">6 caractères minimum</span></div>
+      <div class="field"><label for="f-pw2">Confirmer le mot de passe</label><input id="f-pw2" type="password" name="password2" minlength="6" required autocomplete="new-password"></div>
+      <button class="btn block" type="submit">${ic('lock')}Enregistrer le mot de passe</button>
+    </form>`;
+}
+function waitingCard(){
+  const p = state.profile;
+  const inactif = p && p.statut==='inactif';
+  return `
+    <div class="waiting">
+      <div class="disc">${ic(inactif ? 'lock' : 'hourglass')}</div>
+      <h2>${inactif ? 'Accès désactivé' : `Bienvenue ${esc(firstName(p ? p.nom : ''))}`}</h2>
+      <p class="lead">${inactif
+        ? "Votre accès a été désactivé. Contactez l'administrateur de Pax International."
+        : "Votre demande d'accès a bien été envoyée. L'administrateur doit maintenant l'activer : revenez ici dès qu'il vous a prévenu."}</p>
+      <div class="actions" style="justify-content:center;">
+        <button class="btn" onclick="location.reload()">${ic('refresh')}Actualiser</button>
+        <button class="btn ghost" onclick="signOut()">${ic('logout')}Se déconnecter</button>
+      </div>
+    </div>`;
 }
 function attachAuthHandlers(){
   const f = document.getElementById('authForm');
   if(f) f.onsubmit = (e)=>{
     e.preventDefault();
     const fd = new FormData(f);
-    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-    if(state.authView==='signup') signUp(String(fd.get('nom')).trim(), fd.get('email'), fd.get('password'));
-    else signIn(fd.get('email'), fd.get('password'));
+    f.querySelector('button[type=submit]').disabled = true;
+    const v = f.dataset.view;
+    if(v==='signup') signUp(String(fd.get('nom')).trim(), String(fd.get('email')).trim(), fd.get('password'));
+    else if(v==='forgot') sendReset(String(fd.get('email')).trim());
+    else if(v==='recovery') setNewPassword(fd.get('password'), fd.get('password2'));
+    else signIn(String(fd.get('email')).trim(), fd.get('password'));
   };
-  const toL = document.getElementById('toLogin'), toS = document.getElementById('toSignup');
-  if(toL) toL.onclick = (e)=>{ e.preventDefault(); state.authView='login'; state.authError=''; state.authInfo=''; render(); };
-  if(toS) toS.onclick = (e)=>{ e.preventDefault(); state.authView='signup'; state.authError=''; state.authInfo=''; render(); };
-}
-function renderWaiting(){
-  const p = state.profile;
-  const inactif = p && p.statut === 'inactif';
-  return `
-  <div style="display:flex; align-items:center; justify-content:center; min-height:100vh; width:100%; padding:16px;">
-    <div class="card" style="width:100%; max-width:420px; text-align:center;">
-      <div class="disp" style="color:var(--gold); font-size:22px; margin-bottom:10px;">Pax International<br><span style="font-size:0.62em; color:var(--text-dim); font-family:Inter,sans-serif; font-weight:500;">Travels and Services</span></div>
-      <div style="font-size:15px; margin-bottom:8px;">Bonjour ${esc(p ? p.nom : '')} 👋</div>
-      <div style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin-bottom:20px;">
-        ${inactif
-          ? "Votre accès a été désactivé. Contactez l'administrateur."
-          : "Votre compte est créé. <b>L'administrateur doit maintenant activer votre accès.</b> Revenez ici dès qu'il vous a prévenu."}
-      </div>
-      <div class="btnrow" style="justify-content:center;">
-        <button class="btn" onclick="location.reload()">Actualiser</button>
-        <button class="btn ghost" onclick="signOut()">Se déconnecter</button>
-      </div>
-    </div>
-  </div>`;
+  document.querySelectorAll('[data-go]').forEach(b=> b.onclick = (e)=>{
+    e.preventDefault(); state.authView = b.dataset.go; state.authError=''; state.authInfo=''; render();
+  });
 }
 
-function navBtn(id, label, count){
-  return `<button class="navbtn ${state.page===id?'active':''}" onclick="setPage('${id}')">
-    ${label} ${count ? `<span class="count">${count}</span>` : ''}
-  </button>`;
-}
-function setPage(id){ state.page=id; render(); window.scrollTo(0,0); }
-
+/* ---------- Pages ---------- */
 function renderPage(){
   switch(state.page){
-    case 'new': return pageNew();
+    case 'new': return isBuja() ? pageDashboard() : pageNew();
     case 'transactions': return pageTransactions();
     case 'versements': return pageVersements();
-    case 'bilan': return isStaff() ? pageBilan() : pageDashboard();
+    case 'stats': return pageStats();
     case 'users': return isAdmin() ? pageUsers() : pageDashboard();
-    case 'settings': return pageSettings();
+    case 'account': return pageAccount();
     default: return pageDashboard();
   }
 }
-
-/* ---------- TABLEAU DE BORD ---------- */
-function pageDashboard(){
-  if(isAgent()) return dashboardAgent();
-  return dashboardStaff();
+function kpi(label, icon, value, unit, hint, cls='', hl=false){
+  return `<div class="kpi ${hl?'hl':''}">
+    <div class="k"><span class="chip">${ic(icon)}</span>${label}</div>
+    <div class="v ${cls}">${value}${unit?`<small>${unit}</small>`:''}</div>
+    ${hint?`<div class="h">${hint}</div>`:''}
+  </div>`;
 }
+function panel(title, icon, body, opts={}){
+  return `<section class="panel ${opts.cls||''}">
+    <div class="panel-h"><h2>${ic(icon)}${title}</h2>${opts.right||''}</div>
+    ${body!==null ? `<div class="${opts.flush?'':'panel-b'}">${body}</div>` : ''}
+  </section>`;
+}
+function emptyState(icon, text){ return `<div class="empty">${ic(icon)}${text}</div>`; }
+
+/* Dashboard */
+function pageDashboard(){ return isAgent() ? dashboardAgent() : dashboardStaff(); }
 
 function dashboardAgent(){
-  const saved = state.filters.periode; state.filters.periode = 'tout';
-  const me = bilanAgents().find(a=>a.id===state.profile.id) || {nbClients:0, aed:0, frais:0, encaisse:0, envoyeRecu:0, envoyeAttente:0, reste:0, nbAPayer:0, bif:0};
-  state.filters.periode = saved;
-  const mesTx = state.transactions.filter(t=>t.agent_id===state.profile.id);
+  const me = bilan(null, state.profile.id)[0] || { n:0, aed:0, frais:0, encaisse:0, envoye:0, envoyeAttente:0, reste:0, aPayer:0 };
+  const mine = state.transactions.filter(t=>t.agent_id===state.profile.id);
   return `
-    <div class="pagehead"><div>
-      <h1>Bonjour ${esc(state.profile.nom)}</h1>
-      <p>Votre activité depuis le début</p>
+    <div class="pagehead">
+      <div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>${longToday()}</p></div>
+      <div class="actions desk-only"><button class="btn gold" onclick="setPage('new')">${ic('plus')}Nouvelle transaction</button></div>
     </div>
-    <button class="btn" onclick="setPage('new')">＋ Nouvelle transaction</button></div>
-    <div class="grid">
-      <div class="stat"><div class="label">Clients servis</div><div class="val mono">${me.nbClients}</div><div class="hint">${me.nbAPayer} pas encore payé(s) au Burundi</div></div>
-      <div class="stat"><div class="label">Argent des clients</div><div class="val mono">${fmtAed(me.aed)}</div></div>
-      <div class="stat"><div class="label">Frais encaissés</div><div class="val mono gold">${fmtAed(me.frais)}</div></div>
-      <div class="stat"><div class="label">Total encaissé</div><div class="val mono">${fmtAed(me.encaisse)}</div><div class="hint">argent + frais</div></div>
+    <div class="kpis">
+      ${kpi('Reste chez moi', 'wallet', fmt(me.reste), 'AED', 'Encaissé moins envois confirmés', me.reste>0?'bad':'good', true)}
+      ${kpi('Clients servis', 'users', me.n, '', `${me.aPayer} en attente de paiement`)}
+      ${kpi('Argent des clients', 'coins', fmt(me.aed), 'AED', '')}
+      ${kpi('Frais encaissés', 'coins', fmt(me.frais), 'AED', '', 'gold')}
+      ${kpi('Total encaissé', 'wallet', fmt(me.encaisse), 'AED', 'Argent des clients et frais')}
+      ${kpi('Envoyé à Naomie', 'send', fmt(me.envoye), 'AED', 'Réception confirmée', 'good')}
+      ${kpi('Envoi en attente', 'hourglass', fmt(me.envoyeAttente), 'AED', 'Pas encore confirmé')}
+      ${kpi('Transactions du jour', 'calendar', mine.filter(t=>t.date===today() && t.statut!=='ANNULEE').length, '', '')}
     </div>
-    <div class="grid g3">
-      <div class="stat"><div class="label">Envoyé à Naomie (reçu)</div><div class="val mono good">${fmtAed(me.envoyeRecu)}</div></div>
-      <div class="stat"><div class="label">Envoyé, pas encore confirmé</div><div class="val mono">${fmtAed(me.envoyeAttente)}</div></div>
-      <div class="stat"><div class="label">Reste chez moi</div><div class="val mono ${me.reste>0?'bad':'good'}">${fmtAed(me.reste)}</div><div class="hint">encaissé − envoyé reçu</div></div>
-    </div>
-    <div class="card">
-      <h2>Mes dernières transactions</h2>
-      ${tableTransactions(mesTx.slice(0,10))}
-    </div>`;
+    ${panel('Mes dernières transactions', 'list', txList(mine.slice(0,8)), { flush:true, right:`<button class="btn ghost sm" onclick="setPage('transactions')">Tout voir</button>` })}`;
 }
 
 function dashboardStaff(){
-  const saved = state.filters.periode; state.filters.periode = 'tout';
-  const bil = bilanAgents(); const T = totals(bil);
-  state.filters.periode = saved;
+  const all = bilan(null); const T = totals(all);
   const aPayer = txAPayer();
   const vs = vsAConfirmer();
-  const today = state.transactions.filter(t=>t.date===todayKey() && t.statut!=='ANNULEE');
+  const todayTx = activeTx([today(), today()]);
+  const pend = pendingUsers();
   return `
-    <div class="pagehead"><div>
-      <h1>Tableau de bord</h1>
-      <p>Transactions envoyées depuis Dubaï</p>
-    </div></div>
-    <div class="grid">
-      <div class="stat"><div class="label">À payer au Burundi</div><div class="val mono ${aPayer.length?'bad':'good'}">${aPayer.length}</div><div class="hint">${fmtBif(aPayer.reduce((s,t)=>s+ +t.montant_bif,0))}</div></div>
-      <div class="stat"><div class="label">Transactions aujourd'hui</div><div class="val mono">${today.length}</div><div class="hint">${fmtAed(today.reduce((s,t)=>s+ +t.montant_aed,0))}</div></div>
-      <div class="stat"><div class="label">Frais totaux</div><div class="val mono gold">${fmtAed(T.frais||0)}</div></div>
-      <div class="stat"><div class="label">Argent encore chez les agents</div><div class="val mono ${(T.reste||0)>0?'bad':'good'}">${fmtAed(T.reste||0)}</div></div>
+    <div class="pagehead">
+      <div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>${longToday()}</p></div>
+      ${isAdmin() ? `<div class="actions desk-only"><button class="btn gold" onclick="setPage('new')">${ic('plus')}Nouvelle transaction</button></div>` : ''}
     </div>
-    ${aPayer.length ? `
-      <div class="card alert">
-        <h2>🔴 À payer aux bénéficiaires — ${aPayer.length} transaction(s)</h2>
-        ${tableTransactions(aPayer)}
-      </div>` : `<div class="card"><h2>✅ Aucune transaction en attente de paiement</h2></div>`}
-    ${vs.length ? `
-      <div class="card warn">
-        <h2>🟡 Argent envoyé par les agents — à confirmer (${vs.length})</h2>
-        ${tableVersements(vs)}
-      </div>` : ''}
-    ${isAdmin() && pendingUsers().length ? `
-      <div class="card warn">
-        <h2>👤 ${pendingUsers().length} nouvel(le)(s) inscrit(e)(s) attend(ent) votre accord</h2>
-        <button class="btn small" onclick="setPage('users')">Voir les demandes</button>
-      </div>` : ''}
-    <div class="card">
-      <h2>Résumé par agent</h2>
-      ${tableBilan(bil, true)}
-    </div>`;
+    <div class="kpis">
+      ${kpi('À payer au Burundi', 'hourglass', aPayer.length, '', fmt(sum(aPayer,'montant_bif'),0)+' BIF', aPayer.length?'bad':'good', true)}
+      ${kpi("Transactions aujourd'hui", 'calendar', todayTx.length, '', fmt(sum(todayTx,'montant_aed'))+' AED')}
+      ${kpi("Frais aujourd'hui", 'coins', fmt(sum(todayTx,'frais_aed')), 'AED', '', 'gold')}
+      ${kpi('Argent encore chez les agents', 'wallet', fmt(T.reste||0), 'AED', 'Depuis le début', (T.reste||0)>0?'bad':'good')}
+    </div>
+    ${pend.length && isAdmin() ? panel(`${pend.length} demande${pend.length>1?'s':''} d'accès en attente`, 'users', null, { cls:'flag-warn calm', right:`<button class="btn sm" onclick="setPage('users')">Voir les demandes</button>` }) : ''}
+    ${aPayer.length
+      ? panel('Bénéficiaires à payer', 'hourglass', txList(aPayer), { cls:'flag-bad', flush:true, right:`<span class="count">${aPayer.length} transaction${aPayer.length>1?'s':''}</span>` })
+      : panel('Tous les bénéficiaires sont payés', 'check', null, { cls:'calm' })}
+    ${vs.length ? panel('Fonds envoyés par les agents, à confirmer', 'inbox', vsList(vs), { cls:'flag-warn', flush:true, right:`<span class="count">${fmt(sum(vs,'montant_aed'))} AED</span>` }) : ''}
+    ${panel('Résumé par agent', 'users', bilanList(all, true), { flush:true, right:`<span class="count">Depuis le début</span>` })}`;
 }
 
-/* ---------- NOUVELLE TRANSACTION ---------- */
+/* New transaction */
 function lastRates(){
   const mine = state.transactions.find(t=>t.agent_id===state.profile.id) || state.transactions[0];
   return { aedUsd: mine ? mine.taux_aed_usd : DEFAULT_AED_USD, usdBif: mine ? mine.taux_usd_bif : '' };
@@ -558,312 +858,446 @@ function lastRates(){
 function pageNew(){
   const r = lastRates();
   return `
-    <div class="pagehead"><div>
-      <h1>Nouvelle transaction</h1>
-      <p>Enregistrer un client reçu à Dubaï</p>
-    </div></div>
-    <div class="card" style="max-width:760px;">
+    <div class="pagehead"><div><h1>Nouvelle transaction</h1><p>Enregistrez un client reçu à Dubaï.</p></div></div>
+    <section class="panel" style="max-width:820px;"><div class="panel-b">
       <form id="txForm" autocomplete="off">
-        <h3>Client (à Dubaï)</h3>
-        <div class="formrow">
-          <div class="field"><label>Nom du client</label><input name="client" required></div>
-          <div class="field"><label>Téléphone du client (optionnel)</label><input name="client_tel" type="tel"></div>
+        <div class="legend">${ic('user')}Client à Dubaï</div>
+        <div class="grid2">
+          <div class="field"><label for="t-client">Nom du client</label><input id="t-client" name="client" required></div>
+          <div class="field"><label for="t-ctel">Téléphone du client</label><input id="t-ctel" name="client_tel" type="tel" inputmode="tel" placeholder="Facultatif"></div>
         </div>
-        <h3 style="margin-top:18px;">Bénéficiaire (au Burundi)</h3>
-        <div class="formrow r3">
-          <div class="field"><label>Nom du bénéficiaire</label><input name="beneficiaire" required placeholder="ex. Nizigiyimana Anastase"></div>
-          <div class="field"><label>Numéro</label><input name="beneficiaire_tel" type="tel" required placeholder="ex. 61104806"></div>
-          <div class="field"><label>Mode de réception</label>
-            <select name="mode_reception">${MODES_RECEPTION.map(m=>`<option>${esc(m)}</option>`).join('')}</select>
-          </div>
+        <div class="sep"></div>
+        <div class="legend">${ic('phone')}Bénéficiaire au Burundi</div>
+        <div class="grid3">
+          <div class="field"><label for="t-ben">Nom du bénéficiaire</label><input id="t-ben" name="beneficiaire" required placeholder="Ex. Nizigiyimana Anastase"></div>
+          <div class="field"><label for="t-btel">Numéro</label><input id="t-btel" name="beneficiaire_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806"></div>
+          <div class="field"><label for="t-mode">Mode de réception</label><select id="t-mode" name="mode_reception">${MODES_RECEPTION.map(m=>`<option>${esc(m)}</option>`).join('')}</select></div>
         </div>
-        <h3 style="margin-top:18px;">Montants</h3>
-        <div class="formrow">
-          <div class="field"><label>Montant reçu du client (AED)</label><input name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" placeholder="ex. 785"></div>
-          <div class="field"><label>Frais de transfert reçus (AED)</label><input name="frais_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"></div>
+        <div class="sep"></div>
+        <div class="legend">${ic('coins')}Montant et taux</div>
+        <div class="grid2">
+          <div class="field"><label for="t-aed">Montant reçu du client (AED)</label><input id="t-aed" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 785"></div>
+          <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"></div>
+          <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
+          <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
         </div>
-        <div class="formrow">
-          <div class="field"><label>Taux AED → USD (1 $ = ? AED)</label><input name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
-          <div class="field"><label>Taux du jour : 1 $ = ? BIF</label><input name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="ex. 5950"></div>
+        <div class="convert" aria-live="polite">
+          <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
+          <div class="op">${ic('arrow')}<span id="cvOp1">÷ ${fmt(r.aedUsd,4)}</span></div>
+          <div class="step"><span>En dollars</span><b id="cvUsd">0 $</b></div>
+          <div class="op">${ic('arrow')}<span id="cvOp2">× ${r.usdBif ? fmt(r.usdBif) : 'taux'}</span></div>
+          <div class="step final"><span>Le bénéficiaire reçoit</span><b id="cvBif">0 BIF</b></div>
         </div>
-        <div class="calc" id="calcBox">Saisissez le montant et les taux pour voir le calcul.</div>
-        <div class="formrow">
-          <div class="field"><label>Montant que le bénéficiaire reçoit (BIF)</label><input name="montant_bif" type="number" step="1" min="1" required inputmode="numeric"></div>
-          <div class="field"><label>Note (optionnel)</label><input name="note"></div>
+        <div class="convert-note" id="cvNote">Arrondi au multiple de 50 BIF inférieur.</div>
+        <div class="grid2">
+          <div class="field"><label for="t-bif">Montant à verser en BIF</label><input id="t-bif" name="montant_bif" type="number" step="1" min="1" required inputmode="numeric"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+          <div class="field"><label for="t-note">Note</label><input id="t-note" name="note" placeholder="Facultatif"></div>
         </div>
-        <button class="btn" type="submit">Enregistrer la transaction</button>
-        <div id="txMsg"></div>
+        <button class="btn gold" type="submit" style="min-width:240px;">${ic('check')}Enregistrer la transaction</button>
       </form>
-    </div>`;
+    </div></section>`;
 }
 
-/* ---------- TRANSACTIONS ---------- */
+/* Transactions */
+function filteredTx(){
+  const f = state.txf;
+  const range = f.periode==='all' ? null : presetRange(f.periode);
+  const q = f.q.trim().toLowerCase();
+  return state.transactions.filter(t=>
+    inRange(t.date, range) &&
+    (!f.agent || t.agent_id===f.agent) &&
+    (!f.statut || t.statut===f.statut) &&
+    (!q || [t.client, t.beneficiaire, t.beneficiaire_tel, t.client_tel, t.agent_nom].some(x=>String(x||'').toLowerCase().includes(q))));
+}
+function agentOptions(selected){
+  const ids = new Map();
+  state.profiles.filter(p=>p.role==='AGENT').forEach(p=>ids.set(p.id, p.nom));
+  state.transactions.forEach(t=>{ if(!ids.has(t.agent_id)) ids.set(t.agent_id, t.agent_nom); });
+  return `<option value="">Tous les agents</option>` + [...ids.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,nom])=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(nom)}</option>`).join('');
+}
+function periodOptions(sel){
+  return [['all','Toutes les dates'],['today',"Aujourd'hui"],['week','Cette semaine'],['month','Ce mois']]
+    .map(([v,l])=>`<option value="${v}" ${sel===v?'selected':''}>${l}</option>`).join('');
+}
 function pageTransactions(){
-  const f = state.filters;
-  let list = state.transactions.filter(t=>inPeriod(t.date));
-  if(isStaff() && f.agent) list = list.filter(t=>t.agent_id===f.agent);
-  if(f.statut) list = list.filter(t=>t.statut===f.statut);
-  const agents = [...new Map(state.transactions.map(t=>[t.agent_id, t.agent_nom])).entries()];
-  const actives = list.filter(t=>t.statut!=='ANNULEE');
+  const f = state.txf;
+  const list = filteredTx();
+  const act = list.filter(t=>t.statut!=='ANNULEE');
   return `
-    <div class="pagehead"><div>
-      <h1>${isAgent() ? 'Mes transactions' : 'Transactions'}</h1>
-      <p>${isAgent() ? 'Le statut passe à « Payée » quand Bujumbura a payé le bénéficiaire' : 'Cliquez sur « Payée » une fois le bénéficiaire payé'}</p>
-    </div></div>
+    <div class="pagehead">
+      <div><h1>${isAgent() ? 'Mes transactions' : 'Transactions'}</h1>
+      <p>${isAgent() ? 'Le statut passe à « Payée » quand Bujumbura a payé le bénéficiaire.' : 'Marquez chaque transaction « Payée » dès que le bénéficiaire a reçu son argent.'}</p></div>
+      <div class="actions"><button class="btn ghost" onclick="exportCsv(filteredTx(), 'transactions')">${ic('download')}Exporter</button></div>
+    </div>
     <div class="filters">
-      ${isStaff() ? `<select id="fAgent"><option value="">Tous les agents</option>${agents.map(([id,nom])=>`<option value="${esc(id)}" ${f.agent===id?'selected':''}>${esc(nom)}</option>`).join('')}</select>` : ''}
-      <select id="fStatut">
-        <option value="">Tous les statuts</option>
-        ${Object.entries(TX_STATUTS).map(([k,v])=>`<option value="${k}" ${f.statut===k?'selected':''}>${v.label}</option>`).join('')}
-      </select>
-      ${periodSelect()}
+      <div class="search">${ic('search')}<input data-bind="txf.q" value="${esc(f.q)}" placeholder="Rechercher un nom ou un numéro" type="search"></div>
+      ${isStaff() ? `<select data-bind="txf.agent" aria-label="Agent">${agentOptions(f.agent)}</select>` : ''}
+      <select data-bind="txf.statut" aria-label="Statut"><option value="">Tous les statuts</option>${Object.entries(TX_STATUTS).map(([k,v])=>`<option value="${k}" ${f.statut===k?'selected':''}>${v.label}</option>`).join('')}</select>
+      <select data-bind="txf.periode" aria-label="Période">${periodOptions(f.periode)}</select>
     </div>
-    <div class="grid">
-      <div class="stat"><div class="label">Transactions</div><div class="val mono">${actives.length}</div></div>
-      <div class="stat"><div class="label">Montant (AED)</div><div class="val mono">${fmt(actives.reduce((s,t)=>s+ +t.montant_aed,0))}</div></div>
-      <div class="stat"><div class="label">Frais (AED)</div><div class="val mono gold">${fmt(actives.reduce((s,t)=>s+ +t.frais_aed,0))}</div></div>
-      <div class="stat"><div class="label">Versé au Burundi (BIF)</div><div class="val mono">${fmt(actives.reduce((s,t)=>s+ +t.montant_bif,0),0)}</div></div>
+    <div class="kpis">
+      ${kpi('Transactions', 'list', act.length, '', `${act.filter(t=>t.statut==='EN_ATTENTE').length} à payer`)}
+      ${kpi('Argent des clients', 'coins', fmt(sum(act,'montant_aed')), 'AED', '')}
+      ${kpi('Frais', 'coins', fmt(sum(act,'frais_aed')), 'AED', '', 'gold')}
+      ${kpi('Versé au Burundi', 'send', fmt(sum(act,'montant_bif'),0), 'BIF', '')}
     </div>
-    <div class="card">${tableTransactions(list)}</div>`;
+    ${panel('Liste des transactions', 'list', txList(list), { flush:true, right:`<span class="count">${list.length} résultat${list.length>1?'s':''}</span>` })}`;
+}
+function txActions(t){
+  const a = [];
+  if(isStaff() && t.statut==='EN_ATTENTE'){
+    a.push(`<button class="btn good sm" onclick="markPayee('${t.id}')">${ic('check')}Payée</button>`);
+    a.push(`<button class="btn ghost sm" onclick="markAnnulee('${t.id}')">Annuler</button>`);
+  }
+  if(isStaff() && t.statut!=='EN_ATTENTE') a.push(`<button class="btn ghost sm sq" onclick="markAttente('${t.id}')" title="Remettre à payer" aria-label="Remettre à payer">${ic('undo')}</button>`);
+  if(isAdmin() || (isAgent() && t.statut==='EN_ATTENTE')) a.push(`<button class="btn ghost sm sq" onclick="deleteTransaction('${t.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
+  return a.join('');
+}
+function statusPill(map, s){ const st = map[s] || { label:s, cls:'', icon:'clock' }; return `<span class="pill ${st.cls}">${ic(st.icon)}${st.label}</span>`; }
+function txList(list){
+  if(!list.length) return emptyState('list', 'Aucune transaction pour le moment.');
+  const staff = isStaff();
+  const table = `<div class="only-desk tblwrap"><table><thead><tr>
+      <th>Date</th>${staff?'<th>Agent</th>':''}<th>Client</th><th>Bénéficiaire</th>
+      <th class="r">Montant</th><th class="r">Frais</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
+    </tr></thead><tbody>
+    ${list.map(t=>`<tr>
+      <td>${fmtDate(t.date)}</td>
+      ${staff?`<td>${esc(t.agent_nom)}</td>`:''}
+      <td>${esc(t.client)}${t.client_tel?`<div class="sub">${esc(t.client_tel)}</div>`:''}</td>
+      <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
+      <td class="r">${fmt(t.montant_aed)} AED<div class="sub">${fmt(t.montant_usd)} $</div></td>
+      <td class="r">${fmt(t.frais_aed)} AED</td>
+      <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
+      <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>
+      <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}</td>
+      <td><div class="actions">${txActions(t)}</div></td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+  const cards = `<div class="cards">${list.map(t=>`
+    <div class="tcard">
+      <div class="row">
+        <div style="min-width:0;"><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></div>
+        <div class="bif">${fmt(t.montant_bif,0)} BIF</div>
+      </div>
+      <div class="meta" style="margin-top:6px;">${fmtDate(t.date)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
+      <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}</div>
+      <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
+    </div>`).join('')}</div>`;
+  return table + cards;
 }
 
-function tableTransactions(list){
-  if(!list.length) return `<div class="empty">Aucune transaction.</div>`;
-  return `<div class="tablewrap"><table><thead><tr>
-    <th>Date</th>${isStaff()?'<th>Agent</th>':''}<th>Client</th><th>Bénéficiaire</th>
-    <th class="num">AED</th><th class="num">Frais</th><th class="num">Taux</th><th class="num">BIF à payer</th><th>Statut</th><th></th>
-  </tr></thead><tbody>
-  ${list.map(t=>{
-    const st = TX_STATUTS[t.statut] || {label:t.statut, cls:''};
-    const actions = [];
-    if(isStaff() && t.statut==='EN_ATTENTE') actions.push(`<button class="btn small good" onclick="markPayee('${t.id}')">✓ Payée</button>`);
-    if(isStaff() && t.statut==='EN_ATTENTE') actions.push(`<button class="btn small ghost" onclick="markAnnulee('${t.id}')">Annuler</button>`);
-    if(isStaff() && t.statut!=='EN_ATTENTE') actions.push(`<button class="btn small ghost" onclick="markAttente('${t.id}')">↺</button>`);
-    if((isAdmin()) || (isAgent() && t.statut==='EN_ATTENTE')) actions.push(`<button class="btn small ghost" onclick="deleteTransaction('${t.id}')" title="Supprimer">🗑</button>`);
-    return `<tr>
-      <td class="mono">${fmtDate(t.date)}</td>
-      ${isStaff()?`<td>${esc(t.agent_nom)}</td>`:''}
-      <td>${esc(t.client)}${t.client_tel?`<div class="sub2">${esc(t.client_tel)}</div>`:''}</td>
-      <td>${esc(t.beneficiaire)}<div class="sub2">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
-      <td class="num mono">${fmt(t.montant_aed)}</td>
-      <td class="num mono">${fmt(t.frais_aed)}</td>
-      <td class="num mono">${fmt(t.taux_usd_bif)}<div class="sub2">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
-      <td class="num mono" style="color:var(--gold); font-weight:700;">${fmt(t.montant_bif,0)}</td>
-      <td><span class="stamp ${st.cls}">${st.label}</span>${t.valide_par?`<div class="sub2">${esc(t.valide_par)} · ${fmtDateTime(t.valide_le)}</div>`:''}</td>
-      <td><div class="btnrow">${actions.join('')}</div></td>
-    </tr>`;
-  }).join('')}
-  </tbody></table></div>`;
+/* Versements */
+function filteredVs(){
+  const f = state.vsf;
+  const range = f.periode==='all' ? null : presetRange(f.periode);
+  return state.versements.filter(v=> inRange(v.date, range) && (!f.agent || v.agent_id===f.agent));
 }
-
-/* ---------- ENVOIS A NAOMIE ---------- */
 function pageVersements(){
-  let list = state.versements.filter(v=>inPeriod(v.date));
-  if(isStaff() && state.filters.agent) list = list.filter(v=>v.agent_id===state.filters.agent);
-  const recu = list.filter(v=>v.statut==='RECU').reduce((s,v)=>s+ +v.montant_aed,0);
-  const att = list.filter(v=>v.statut==='ENVOYE').reduce((s,v)=>s+ +v.montant_aed,0);
-  const agents = [...new Map(state.versements.map(v=>[v.agent_id, v.agent_nom])).entries()];
+  const list = filteredVs();
+  const recu = sum(list.filter(v=>v.statut==='RECU'), 'montant_aed');
+  const att = sum(list.filter(v=>v.statut==='ENVOYE'), 'montant_aed');
   return `
     <div class="pagehead"><div>
-      <h1>${isAgent() ? 'Envois à Naomie' : 'Argent reçu de Dubaï'}</h1>
-      <p>${isAgent() ? "Déclarez chaque somme envoyée à Bujumbura. Naomie confirme à la réception." : "Confirmez chaque somme quand elle est bien arrivée."}</p>
+      <h1>${isAgent() ? 'Envois à Naomie' : 'Fonds reçus de Dubaï'}</h1>
+      <p>${isAgent() ? "Déclarez chaque somme envoyée à Bujumbura. Naomie confirme à la réception." : "Confirmez chaque somme dès qu'elle est arrivée à Bujumbura."}</p>
     </div></div>
-    ${isAgent() ? `
-    <div class="card" style="max-width:760px;">
-      <h2>Déclarer un envoi</h2>
+    ${isAgent() ? panel('Déclarer un envoi', 'send', `
       <form id="vsForm" autocomplete="off">
-        <div class="formrow r3">
-          <div class="field"><label>Montant envoyé (AED)</label><input name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"></div>
-          <div class="field"><label>Moyen d'envoi</label><input name="moyen" placeholder="ex. USDT, banque, cash…"></div>
-          <div class="field"><label>Note (optionnel)</label><input name="note"></div>
+        <div class="grid3">
+          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"></div>
+          <div class="field"><label for="v-moy">Moyen d'envoi</label><input id="v-moy" name="moyen" placeholder="USDT, banque, cash…"></div>
+          <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
         </div>
-        <button class="btn" type="submit">Enregistrer l'envoi</button>
-      </form>
-    </div>` : ''}
+        <button class="btn" type="submit">${ic('send')}Enregistrer l'envoi</button>
+      </form>`) : ''}
     <div class="filters">
-      ${isStaff() ? `<select id="fAgent"><option value="">Tous les agents</option>${agents.map(([id,nom])=>`<option value="${esc(id)}" ${state.filters.agent===id?'selected':''}>${esc(nom)}</option>`).join('')}</select>` : ''}
-      ${periodSelect()}
+      ${isStaff() ? `<select data-bind="vsf.agent" aria-label="Agent">${agentOptions(state.vsf.agent)}</select>` : ''}
+      <select data-bind="vsf.periode" aria-label="Période">${periodOptions(state.vsf.periode)}</select>
     </div>
-    <div class="grid g3">
-      <div class="stat"><div class="label">Reçu (confirmé)</div><div class="val mono good">${fmtAed(recu)}</div></div>
-      <div class="stat"><div class="label">Envoyé, à confirmer</div><div class="val mono">${fmtAed(att)}</div></div>
-      <div class="stat"><div class="label">Nombre d'envois</div><div class="val mono">${list.length}</div></div>
+    <div class="kpis">
+      ${kpi('Reçu, confirmé', 'check', fmt(recu), 'AED', '', 'good')}
+      ${kpi('Envoyé, à confirmer', 'hourglass', fmt(att), 'AED', '')}
+      ${kpi("Nombre d'envois", 'list', list.length, '', '')}
     </div>
-    <div class="card">${tableVersements(list)}</div>`;
+    ${panel('Historique des envois', 'inbox', vsList(list), { flush:true })}`;
 }
-function tableVersements(list){
-  if(!list.length) return `<div class="empty">Aucun envoi enregistré.</div>`;
-  return `<div class="tablewrap"><table><thead><tr>
-    <th>Date</th>${isStaff()?'<th>Agent</th>':''}<th class="num">Montant</th><th>Moyen</th><th>Note</th><th>Statut</th><th></th>
-  </tr></thead><tbody>
-  ${list.map(v=>{
-    const st = VS_STATUTS[v.statut];
-    const actions = [];
-    if(isStaff() && v.statut==='ENVOYE') actions.push(`<button class="btn small good" onclick="confirmVersement('${v.id}')">✓ Reçu</button>`);
-    if(isStaff() && v.statut==='RECU') actions.push(`<button class="btn small ghost" onclick="unconfirmVersement('${v.id}')">↺</button>`);
-    if(isAdmin() || (isAgent() && v.statut==='ENVOYE')) actions.push(`<button class="btn small ghost" onclick="deleteVersement('${v.id}')" title="Supprimer">🗑</button>`);
-    return `<tr>
-      <td class="mono">${fmtDate(v.date)}</td>
-      ${isStaff()?`<td>${esc(v.agent_nom)}</td>`:''}
-      <td class="num mono" style="font-weight:700;">${fmtAed(v.montant_aed)}</td>
-      <td>${esc(v.moyen||'')}</td>
-      <td class="sub2">${esc(v.note||'')}</td>
-      <td><span class="stamp ${st.cls}">${st.label}</span>${v.confirme_par?`<div class="sub2">${esc(v.confirme_par)} · ${fmtDateTime(v.confirme_le)}</div>`:''}</td>
-      <td><div class="btnrow">${actions.join('')}</div></td>
-    </tr>`;
-  }).join('')}
-  </tbody></table></div>`;
+function vsActions(v){
+  const a = [];
+  if(isStaff() && v.statut==='ENVOYE') a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Reçu</button>`);
+  if(isStaff() && v.statut==='RECU') a.push(`<button class="btn ghost sm sq" onclick="unconfirmVersement('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
+  if(isAdmin() || (isAgent() && v.statut==='ENVOYE')) a.push(`<button class="btn ghost sm sq" onclick="deleteVersement('${v.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
+  return a.join('');
+}
+function vsList(list){
+  if(!list.length) return emptyState('inbox', 'Aucun envoi enregistré.');
+  const staff = isStaff();
+  const table = `<div class="only-desk tblwrap"><table><thead><tr>
+      <th>Date</th>${staff?'<th>Agent</th>':''}<th class="r">Montant</th><th>Moyen</th><th>Note</th><th>Statut</th><th></th>
+    </tr></thead><tbody>
+    ${list.map(v=>`<tr>
+      <td>${fmtDate(v.date)}</td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
+      <td class="r strong">${fmt(v.montant_aed)} AED</td><td>${esc(v.moyen||'')}</td><td class="sub">${esc(v.note||'')}</td>
+      <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
+      <td><div class="actions">${vsActions(v)}</div></td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+  const cards = `<div class="cards">${list.map(v=>`
+    <div class="tcard">
+      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div></div>
+      <div class="bif">${fmt(v.montant_aed)} AED</div></div>
+      <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">${vsActions(v)}</div></div>
+    </div>`).join('')}</div>`;
+  return table + cards;
 }
 
-/* ---------- BILAN PAR AGENT ---------- */
-function periodSelect(){
-  const p = state.filters.periode;
-  return `<select id="fPeriode">
-    <option value="tout" ${p==='tout'?'selected':''}>Depuis le début</option>
-    <option value="mois" ${p==='mois'?'selected':''}>Ce mois-ci</option>
-    <option value="jour" ${p==='jour'?'selected':''}>Aujourd'hui</option>
-  </select>`;
+/* Per-agent summary list */
+function bilanList(list, compact){
+  if(!list.length) return emptyState('users', 'Aucun agent actif pour le moment.');
+  const T = totals(list);
+  const table = `<div class="only-desk tblwrap"><table><thead><tr>
+      <th>Agent</th><th class="r">Clients</th><th class="r">Argent clients</th><th class="r">Frais</th><th class="r">Total encaissé</th>
+      ${compact?'':'<th class="r">Versé au Burundi</th>'}
+      <th class="r">Envoyé à Naomie</th>${compact?'':'<th class="r">Envoi à confirmer</th>'}<th class="r">Reste chez l'agent</th>
+    </tr></thead><tbody>
+    ${list.map(a=>`<tr>
+      <td><span class="strong">${esc(a.nom)}</span>${a.aPayer?`<div class="sub">${a.aPayer} à payer</div>`:''}</td>
+      <td class="r">${a.n}</td><td class="r">${fmt(a.aed)}</td><td class="r cell-gold">${fmt(a.frais)}</td><td class="r">${fmt(a.encaisse)}</td>
+      ${compact?'':`<td class="r">${fmt(a.bif,0)} BIF</td>`}
+      <td class="r cell-good">${fmt(a.envoye)}</td>${compact?'':`<td class="r">${fmt(a.envoyeAttente)}</td>`}
+      <td class="r ${a.reste>0?'cell-bad':'cell-good'}">${fmt(a.reste)}</td>
+    </tr>`).join('')}
+    </tbody><tfoot><tr>
+      <td>Total</td><td class="r">${T.n||0}</td><td class="r">${fmt(T.aed)}</td><td class="r">${fmt(T.frais)}</td><td class="r">${fmt(T.encaisse)}</td>
+      ${compact?'':`<td class="r">${fmt(T.bif,0)} BIF</td>`}
+      <td class="r">${fmt(T.envoye)}</td>${compact?'':`<td class="r">${fmt(T.envoyeAttente)}</td>`}<td class="r">${fmt(T.reste)}</td>
+    </tr></tfoot></table></div>`;
+  const cards = `<div class="cards">${list.map(a=>`
+    <div class="tcard">
+      <div class="row"><div class="name">${esc(a.nom)}</div><div class="${a.reste>0?'cell-bad':'cell-good'}">${fmt(a.reste)} AED</div></div>
+      <div class="meta">Reste chez l'agent${a.aPayer?`, ${a.aPayer} à payer`:''}</div>
+      <div class="mini">
+        <div><span>Clients</span><b>${a.n}</b></div>
+        <div><span>Argent clients</span><b>${fmt(a.aed)} AED</b></div>
+        <div><span>Frais</span><b class="cell-gold">${fmt(a.frais)} AED</b></div>
+        <div><span>Envoyé à Naomie</span><b class="cell-good">${fmt(a.envoye)} AED</b></div>
+      </div>
+    </div>`).join('')}
+    <div class="tcard"><div class="row"><div class="name">Total</div><div class="strong">${fmt(T.reste)} AED</div></div>
+      <div class="meta">${T.n||0} clients, ${fmt(T.aed)} AED, ${fmt(T.frais)} AED de frais, ${fmt(T.envoye)} AED envoyés</div></div>
+  </div>`;
+  return table + cards + `<div class="sub" style="padding:10px 16px;">Montants en dirhams (AED) sauf mention contraire.</div>`;
 }
-function pageBilan(){
-  const bil = bilanAgents();
+
+/* Statistics */
+const PRESETS = [['today',"Aujourd'hui"],['yesterday','Hier'],['week','Cette semaine'],['last7','7 derniers jours'],['month','Ce mois'],['lastmonth','Mois dernier'],['all','Depuis le début'],['custom','Dates choisies']];
+function statsRange(){
+  const s = state.st;
+  if(s.preset==='custom') return [s.from || today(), s.to || today()];
+  if(s.preset==='all') return null;
+  return presetRange(s.preset);
+}
+function groupKey(d, g){ return g==='month' ? d.slice(0,7) : g==='week' ? weekStart(d) : d; }
+function groupLabel(k, g){
+  if(g==='month'){ const [y,m] = k.split('-'); return cap(new Date(+y, +m-1, 1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'})); }
+  if(g==='week') return `Semaine du ${fmtDate(k).slice(0,5)} au ${fmtDate(addDays(k,6)).slice(0,5)}`;
+  return cap(parseYmd(k).toLocaleDateString('fr-FR',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}));
+}
+function pageStats(){
+  const s = state.st;
+  const range = statsRange();
+  const agentId = isAgent() ? state.profile.id : (s.agent || null);
+  const tx = activeTx(range, agentId);
+  const vs = state.versements.filter(v=>inRange(v.date, range) && (!agentId || v.agent_id===agentId));
+  const envoye = sum(vs.filter(v=>v.statut==='RECU'),'montant_aed');
+  const aed = sum(tx,'montant_aed'), frais = sum(tx,'frais_aed');
+  const g = s.group;
+  const groups = {};
+  tx.forEach(t=>{ const k = groupKey(t.date, g); const o = (groups[k] ||= { n:0, aed:0, frais:0, bif:0, envoye:0 }); o.n++; o.aed += +t.montant_aed; o.frais += +t.frais_aed; o.bif += +t.montant_bif; });
+  vs.filter(v=>v.statut==='RECU').forEach(v=>{ const k = groupKey(v.date, g); const o = (groups[k] ||= { n:0, aed:0, frais:0, bif:0, envoye:0 }); o.envoye += +v.montant_aed; });
+  const rows = Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0]));
+  const rangeText = range ? (range[0]===range[1] ? `le ${fmtDate(range[0])}` : `du ${fmtDate(range[0])} au ${fmtDate(range[1])}`) : 'depuis le début';
+  const fromVal = range ? range[0] : '';
+  const toVal = range ? range[1] : '';
+  const gLabel = { day:'jour', week:'semaine', month:'mois' }[g];
+
+  const detail = rows.length ? `
+    <div class="only-desk tblwrap"><table><thead><tr><th>Période</th><th class="r">Transactions</th><th class="r">Argent clients</th><th class="r">Frais</th><th class="r">Versé au Burundi</th><th class="r">Envoyé à Naomie</th></tr></thead><tbody>
+      ${rows.map(([k,o])=>`<tr><td class="strong">${groupLabel(k,g)}</td><td class="r">${o.n}</td><td class="r">${fmt(o.aed)} AED</td><td class="r cell-gold">${fmt(o.frais)} AED</td><td class="r">${fmt(o.bif,0)} BIF</td><td class="r cell-good">${fmt(o.envoye)} AED</td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total</td><td class="r">${tx.length}</td><td class="r">${fmt(aed)} AED</td><td class="r">${fmt(frais)} AED</td><td class="r">${fmt(sum(tx,'montant_bif'),0)} BIF</td><td class="r">${fmt(envoye)} AED</td></tr></tfoot></table></div>
+    <div class="cards">${rows.map(([k,o])=>`
+      <div class="tcard"><div class="row"><div class="name">${groupLabel(k,g)}</div><div class="strong">${o.n} transaction${o.n>1?'s':''}</div></div>
+        <div class="mini">
+          <div><span>Argent clients</span><b>${fmt(o.aed)} AED</b></div>
+          <div><span>Frais</span><b class="cell-gold">${fmt(o.frais)} AED</b></div>
+          <div><span>Versé au Burundi</span><b>${fmt(o.bif,0)} BIF</b></div>
+          <div><span>Envoyé à Naomie</span><b class="cell-good">${fmt(o.envoye)} AED</b></div>
+        </div></div>`).join('')}</div>`
+    : emptyState('chart', 'Aucune activité sur cette période.');
+
   return `
-    <div class="pagehead"><div>
-      <h1>Bilan par agent</h1>
-      <p>Clients amenés, frais, argent envoyé à Naomie et argent restant chez chaque agent</p>
-    </div></div>
-    <div class="filters">${periodSelect()}</div>
-    <div class="card">${tableBilan(bil, false)}</div>
-    <div class="lockednote">
-      <b>Comment c'est calculé :</b><br>
-      • <b>Total encaissé</b> = argent des clients + frais (en AED), transactions annulées exclues.<br>
-      • <b>Envoyé à Naomie</b> = envois dont Naomie a confirmé la réception.<br>
-      • <b>Reste chez l'agent</b> = total encaissé − envoyé à Naomie (confirmé).
-    </div>`;
+    <div class="pagehead">
+      <div><h1>${isAgent() ? 'Mes statistiques' : 'Statistiques'}</h1><p>Activité ${rangeText}${!isAgent() && s.agent ? ', '+esc((profileById(s.agent)||{}).nom||'agent') : ''}.</p></div>
+      <div class="actions"><button class="btn ghost" onclick="exportCsv(activeTx(statsRange(), ${agentId?`'${agentId}'`:'null'}), 'statistiques')">${ic('download')}Exporter</button></div>
+    </div>
+    <div class="chips" role="group" aria-label="Période">
+      ${PRESETS.map(([k,l])=>`<button class="chipbtn ${s.preset===k?'on':''}" data-preset="${k}">${l}</button>`).join('')}
+    </div>
+    <div class="range">
+      <div class="field"><label for="s-from">Du</label><input id="s-from" type="date" data-bind="st.from" value="${fromVal}"></div>
+      <div class="field"><label for="s-to">Au</label><input id="s-to" type="date" data-bind="st.to" value="${toVal}"></div>
+      ${isStaff() ? `<div class="field"><label for="s-ag">Agent</label><select id="s-ag" data-bind="st.agent">${agentOptions(s.agent)}</select></div>` : ''}
+      <div class="field"><label for="s-g">Regrouper par</label><select id="s-g" data-bind="st.group">
+        <option value="day" ${g==='day'?'selected':''}>Jour</option><option value="week" ${g==='week'?'selected':''}>Semaine</option><option value="month" ${g==='month'?'selected':''}>Mois</option>
+      </select></div>
+    </div>
+    <div class="kpis">
+      ${kpi('Transactions', 'list', tx.length, '', `${tx.filter(t=>t.statut==='EN_ATTENTE').length} encore à payer`, '', true)}
+      ${kpi('Argent des clients', 'coins', fmt(aed), 'AED', fmt(sum(tx,'montant_usd'))+' $')}
+      ${kpi('Frais encaissés', 'coins', fmt(frais), 'AED', '', 'gold')}
+      ${kpi('Total encaissé', 'wallet', fmt(aed+frais), 'AED', 'Argent des clients et frais')}
+      ${kpi('Versé au Burundi', 'send', fmt(sum(tx,'montant_bif'),0), 'BIF', '')}
+      ${kpi('Envoyé à Naomie', 'inbox', fmt(envoye), 'AED', 'Réception confirmée', 'good')}
+      ${kpi('Écart de la période', 'wallet', fmt(aed+frais-envoye), 'AED', 'Encaissé moins envoyé', (aed+frais-envoye)>0?'bad':'good')}
+      ${kpi('Moyenne par transaction', 'chart', fmt(tx.length ? aed/tx.length : 0), 'AED', '')}
+    </div>
+    ${panel(`Détail par ${gLabel}`, 'calendar', detail, { flush:true })}
+    ${isStaff() && !s.agent ? panel('Par agent', 'users', bilanList(bilan(range), false), { flush:true, right:`<span class="count">${rangeText}</span>` }) : ''}`;
 }
-function tableBilan(bil, compact){
-  if(!bil.length) return `<div class="empty">Aucun agent actif pour l'instant.</div>`;
-  const T = totals(bil);
-  return `<div class="tablewrap"><table><thead><tr>
-    <th>Agent</th><th class="num">Clients</th><th class="num">Argent clients</th><th class="num">Frais</th><th class="num">Total encaissé</th>
-    ${compact?'':'<th class="num">BIF à verser</th>'}
-    <th class="num">Envoyé à Naomie</th>${compact?'':'<th class="num">Envoi à confirmer</th>'}<th class="num">Reste chez l'agent</th>
-  </tr></thead><tbody>
-  ${bil.map(a=>`<tr>
-    <td>${esc(a.nom)}${a.nbAPayer?`<div class="sub2">${a.nbAPayer} à payer</div>`:''}</td>
-    <td class="num mono">${a.nbClients}</td>
-    <td class="num mono">${fmt(a.aed)}</td>
-    <td class="num mono" style="color:var(--gold);">${fmt(a.frais)}</td>
-    <td class="num mono">${fmt(a.encaisse)}</td>
-    ${compact?'':`<td class="num mono">${fmt(a.bif,0)}</td>`}
-    <td class="num mono" style="color:var(--good);">${fmt(a.envoyeRecu)}</td>
-    ${compact?'':`<td class="num mono">${fmt(a.envoyeAttente)}</td>`}
-    <td class="num mono" style="color:${a.reste>0?'var(--bad)':'var(--good)'}; font-weight:700;">${fmt(a.reste)}</td>
-  </tr>`).join('')}
-  </tbody><tfoot><tr>
-    <td>Total</td><td class="num mono">${T.nbClients||0}</td><td class="num mono">${fmt(T.aed)}</td><td class="num mono">${fmt(T.frais)}</td><td class="num mono">${fmt(T.encaisse)}</td>
-    ${compact?'':`<td class="num mono">${fmt(T.bif,0)}</td>`}
-    <td class="num mono">${fmt(T.envoyeRecu)}</td>${compact?'':`<td class="num mono">${fmt(T.envoyeAttente)}</td>`}<td class="num mono">${fmt(T.reste)}</td>
-  </tr></tfoot></table></div>
-  <div class="sub2" style="margin-top:8px;">Montants en AED sauf mention BIF.</div>`;
+function exportCsv(list, name){
+  if(!list.length){ toast('Rien à exporter sur cette sélection', 'bad'); return; }
+  const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['statut','Statut'],['valide_par','Validé par']];
+  const cell = v => { const s = String(v ?? '').replace(/"/g,'""'); return /[;"\n]/.test(s) ? `"${s}"` : s; };
+  const num = v => String(v ?? '').replace('.', ',');
+  const lines = [cols.map(c=>c[1]).join(';')].concat(list.map(t=>cols.map(([k])=>{
+    if(k==='statut') return cell((TX_STATUTS[t.statut]||{}).label || t.statut);
+    if(/montant|frais|taux/.test(k)) return num(t[k]);
+    return cell(t[k]);
+  }).join(';')));
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pax-${name}-${today()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
 }
 
-/* ---------- UTILISATEURS ---------- */
+/* Users */
 function pageUsers(){
   const pending = pendingUsers();
   const others = state.profiles.filter(p=>p.statut!=='en_attente');
-  const roleOptions = (sel) => Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${sel===k?'selected':''}>${v}</option>`).join('');
+  const roleOptions = sel => Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${sel===k?'selected':''}>${v}</option>`).join('');
+  const userActions = u => u.id===state.profile.id ? '' : `
+      <button class="btn ghost sm" onclick="renameUser('${u.id}')">${ic('edit')}Renommer</button>
+      <button class="btn ghost sm" onclick="resetUserPassword('${u.id}')">${ic('key')}Mot de passe</button>
+      <button class="btn ghost sm" onclick="toggleUserStatut('${u.id}')">${u.statut==='actif'?'Désactiver':'Réactiver'}</button>`;
   return `
-    <div class="pagehead"><div>
-      <h1>Utilisateurs</h1>
-      <p>Donner ou retirer l'accès à l'application</p>
-    </div></div>
-    <div class="card">
-      <h2>Lien d'inscription à envoyer aux nouveaux agents</h2>
-      <div class="linkbox">
-        <input id="signupLink" readonly value="${esc(signupLink())}">
-        <button class="btn small" onclick="copyLink()">Copier</button>
-      </div>
-      <div class="sub2" style="margin-top:8px;">L'agent saisit son nom, son email et un mot de passe. Sa demande apparaît ci-dessous ; il ne voit rien tant que vous ne l'avez pas activé.</div>
-    </div>
-    <div class="card ${pending.length?'warn':''}">
-      <h2>Demandes d'accès en attente (${pending.length})</h2>
-      ${pending.length ? `<div class="tablewrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Inscrit le</th><th>Rôle à donner</th><th></th></tr></thead><tbody>
-        ${pending.map(u=>`<tr>
-          <td>${esc(u.nom)}</td><td>${esc(u.email||'')}</td><td class="mono">${fmtDateTime(u.created_at)}</td>
-          <td><select id="role-${u.id}">${roleOptions('AGENT')}</select></td>
-          <td><div class="btnrow">
-            <button class="btn small good" onclick="activateUser('${u.id}')">✓ Donner l'accès</button>
-            <button class="btn small ghost" onclick="refuseUser('${u.id}', '${esc(u.nom).replace(/'/g,'&#39;')}')">Refuser</button>
-          </div></td>
-        </tr>`).join('')}
-      </tbody></table></div>` : `<div class="empty">Aucune demande en attente.</div>`}
-    </div>
-    <div class="card">
-      <h2>Comptes</h2>
-      <div class="tablewrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead><tbody>
-        ${others.map(u=>{
-          const me = u.id===state.profile.id;
-          return `<tr>
-            <td>${esc(u.nom)} ${me?'<span class="badge-role">vous</span>':''}</td>
-            <td>${esc(u.email||'')}</td>
-            <td>${me ? esc(ROLES[u.role]) : `<select onchange="setUserRole('${u.id}', this.value)">${roleOptions(u.role)}</select>`}</td>
-            <td><span class="stamp ${u.statut==='actif'?'s-payee':'s-annulee'}">${u.statut}</span></td>
-            <td><div class="btnrow">
-              <button class="btn small ghost" onclick="renameUser('${u.id}', '${esc(u.nom).replace(/'/g,'&#39;')}')">Renommer</button>
-              ${me?'':`<button class="btn small ghost" onclick="toggleUserStatut('${u.id}', '${u.statut}')">${u.statut==='actif'?'Désactiver':'Réactiver'}</button>`}
-            </div></td>
-          </tr>`;}).join('')}
+    <div class="pagehead"><div><h1>Utilisateurs</h1><p>Donnez ou retirez l'accès à l'application.</p></div></div>
+    ${panel("Lien d'inscription pour les nouveaux agents", 'send', `
+      <div class="linkbox"><input id="signupLink" readonly value="${esc(signupLink())}"><button class="btn" onclick="copyLink()">${ic('copy')}Copier</button></div>
+      <p class="sub" style="margin:10px 0 0;">L'agent saisit son nom, son email et un mot de passe. Sa demande apparaît ci-dessous et il ne voit rien tant que vous ne l'avez pas activé.</p>`)}
+    ${panel(`Demandes d'accès en attente`, 'hourglass', pending.length ? `
+      <div class="only-desk tblwrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Inscrit le</th><th>Rôle à donner</th><th></th></tr></thead><tbody>
+        ${pending.map(u=>`<tr><td class="strong">${esc(u.nom)}</td><td>${esc(u.email||'')}</td><td>${fmtDT(u.created_at)}</td>
+          <td><select id="role-${u.id}" style="height:36px;font-size:14px;">${roleOptions('AGENT')}</select></td>
+          <td><div class="actions"><button class="btn good sm" onclick="activateUser('${u.id}')">${ic('check')}Donner l'accès</button><button class="btn ghost sm" onclick="refuseUser('${u.id}')">Refuser</button></div></td></tr>`).join('')}
       </tbody></table></div>
-      <div class="sub2" style="margin-top:8px;">Désactiver bloque l'accès sans effacer l'historique de l'agent.</div>
-    </div>`;
+      <div class="cards">${pending.map(u=>`
+        <div class="tcard"><div class="name">${esc(u.nom)}</div><div class="meta">${esc(u.email||'')}, inscrit le ${fmtDT(u.created_at)}</div>
+          <div class="field" style="margin:10px 0 0;"><label for="role-m-${u.id}">Rôle à donner</label><select id="role-m-${u.id}" onchange="document.getElementById('role-${u.id}').value=this.value">${roleOptions('AGENT')}</select></div>
+          <div class="foot"><span></span><div class="actions"><button class="btn good sm" onclick="activateUser('${u.id}')">${ic('check')}Donner l'accès</button><button class="btn ghost sm" onclick="refuseUser('${u.id}')">Refuser</button></div></div>
+        </div>`).join('')}</div>` : emptyState('check', 'Aucune demande en attente.'), { cls: pending.length ? 'flag-warn' : '', flush:true, right:`<span class="count">${pending.length}</span>` })}
+    ${panel('Comptes', 'users', `
+      <div class="only-desk tblwrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead><tbody>
+        ${others.map(u=>`<tr>
+          <td class="strong">${esc(u.nom)}${u.id===state.profile.id?' <span class="sub">(vous)</span>':''}</td>
+          <td>${esc(u.email||'')}</td>
+          <td>${u.id===state.profile.id ? `<span class="pill role">${esc(ROLES[u.role])}</span>` : `<select style="height:36px;font-size:14px;min-width:190px;" onchange="setUserRole('${u.id}', this.value)">${roleOptions(u.role)}</select>`}</td>
+          <td><span class="pill ${u.statut==='actif'?'payee':'annulee'}">${u.statut==='actif'?'Actif':'Inactif'}</span></td>
+          <td><div class="actions">${userActions(u)}</div></td>
+        </tr>`).join('')}
+      </tbody></table></div>
+      <div class="cards">${others.map(u=>`
+        <div class="tcard">
+          <div class="row"><div><div class="name">${esc(u.nom)}${u.id===state.profile.id?' <span class="sub">(vous)</span>':''}</div><div class="meta">${esc(u.email||'')}</div></div>
+          <span class="pill ${u.statut==='actif'?'payee':'annulee'}">${u.statut==='actif'?'Actif':'Inactif'}</span></div>
+          ${u.id===state.profile.id ? `<div style="margin-top:8px;"><span class="pill role">${esc(ROLES[u.role])}</span></div>` : `
+          <div class="field" style="margin:10px 0 0;"><label for="ur-${u.id}">Rôle</label><select id="ur-${u.id}" onchange="setUserRole('${u.id}', this.value)">${roleOptions(u.role)}</select></div>
+          <div class="actions" style="justify-content:flex-start;margin-top:10px;">${userActions(u)}</div>`}
+        </div>`).join('')}</div>
+      <div class="sub" style="padding:10px 16px;">Désactiver bloque l'accès sans effacer l'historique. « Mot de passe » permet de définir un nouveau mot de passe quand l'email de réinitialisation n'arrive pas.</div>`, { flush:true })}`;
 }
 function copyLink(){
   const i = document.getElementById('signupLink');
-  i.select();
-  (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).then(
-    ()=>alert('Lien copié ✅'),
-    ()=>{ document.execCommand('copy'); alert('Lien copié ✅'); }
-  );
+  const done = ()=>toast('Lien copié');
+  if(navigator.clipboard) navigator.clipboard.writeText(i.value).then(done, ()=>{ i.select(); document.execCommand('copy'); done(); });
+  else { i.select(); document.execCommand('copy'); done(); }
 }
 
-/* ---------- MON COMPTE ---------- */
-function pageSettings(){
+/* Account */
+function pageAccount(){
+  const p = state.profile;
   return `
-    <div class="pagehead"><div>
-      <h1>Mon compte</h1>
-    </div></div>
-    <div class="card" style="max-width:440px;">
-      <h3>Compte connecté</h3>
-      <div style="font-size:14px; margin-bottom:4px;">${esc(state.profile.nom)}</div>
-      <div style="font-size:13px; color:var(--text-dim); margin-bottom:20px;">${esc(state.session.user.email)} · ${esc(ROLES[role()])}</div>
-      <h2>Changer mon mot de passe</h2>
-      <form id="passwordForm">
-        <div class="field" style="margin-bottom:12px;"><label>Nouveau mot de passe</label><input type="password" name="password" minlength="6" required></div>
-        <div class="field" style="margin-bottom:16px;"><label>Confirmer le nouveau mot de passe</label><input type="password" name="password2" minlength="6" required></div>
-        <div id="pwFeedback" style="font-size:12.5px; margin-bottom:12px;"></div>
-        <button class="btn" type="submit">Mettre à jour le mot de passe</button>
-      </form>
+    <div class="pagehead"><div><h1>Mon compte</h1><p>${esc(state.session.user.email)}</p></div></div>
+    <div style="max-width:520px;">
+      ${panel('Profil', 'user', `
+        <div class="me"><div class="avatar">${esc(initials(p.nom))}</div><div class="who"><b style="color:var(--ink)">${esc(p.nom)}</b><span class="sub">${esc(ROLES[p.role]||p.role)}</span></div></div>`)}
+      ${panel('Changer mon mot de passe', 'lock', `
+        <form id="passwordForm">
+          <div class="field"><label for="a-p1">Nouveau mot de passe</label><input id="a-p1" type="password" name="password" minlength="6" required autocomplete="new-password"><span class="hint">6 caractères minimum</span></div>
+          <div class="field"><label for="a-p2">Confirmer le mot de passe</label><input id="a-p2" type="password" name="password2" minlength="6" required autocomplete="new-password"></div>
+          <button class="btn" type="submit">Mettre à jour le mot de passe</button>
+        </form>`)}
+      <button class="btn ghost block" onclick="signOut()">${ic('logout')}Se déconnecter</button>
     </div>`;
 }
 
-/* ---------- FORMULAIRES ---------- */
+/* ---------- Handlers ---------- */
 function attachPageHandlers(){
+  // generic bindings for filters: data-bind="group.key"
+  document.querySelectorAll('[data-bind]').forEach(el=>{
+    const [grp, key] = el.dataset.bind.split('.');
+    const evt = (el.tagName==='INPUT' && el.type!=='date') ? 'input' : 'change';
+    el.addEventListener(evt, ()=>{
+      state[grp][key] = el.value;
+      if(grp==='st' && (key==='from' || key==='to')){
+        const r = statsRange() || [today(), today()];
+        state.st.from = key==='from' ? el.value : r[0];
+        state.st.to = key==='to' ? el.value : r[1];
+        state.st.preset = 'custom';
+      }
+      const pos = el.selectionStart;
+      render();
+      const again = document.querySelector(`[data-bind="${el.dataset.bind}"]`);
+      if(again && evt==='input'){ again.focus(); try{ again.setSelectionRange(pos,pos); }catch(e){} }
+    });
+  });
+  document.querySelectorAll('[data-preset]').forEach(b=> b.onclick = ()=>{
+    state.st.preset = b.dataset.preset;
+    if(b.dataset.preset==='custom' && !state.st.from){ const r = presetRange('week'); state.st.from = r[0]; state.st.to = r[1]; }
+    render();
+  });
+
   const txForm = document.getElementById('txForm');
   if(txForm){
     const bifInput = txForm.querySelector('[name=montant_bif]');
-    let bifTouched = false;
-    bifInput.addEventListener('input', ()=>{ bifTouched = true; });
+    let touched = false;
+    bifInput.addEventListener('input', ()=>{ touched = true; });
     const update = ()=>{
       const fd = new FormData(txForm);
-      const aed = fd.get('montant_aed'), tAU = fd.get('taux_aed_usd'), tUB = fd.get('taux_usd_bif');
-      const c = computeTx(aed, tAU, tUB);
-      const box = document.getElementById('calcBox');
-      if(!c.bif){ box.innerHTML = 'Saisissez le montant et les taux pour voir le calcul.'; return; }
-      box.innerHTML = `${fmt(aed)} AED ÷ ${fmt(tAU,4)} = <b>${fmt(c.usd)} $</b><br>
-        ${fmt(c.usd)} $ × ${fmt(tUB)} = ${fmt(c.bifExact,0)} BIF → arrondi : <b>${fmt(c.bif,0)} BIF</b>`;
-      if(!bifTouched) bifInput.value = c.bif;
+      const aed = fd.get('montant_aed'), au = fd.get('taux_aed_usd'), ub = fd.get('taux_usd_bif');
+      const c = computeTx(aed, au, ub);
+      document.getElementById('cvAed').textContent = fmt(aed) + ' AED';
+      document.getElementById('cvUsd').textContent = fmt(c.usd) + ' $';
+      document.getElementById('cvBif').textContent = fmt(c.bif, 0) + ' BIF';
+      document.getElementById('cvOp1').textContent = '÷ ' + (au ? fmt(au, 4) : 'taux');
+      document.getElementById('cvOp2').textContent = '× ' + (ub ? fmt(ub) : 'taux');
+      document.getElementById('cvNote').textContent = c.bif
+        ? `Calcul exact ${fmt(c.bifExact, 0)} BIF, arrondi au multiple de 50 BIF inférieur.`
+        : 'Saisissez le montant et le taux du jour pour voir le calcul.';
+      if(!touched) bifInput.value = c.bif || '';
     };
-    ['montant_aed','taux_aed_usd','taux_usd_bif'].forEach(n=>txForm.querySelector(`[name=${n}]`).addEventListener('input', ()=>{ bifTouched=false; update(); }));
+    ['montant_aed','taux_aed_usd','taux_usd_bif'].forEach(n=>txForm.querySelector(`[name=${n}]`).addEventListener('input', ()=>{ touched = false; update(); }));
     update();
     txForm.onsubmit = async (e)=>{
       e.preventDefault();
@@ -882,8 +1316,7 @@ function attachPageHandlers(){
         montant_bif: parseInt(fd.get('montant_bif'), 10),
         note: String(fd.get('note')||'').trim() || null,
       });
-      if(ok){ state.page = isAgent() ? 'transactions' : 'transactions'; render(); alert('Transaction enregistrée ✅'); }
-      else btn.disabled = false;
+      if(ok) setPage('transactions'); else btn.disabled = false;
     };
   }
 
@@ -891,6 +1324,7 @@ function attachPageHandlers(){
   if(vsForm) vsForm.onsubmit = async (e)=>{
     e.preventDefault();
     const fd = new FormData(vsForm);
+    vsForm.querySelector('button[type=submit]').disabled = true;
     await addVersement({
       montant_aed: parseFloat(fd.get('montant_aed')),
       moyen: String(fd.get('moyen')||'').trim() || null,
@@ -898,35 +1332,26 @@ function attachPageHandlers(){
     });
   };
 
-  const fAgent = document.getElementById('fAgent');
-  if(fAgent) fAgent.onchange = ()=>{ state.filters.agent = fAgent.value; render(); };
-  const fStatut = document.getElementById('fStatut');
-  if(fStatut) fStatut.onchange = ()=>{ state.filters.statut = fStatut.value; render(); };
-  const fPeriode = document.getElementById('fPeriode');
-  if(fPeriode) fPeriode.onchange = ()=>{ state.filters.periode = fPeriode.value; render(); };
-
-  const passwordForm = document.getElementById('passwordForm');
-  if(passwordForm) passwordForm.onsubmit = async (e)=>{
+  const pw = document.getElementById('passwordForm');
+  if(pw) pw.onsubmit = async (e)=>{
     e.preventDefault();
-    const f = new FormData(passwordForm);
-    const fb = document.getElementById('pwFeedback');
-    const p1 = f.get('password'), p2 = f.get('password2');
-    if(p1 !== p2){ fb.style.color='var(--bad)'; fb.textContent = 'Les deux mots de passe ne correspondent pas.'; return; }
-    const {error} = await sb.auth.updateUser({password: p1});
-    if(error){ fb.style.color='var(--bad)'; fb.textContent = 'Erreur : '+error.message; return; }
-    fb.style.color='var(--good)'; fb.textContent = 'Mot de passe mis à jour.';
-    passwordForm.reset();
+    const fd = new FormData(pw);
+    if(fd.get('password') !== fd.get('password2')){ toast('Les deux mots de passe ne correspondent pas', 'bad'); return; }
+    const { error } = await sb.auth.updateUser({ password: fd.get('password') });
+    if(error){ toast(friendlyAuthError(error), 'bad'); return; }
+    pw.reset(); toast('Mot de passe mis à jour');
   };
 }
 
-/* ---------- DEMARRAGE ---------- */
+/* ---------- Start ---------- */
 (async function boot(){
-  const {data: {session}} = await sb.auth.getSession();
-  if(session){ await afterLogin(session); } else { render(); }
   sb.auth.onAuthStateChange((event, session)=>{
-    if(event === 'SIGNED_OUT'){ state.session=null; state.profile=null; render(); }
-    if(event === 'SIGNED_IN' && session && !state.session){ afterLogin(session); }
+    if(event==='PASSWORD_RECOVERY'){ state.recovery = true; state.session = session; render(); }
+    else if(event==='SIGNED_OUT'){ state.session = null; state.profile = null; render(); }
   });
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session && !state.recovery){ await afterLogin(session); }
+  else { state.session = session; render(); }
 })();
 </script>
 </body>
