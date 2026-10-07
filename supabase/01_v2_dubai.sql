@@ -1,5 +1,5 @@
 -- =====================================================================
--- FlashRemit v2 — Dubaï → Bujumbura
+-- Pax International Travels and Services v2 — Dubaï → Bujumbura
 -- A coller dans Supabase → SQL Editor → Run (une seule fois).
 -- Archive l'ancien modèle (rien n'est supprimé), crée les tables
 -- transactions (Dubaï) et versements (envois à Naomie), et les règles
