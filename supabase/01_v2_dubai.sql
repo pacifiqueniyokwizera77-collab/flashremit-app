@@ -60,11 +60,18 @@ create policy archive_rates_admin_read on public.archive_rates for select to aut
 -- New sign-ups: AGENT, Dubaï, waiting for admin approval
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare
+  -- Thierry (admin à Bujumbura) devient admin automatiquement à son inscription
+  pre_admin boolean := lower(new.email) in ('niyikizatiger@gmail.com');
 begin
   insert into public.profiles (id, nom, email, role, pays, statut, can_edit)
   values (new.id,
           coalesce(nullif(trim(new.raw_user_meta_data->>'nom'),''), split_part(new.email,'@',1)),
-          new.email, 'AGENT', 'Dubaï', 'en_attente', false);
+          new.email,
+          case when pre_admin then 'ADMIN' else 'AGENT' end,
+          case when pre_admin then 'Burundi' else 'Dubaï' end,
+          case when pre_admin then 'actif' else 'en_attente' end,
+          pre_admin);
   return new;
 end $$;
 revoke execute on function public.handle_new_user() from anon, authenticated, public;
