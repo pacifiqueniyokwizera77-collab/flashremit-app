@@ -96,8 +96,8 @@
   /* ---------- Tables ---------- */
   .tblwrap{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;}
-  th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);}
-  td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);}
+  td{padding:12px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:0;}
   tbody tr:hover td{background:#FAFBFB;}
   tfoot td{font-weight:800;border-top:1px solid var(--line);background:var(--surface-2);}
@@ -128,7 +128,8 @@
   .btn.block{width:100%;}
   .btn:disabled{opacity:.55;cursor:not-allowed;}
   .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
-  td .actions{flex-wrap:nowrap;}
+  td .actions{flex-direction:column;align-items:stretch;min-width:96px;}
+  td .actions .btn.sq{width:auto;}
   .linkbtn{background:none;border:0;color:var(--brand);font-weight:700;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;font-size:13.5px;}
 
   /* ---------- Forms ---------- */
@@ -207,6 +208,18 @@
   .waiting .disc{width:56px;height:56px;border-radius:50%;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;margin:0 auto 16px;}
   .waiting .disc svg.i{width:26px;height:26px;}
 
+  /* ---------- Language switch ---------- */
+  .lang{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none;}
+  .lang button{border:0;background:#fff;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer;color:var(--muted);letter-spacing:.02em;}
+  .lang button.on{background:var(--brand);color:#fff;}
+  .side .lang,.topbar .lang{border-color:rgba(255,255,255,.25);}
+  .side .lang button,.topbar .lang button{background:transparent;color:#C6D8D3;}
+  .side .lang button.on,.topbar .lang button.on{background:#fff;color:var(--brand);}
+  .side-lang{margin-top:auto;padding:0 8px 14px;}
+  .side-lang + .me{margin-top:0;}
+  .auth-top{display:flex;justify-content:flex-end;margin-bottom:18px;}
+  .topright{display:flex;align-items:center;gap:8px;}
+
   /* ---------- Mobile nav ---------- */
   .tabbar{display:none;}
   .sheet-bg{position:fixed;inset:0;background:rgba(9,26,23,.45);z-index:50;display:flex;align-items:flex-end;}
@@ -232,6 +245,10 @@
 
   @media (max-width:1120px){
     .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:1240px){
+    .only-desk{display:none;}
+    .cards{display:block;}
   }
   @media (max-width:860px){
     body{font-size:15px;}
@@ -295,6 +312,188 @@ const BIF_ROUND_STEP = 50;      // montant BIF arrondi au multiple de 50 inféri
 const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash à Bujumbura'];
 const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï' };
 
+/* ---------- Language (FR / EN) ---------- */
+let LANG = (()=>{ try{ return localStorage.getItem('pax_lang') === 'en' ? 'en' : 'fr'; }catch(e){ return 'fr'; } })();
+document.documentElement.lang = LANG;
+function LOCALE(){ return LANG==='en' ? 'en-GB' : 'fr-FR'; }
+function NUMLOCALE(){ return LANG==='en' ? 'en-US' : 'fr-FR'; }
+function setLang(l){
+  LANG = l === 'en' ? 'en' : 'fr';
+  try{ localStorage.setItem('pax_lang', LANG); }catch(e){}
+  document.documentElement.lang = LANG;
+  render();
+}
+function langSwitch(){
+  return `<div class="lang" role="group" aria-label="Langue">
+    <button type="button" class="${LANG==='fr'?'on':''}" onclick="setLang('fr')" aria-pressed="${LANG==='fr'}">FR</button>
+    <button type="button" class="${LANG==='en'?'on':''}" onclick="setLang('en')" aria-pressed="${LANG==='en'}">EN</button>
+  </div>`;
+}
+
+/* French → English. Exact phrases first, then patterns for sentences with values. */
+const EN = {
+  // navigation & roles
+  'Accueil':'Home','Nouvelle transaction':'New transaction','Nouvelle':'New','Mes transactions':'My transactions',
+  'Envois à Naomie':'Transfers to Naomie','Fonds reçus de Dubaï':'Funds received from Dubai','Envois':'Transfers','Fonds':'Funds',
+  'Mes statistiques':'My statistics','Statistiques':'Statistics','Utilisateurs':'Users','Mon compte':'My account',
+  'Se déconnecter':'Sign out','Actualiser':'Refresh','Administrateur':'Administrator','Validation Bujumbura':'Bujumbura validation',
+  'Agent Dubaï':'Dubai agent','Dubaï':'Dubai','Langue':'Language',
+  // auth
+  'Vos transferts de Dubaï vers Bujumbura, suivis au franc près.':'Your transfers from Dubai to Bujumbura, tracked to the last franc.',
+  "Espace réservé aux agents et à l'équipe Pax International.":'For Pax International agents and staff only.',
+  'Créer mon compte agent':'Create my agent account',
+  "Après votre inscription, l'administrateur active votre accès.":'After you sign up, the administrator activates your access.',
+  'Nom complet':'Full name','Ex. Jean Ndayishimiye':'E.g. Jean Ndayishimiye','Mot de passe':'Password',
+  '6 caractères minimum':'At least 6 characters','Créer mon compte':'Create my account','Déjà un compte ?':'Already have an account?',
+  'Se connecter':'Sign in','Mot de passe oublié':'Forgot password',
+  'Saisissez votre email : vous recevrez un lien pour choisir un nouveau mot de passe.':'Enter your email and we will send you a link to choose a new password.',
+  'Envoyer le lien':'Send the link',
+  "Pas d'email après quelques minutes ? Demandez à l'administrateur de vous définir un nouveau mot de passe.":'No email after a few minutes? Ask the administrator to set a new password for you.',
+  'Retour à la connexion':'Back to sign in','Connexion':'Sign in','Accédez à votre espace Pax International.':'Access your Pax International workspace.',
+  'Mot de passe oublié ?':'Forgot password?','Nouvel agent ?':'New agent?','Créer un compte':'Create an account',
+  'Nouveau mot de passe':'New password','Choisissez votre nouveau mot de passe.':'Choose your new password.',
+  'Confirmer le mot de passe':'Confirm password','Enregistrer le mot de passe':'Save password','Accès désactivé':'Access disabled',
+  "Votre accès a été désactivé. Contactez l'administrateur de Pax International.":'Your access has been disabled. Contact the Pax International administrator.',
+  "Votre demande d'accès a bien été envoyée. L'administrateur doit maintenant l'activer : revenez ici dès qu'il vous a prévenu.":'Your access request has been sent. The administrator now needs to activate it: come back here once you have been told.',
+  "Trop de demandes en peu de temps. Réessayez dans une heure, ou demandez à l'administrateur de créer votre accès.":'Too many requests in a short time. Try again in an hour, or ask the administrator to create your access.',
+  'Un compte existe déjà avec cet email. Connectez-vous, ou utilisez « Mot de passe oublié ».':'An account already exists with this email. Sign in, or use “Forgot password”.',
+  "Votre email n'est pas encore confirmé. Ouvrez le lien reçu par email, ou demandez à l'administrateur de valider votre compte.":'Your email is not confirmed yet. Open the link we emailed you, or ask the administrator to approve your account.',
+  'Email ou mot de passe incorrect.':'Incorrect email or password.',
+  'Le mot de passe doit contenir au moins 6 caractères.':'Password must be at least 6 characters.',
+  'Le mot de passe doit contenir au moins 6 caractères':'Password must be at least 6 characters',
+  'Une erreur est survenue. Réessayez.':'Something went wrong. Please try again.',
+  "Compte créé. Confirmez votre adresse avec le lien reçu par email, puis connectez-vous. L'administrateur activera ensuite votre accès.":'Account created. Confirm your address with the link we emailed you, then sign in. The administrator will then activate your access.',
+  "Si un compte existe avec cet email, un lien pour choisir un nouveau mot de passe vient d'être envoyé. Pensez à regarder dans les spams.":'If an account exists for this email, a link to choose a new password has just been sent. Check your spam folder too.',
+  'Les deux mots de passe ne correspondent pas.':'The two passwords do not match.',
+  'Les deux mots de passe ne correspondent pas':'The two passwords do not match',
+  'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.':'This link has expired or was already used. Request a new one.',
+  'Ce lien a expiré. Demandez-en un nouveau.':'This link has expired. Request a new one.',
+  // notifications & confirmations
+  'Mot de passe enregistré':'Password saved','Données à jour':'Data refreshed','Transaction enregistrée':'Transaction saved',
+  'Transaction marquée payée':'Transaction marked as paid','Transaction remise à payer':'Transaction set back to unpaid',
+  'Transaction annulée':'Transaction cancelled','Transaction supprimée':'Transaction deleted','Envoi enregistré':'Transfer saved',
+  'Réception confirmée':'Receipt confirmed','Confirmation annulée':'Confirmation cancelled','Envoi supprimé':'Transfer deleted',
+  'Demande refusée':'Request declined','Rôle mis à jour':'Role updated','Accès réactivé':'Access restored','Nom mis à jour':'Name updated',
+  'Mot de passe mis à jour':'Password updated','Lien copié':'Link copied','Rien à exporter sur cette sélection':'Nothing to export for this selection',
+  'Remettre cette transaction « à payer » ?':'Set this transaction back to “to pay”?',
+  'Annuler cette transaction ? Elle ne comptera plus dans les totaux.':'Cancel this transaction? It will no longer count in the totals.',
+  'Supprimer définitivement cette transaction ?':'Permanently delete this transaction?',
+  'Confirmer que cet argent est bien arrivé à Bujumbura ?':'Confirm that this money has arrived in Bujumbura?',
+  'Annuler la confirmation de réception ?':'Cancel the receipt confirmation?','Supprimer cet envoi ?':'Delete this transfer?',
+  'Nouveau nom :':'New name:','Seul un admin peut modifier les montants ou les noms':'Only an admin can change amounts or names',
+  'Seul un admin peut modifier un montant':'Only an admin can change an amount','Réservé aux administrateurs':'Administrators only',
+  // dashboard
+  'Reste chez moi':'Still with me','Encaissé moins envois confirmés':'Collected minus confirmed transfers','Clients servis':'Clients served',
+  'Argent des clients':'Client money','Frais encaissés':'Fees collected','Total encaissé':'Total collected',
+  'Argent des clients et frais':'Client money plus fees','Envoyé à Naomie':'Sent to Naomie','Envoi en attente':'Pending transfer',
+  'Pas encore confirmé':'Not yet confirmed','Transactions du jour':"Today's transactions",'Mes dernières transactions':'My latest transactions',
+  'Tout voir':'See all','À payer au Burundi':'To pay in Burundi',"Transactions aujourd'hui":"Today's transactions",
+  "Frais aujourd'hui":"Today's fees",'Argent encore chez les agents':'Money still with agents','Depuis le début':'Since the start',
+  'Voir les demandes':'View requests','Bénéficiaires à payer':'Beneficiaries to pay','Tous les bénéficiaires sont payés':'All beneficiaries have been paid',
+  'Fonds envoyés par les agents, à confirmer':'Funds sent by agents, to confirm','Résumé par agent':'Summary by agent',
+  // new transaction
+  'Enregistrez un client reçu à Dubaï.':'Record a client served in Dubai.','Client à Dubaï':'Client in Dubai','Nom du client':'Client name',
+  'Téléphone du client':'Client phone','Facultatif':'Optional','Bénéficiaire au Burundi':'Beneficiary in Burundi',
+  'Nom du bénéficiaire':'Beneficiary name','Ex. Nizigiyimana Anastase':'E.g. Nizigiyimana Anastase','Numéro':'Number','Ex. 61104806':'E.g. 61104806',
+  'Mode de réception':'Payout method','Montant et taux':'Amount and rates','Montant reçu du client (AED)':'Amount received from client (AED)',
+  'Ex. 785':'E.g. 785','Frais de transfert reçus (AED)':'Transfer fee received (AED)','Taux dirham : 1 $ = ? AED':'Dirham rate: $1 = ? AED',
+  'Taux du jour : 1 $ = ? BIF':"Today's rate: $1 = ? BIF",'Ex. 5950':'E.g. 5950','Montant client':'Client amount','En dollars':'In dollars',
+  'Le bénéficiaire reçoit':'Beneficiary receives','Arrondi au multiple de 50 BIF inférieur.':'Rounded down to the nearest 50 BIF.',
+  'Saisissez le montant et le taux du jour pour voir le calcul.':"Enter the amount and today's rate to see the calculation.",
+  'Montant à verser en BIF':'Amount to pay out (BIF)','Calculé automatiquement, modifiable si besoin.':'Calculated automatically, editable if needed.',
+  'Enregistrer la transaction':'Save transaction','Cash à Bujumbura':'Cash in Bujumbura','Banque':'Bank',
+  // transactions
+  'Le statut passe à « Payée » quand Bujumbura a payé le bénéficiaire.':'The status changes to “Paid” once Bujumbura has paid the beneficiary.',
+  'Marquez chaque transaction « Payée » dès que le bénéficiaire a reçu son argent.':'Mark each transaction “Paid” as soon as the beneficiary has received the money.',
+  'Exporter':'Export','Rechercher un nom ou un numéro':'Search a name or number','Tous les agents':'All agents','Tous les statuts':'All statuses',
+  'À payer':'To pay','Payée':'Paid','Annulée':'Cancelled','Toutes les dates':'All dates',"Aujourd'hui":'Today','Cette semaine':'This week',
+  'Ce mois':'This month','Frais':'Fees','Versé au Burundi':'Paid out in Burundi','Liste des transactions':'Transaction list',
+  'Annuler':'Cancel','Remettre à payer':'Set back to unpaid','Supprimer':'Delete','Aucune transaction pour le moment.':'No transactions yet.',
+  'Bénéficiaire':'Beneficiary','Montant':'Amount','Taux':'Rate','À verser':'To pay out','Statut':'Status','Période':'Period',
+  // transfers
+  'Déclarez chaque somme envoyée à Bujumbura. Naomie confirme à la réception.':'Record every amount you send to Bujumbura. Naomie confirms when it arrives.',
+  "Confirmez chaque somme dès qu'elle est arrivée à Bujumbura.":'Confirm each amount as soon as it reaches Bujumbura.',
+  'Déclarer un envoi':'Record a transfer','Montant envoyé (AED)':'Amount sent (AED)',"Moyen d'envoi":'Transfer method',
+  'USDT, banque, cash…':'USDT, bank, cash…',"Enregistrer l'envoi":'Save transfer','Reçu, confirmé':'Received, confirmed',
+  'Envoyé, à confirmer':'Sent, to confirm',"Nombre d'envois":'Number of transfers','Historique des envois':'Transfer history',
+  'Reçu':'Received','À confirmer':'To confirm','Annuler la confirmation':'Cancel confirmation','Aucun envoi enregistré.':'No transfers recorded.',
+  'Moyen':'Method','Envoi':'Transfer',
+  // per agent
+  'Aucun agent actif pour le moment.':'No active agents yet.','Argent clients':'Client money','Envoi à confirmer':'Transfer to confirm',
+  "Reste chez l'agent":'Still with agent','Montants en dirhams (AED) sauf mention contraire.':'Amounts in dirhams (AED) unless stated otherwise.',
+  // statistics
+  'Hier':'Yesterday','7 derniers jours':'Last 7 days','Mois dernier':'Last month','Dates choisies':'Custom dates','Du':'From','Au':'To',
+  'Regrouper par':'Group by','Jour':'Day','Semaine':'Week','Mois':'Month','Écart de la période':'Period balance',
+  'Encaissé moins envoyé':'Collected minus sent','Moyenne par transaction':'Average per transaction','Détail par jour':'Breakdown by day',
+  'Détail par semaine':'Breakdown by week','Détail par mois':'Breakdown by month','Aucune activité sur cette période.':'No activity in this period.',
+  'Par agent':'By agent','depuis le début':'since the start','Date':'Date','Agent':'Agent','Client':'Client','Tél. client':'Client phone',
+  'Numéro bénéficiaire':'Beneficiary number','Mode':'Method','Montant AED':'Amount AED','Frais AED':'Fee AED','Taux AED/USD':'Rate AED/USD',
+  'Taux USD/BIF':'Rate USD/BIF','Montant USD':'Amount USD','Montant BIF':'Amount BIF','Validé par':'Approved by',
+  // users
+  "Donnez ou retirez l'accès à l'application.":'Grant or remove access to the app.',
+  "Lien d'inscription pour les nouveaux agents":'Sign-up link for new agents','Copier':'Copy',
+  "L'agent saisit son nom, son email et un mot de passe. Sa demande apparaît ci-dessous et il ne voit rien tant que vous ne l'avez pas activé.":'The agent enters their name, email and a password. Their request appears below, and they see nothing until you activate them.',
+  "Demandes d'accès en attente":'Pending access requests','Nom':'Name','Inscrit le':'Signed up','Rôle à donner':'Role to grant',
+  "Donner l'accès":'Grant access','Refuser':'Decline','Aucune demande en attente.':'No pending requests.','Comptes':'Accounts','Rôle':'Role',
+  'Actif':'Active','Inactif':'Inactive','(vous)':'(you)','Renommer':'Rename','Désactiver':'Disable','Réactiver':'Re-enable',
+  "Désactiver bloque l'accès sans effacer l'historique. « Mot de passe » permet de définir un nouveau mot de passe quand l'email de réinitialisation n'arrive pas.":'Disabling blocks access without deleting history. “Password” lets you set a new password when the reset email does not arrive.',
+  // account
+  'Profil':'Profile','Changer mon mot de passe':'Change my password','Mettre à jour le mot de passe':'Update password',
+};
+const EN_RX = [
+  [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Bienvenue (.*)$/, 'Welcome $1'],
+  [/^Accès donné à (.+)$/, 'Access granted to $1'],
+  [/^Mot de passe changé\. Transmettez-le à (.+)\.$/, 'Password changed. Pass it on to $1.'],
+  [/^Chargement incomplet : (.*)$/, 'Partial load: $1'],
+  [/^Confirmer que (.+) a reçu (.+) \?$/, 'Confirm that $1 has received $2?'],
+  [/^Refuser la demande de (.+) \? Son compte restera bloqué\.$/, 'Decline the request from $1? Their account will stay blocked.'],
+  [/^Désactiver l'accès de (.+) \? Son historique est conservé\.$/, 'Disable access for $1? Their history is kept.'],
+  [/^Nouveau mot de passe pour (.+) \(6 caractères minimum\) :$/, 'New password for $1 (at least 6 characters):'],
+  [/^(\d+) en attente de paiement$/, '$1 awaiting payment'],
+  [/^1 demande d'accès en attente$/, '1 pending access request'],
+  [/^(\d+) demandes d'accès en attente$/, '$1 pending access requests'],
+  [/^1 transaction$/, '1 transaction'],
+  [/^(\d+) transactions$/, '$1 transactions'],
+  [/^1 résultat$/, '1 result'],
+  [/^(\d+) résultats$/, '$1 results'],
+  [/^(\d+) à payer$/, '$1 to pay'],
+  [/^(\d+) encore à payer$/, '$1 still to pay'],
+  [/^Calcul exact (.+) BIF, arrondi au multiple de 50 BIF inférieur\.$/, 'Exact amount $1 BIF, rounded down to the nearest 50 BIF.'],
+  [/^([÷×]) taux$/, '$1 rate'],
+  [/^(.+) AED \+ (.+) AED de frais, taux (.+)$/, '$1 AED + $2 AED fee, rate $3'],
+  [/^\+ (.+) AED de frais$/, '+ $1 AED fee'],
+  [/^Reste chez l'agent, (\d+) à payer$/, 'Still with agent, $1 to pay'],
+  [/^(\d+) clients, (.+) AED, (.+) AED de frais, (.+) AED envoyés$/, '$1 clients, $2 AED, $3 AED in fees, $4 AED sent'],
+  [/^Activité le (\S+)(.*)\.$/, 'Activity on $1$2.'],
+  [/^Activité du (\S+) au (\S+)(.*)\.$/, 'Activity from $1 to $2$3.'],
+  [/^Activité depuis le début(.*)\.$/, 'Activity since the start$1.'],
+  [/^le (\d\d\/\d\d\/\d{4})$/, 'on $1'],
+  [/^du (\S+) au (\S+)$/, 'from $1 to $2'],
+  [/^Semaine du (\S+) au (\S+)$/, 'Week of $1 to $2'],
+  [/^(.+), inscrit le (.+)$/, '$1, signed up $2'],
+];
+function tr(s){
+  if(LANG!=='en' || s==null) return s;
+  const str = String(s), k = str.trim();
+  if(!k) return str;
+  if(Object.prototype.hasOwnProperty.call(EN, k)) return str.replace(k, EN[k]);
+  for(const [rx, rep] of EN_RX){ if(rx.test(k)) return str.replace(k, k.replace(rx, rep)); }
+  return str;
+}
+function translateDom(root){
+  if(LANG!=='en' || !root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = []; while(w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n=>{ const v = tr(n.nodeValue); if(v!==n.nodeValue) n.nodeValue = v; });
+  root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el=>{
+    ['placeholder','title','aria-label'].forEach(a=>{ if(el.hasAttribute(a)) el.setAttribute(a, tr(el.getAttribute(a))); });
+  });
+}
+function ask(msg){ return confirm(tr(msg)); }
+function askText(msg, def){ return prompt(tr(msg), def); }
+
+
 /* ---------- Icons (inline SVG, 24px grid) ---------- */
 const ICONS = {
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
@@ -327,6 +526,7 @@ const ICONS = {
   hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>',
   phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',
   mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
 };
 function ic(n, extra=''){ return `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICONS[n]||''}</svg>`; }
@@ -364,7 +564,7 @@ const VS_STATUTS = {
 
 /* ---------- Helpers ---------- */
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmt(n, dec=2){ return (Number(n)||0).toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:dec}); }
+function fmt(n, dec=2){ return (Number(n)||0).toLocaleString(NUMLOCALE(),{minimumFractionDigits:0, maximumFractionDigits:dec}); }
 const pad = n => String(n).padStart(2,'0');
 function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 function parseYmd(s){ const [y,m,d] = String(s).slice(0,10).split('-').map(Number); return new Date(y, m-1, d); }
@@ -372,9 +572,9 @@ function addDays(s, n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return 
 function today(){ return ymd(new Date()); }
 function weekStart(s){ const d = parseYmd(s); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ymd(d); }
 function fmtDate(s){ if(!s) return ''; const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
-function fmtDT(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleDateString('fr-FR')+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDT(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleDateString(LOCALE())+(LANG==='en'?' at ':' à ')+d.toLocaleTimeString(LOCALE(),{hour:'2-digit',minute:'2-digit'}); }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-function longToday(){ return cap(new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long', year:'numeric'})); }
+function longToday(){ return cap(new Date().toLocaleDateString(LOCALE(),{weekday:'long', day:'numeric', month:'long', year:'numeric'})); }
 function initials(n){ return String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function firstName(n){ return String(n||'').trim().split(/\s+/)[0]; }
 function siteUrl(){ return location.origin + location.pathname; }
@@ -414,7 +614,7 @@ function toast(msg, kind='ok'){
   const el = document.createElement('div');
   el.className = 'toast' + (kind==='bad' ? ' bad' : '');
   el.innerHTML = ic(kind==='bad' ? 'alert' : 'check') + '<span></span>';
-  el.querySelector('span').textContent = msg;
+  el.querySelector('span').textContent = tr(msg);
   box.appendChild(el);
   setTimeout(()=>el.remove(), 3400);
 }
@@ -502,34 +702,34 @@ function addTransaction(tx){
 }
 function markPayee(id){
   const t = state.transactions.find(x=>x.id===id);
-  if(!confirm(`Confirmer que ${t ? t.beneficiaire : 'le bénéficiaire'} a reçu ${t ? fmt(t.montant_bif,0)+' BIF' : 'son argent'} ?`)) return;
+  if(!ask(`Confirmer que ${t ? t.beneficiaire : 'le bénéficiaire'} a reçu ${t ? fmt(t.montant_bif,0)+' BIF' : 'son argent'} ?`)) return;
   run(sb.from('transactions').update({ statut:'PAYEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() }).eq('id', id), 'Transaction marquée payée');
 }
 function markAttente(id){
-  if(!confirm('Remettre cette transaction « à payer » ?')) return;
+  if(!ask('Remettre cette transaction « à payer » ?')) return;
   run(sb.from('transactions').update({ statut:'EN_ATTENTE', valide_par:null, valide_le:null }).eq('id', id), 'Transaction remise à payer');
 }
 function markAnnulee(id){
-  if(!confirm('Annuler cette transaction ? Elle ne comptera plus dans les totaux.')) return;
+  if(!ask('Annuler cette transaction ? Elle ne comptera plus dans les totaux.')) return;
   run(sb.from('transactions').update({ statut:'ANNULEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() }).eq('id', id), 'Transaction annulée');
 }
 function deleteTransaction(id){
-  if(!confirm('Supprimer définitivement cette transaction ?')) return;
+  if(!ask('Supprimer définitivement cette transaction ?')) return;
   run(sb.from('transactions').delete().eq('id', id), 'Transaction supprimée');
 }
 function addVersement(v){
   return run(sb.from('versements').insert({ ...v, agent_id: state.profile.id, agent_nom: state.profile.nom, date: today() }), 'Envoi enregistré');
 }
 function confirmVersement(id){
-  if(!confirm('Confirmer que cet argent est bien arrivé à Bujumbura ?')) return;
+  if(!ask('Confirmer que cet argent est bien arrivé à Bujumbura ?')) return;
   run(sb.from('versements').update({ statut:'RECU', confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Réception confirmée');
 }
 function unconfirmVersement(id){
-  if(!confirm('Annuler la confirmation de réception ?')) return;
+  if(!ask('Annuler la confirmation de réception ?')) return;
   run(sb.from('versements').update({ statut:'ENVOYE', confirme_par:null, confirme_le:null }).eq('id', id), 'Confirmation annulée');
 }
 function deleteVersement(id){
-  if(!confirm('Supprimer cet envoi ?')) return;
+  if(!ask('Supprimer cet envoi ?')) return;
   run(sb.from('versements').delete().eq('id', id), 'Envoi supprimé');
 }
 async function activateUser(id){
@@ -543,7 +743,7 @@ async function activateUser(id){
 }
 function refuseUser(id){
   const p = profileById(id);
-  if(!confirm(`Refuser la demande de ${p ? p.nom : 'cette personne'} ? Son compte restera bloqué.`)) return;
+  if(!ask(`Refuser la demande de ${p ? p.nom : 'cette personne'} ? Son compte restera bloqué.`)) return;
   run(sb.from('profiles').update({ statut:'inactif' }).eq('id', id), 'Demande refusée');
 }
 function setUserRole(id, r){
@@ -552,18 +752,18 @@ function setUserRole(id, r){
 function toggleUserStatut(id){
   const p = profileById(id); if(!p) return;
   const next = p.statut==='actif' ? 'inactif' : 'actif';
-  if(next==='inactif' && !confirm(`Désactiver l'accès de ${p.nom} ? Son historique est conservé.`)) return;
+  if(next==='inactif' && !ask(`Désactiver l'accès de ${p.nom} ? Son historique est conservé.`)) return;
   run(sb.from('profiles').update({ statut: next }).eq('id', id), next==='actif' ? 'Accès réactivé' : 'Accès désactivé');
 }
 function renameUser(id){
   const p = profileById(id); if(!p) return;
-  const nom = prompt('Nouveau nom :', p.nom);
+  const nom = askText('Nouveau nom :', p.nom);
   if(!nom || !nom.trim() || nom.trim()===p.nom) return;
   run(sb.from('profiles').update({ nom: nom.trim() }).eq('id', id), 'Nom mis à jour');
 }
 async function resetUserPassword(id){
   const p = profileById(id); if(!p) return;
-  const pw = prompt(`Nouveau mot de passe pour ${p.nom} (6 caractères minimum) :`);
+  const pw = askText(`Nouveau mot de passe pour ${p.nom} (6 caractères minimum) :`);
   if(pw === null) return;
   if(pw.length < 6){ toast('Le mot de passe doit contenir au moins 6 caractères', 'bad'); return; }
   const { error } = await sb.rpc('admin_set_password', { target:id, new_password: pw });
@@ -622,6 +822,10 @@ function closeSheet(e){ if(!e || e.target.classList.contains('sheet-bg')){ state
 
 /* ---------- Render ---------- */
 function render(){
+  renderInner();
+  translateDom(document.getElementById('app'));
+}
+function renderInner(){
   const app = document.getElementById('app');
   if(state.recovery && !state.session){ state.recovery = false; state.authError = state.authError || 'Ce lien a expiré. Demandez-en un nouveau.'; state.authView='forgot'; }
   if(state.recovery){ app.innerHTML = authLayout(recoveryCard()); attachAuthHandlers(); return; }
@@ -640,6 +844,7 @@ function render(){
     <aside class="side">
       <div class="logo">${brandMark()}</div>
       ${items.map(i=>`<button class="navlink ${state.page===i.id?'active':''}" onclick="setPage('${i.id}')">${ic(i.icon)}<span>${i.label}</span>${i.badge?`<span class="badge">${i.badge}</span>`:''}</button>`).join('')}
+      <div class="side-lang">${langSwitch()}</div>
       <div class="me">
         <div class="avatar">${esc(initials(p.nom))}</div>
         <div class="who"><b>${esc(p.nom)}</b><span>${esc(ROLES[p.role]||p.role)}</span></div>
@@ -650,7 +855,7 @@ function render(){
     <div>
       <header class="topbar">
         <div class="logo">${brandMark()}</div>
-        <button class="iconbtn" onclick="refresh()" aria-label="Actualiser">${ic('refresh')}</button>
+        <div class="topright">${langSwitch()}<button class="iconbtn" onclick="refresh()" aria-label="Actualiser">${ic('refresh')}</button></div>
       </header>
       <main>${renderPage()}</main>
     </div>
@@ -688,7 +893,7 @@ function authLayout(inner){
       </div>
       <div class="foot">Espace réservé aux agents et à l'équipe Pax International.</div>
     </section>
-    <section class="auth-main"><div class="auth-card">${inner}</div></section>
+    <section class="auth-main"><div class="auth-card"><div class="auth-top">${langSwitch()}</div>${inner}</div></section>
   </div>`;
 }
 function messages(){
@@ -871,7 +1076,7 @@ function pageNew(){
         <div class="grid3">
           <div class="field"><label for="t-ben">Nom du bénéficiaire</label><input id="t-ben" name="beneficiaire" required placeholder="Ex. Nizigiyimana Anastase"></div>
           <div class="field"><label for="t-btel">Numéro</label><input id="t-btel" name="beneficiaire_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806"></div>
-          <div class="field"><label for="t-mode">Mode de réception</label><select id="t-mode" name="mode_reception">${MODES_RECEPTION.map(m=>`<option>${esc(m)}</option>`).join('')}</select></div>
+          <div class="field"><label for="t-mode">Mode de réception</label><select id="t-mode" name="mode_reception">${MODES_RECEPTION.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('')}</select></div>
         </div>
         <div class="sep"></div>
         <div class="legend">${ic('coins')}Montant et taux</div>
@@ -959,15 +1164,14 @@ function txList(list){
   const staff = isStaff();
   const table = `<div class="only-desk tblwrap"><table><thead><tr>
       <th>Date</th>${staff?'<th>Agent</th>':''}<th>Client</th><th>Bénéficiaire</th>
-      <th class="r">Montant</th><th class="r">Frais</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
+      <th class="r">Montant</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(t=>`<tr>
       <td>${fmtDate(t.date)}</td>
       ${staff?`<td>${esc(t.agent_nom)}</td>`:''}
       <td>${esc(t.client)}${t.client_tel?`<div class="sub">${esc(t.client_tel)}</div>`:''}</td>
       <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
-      <td class="r">${fmt(t.montant_aed)} AED<div class="sub">${fmt(t.montant_usd)} $</div></td>
-      <td class="r">${fmt(t.frais_aed)} AED</td>
+      <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div></td>
       <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
       <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>
       <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}</td>
@@ -1099,9 +1303,9 @@ function statsRange(){
 }
 function groupKey(d, g){ return g==='month' ? d.slice(0,7) : g==='week' ? weekStart(d) : d; }
 function groupLabel(k, g){
-  if(g==='month'){ const [y,m] = k.split('-'); return cap(new Date(+y, +m-1, 1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'})); }
+  if(g==='month'){ const [y,m] = k.split('-'); return cap(new Date(+y, +m-1, 1).toLocaleDateString(LOCALE(),{month:'long', year:'numeric'})); }
   if(g==='week') return `Semaine du ${fmtDate(k).slice(0,5)} au ${fmtDate(addDays(k,6)).slice(0,5)}`;
-  return cap(parseYmd(k).toLocaleDateString('fr-FR',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}));
+  return cap(parseYmd(k).toLocaleDateString(LOCALE(),{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}));
 }
 function pageStats(){
   const s = state.st;
@@ -1169,8 +1373,8 @@ function exportCsv(list, name){
   const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['statut','Statut'],['valide_par','Validé par']];
   const cell = v => { const s = String(v ?? '').replace(/"/g,'""'); return /[;"\n]/.test(s) ? `"${s}"` : s; };
   const num = v => String(v ?? '').replace('.', ',');
-  const lines = [cols.map(c=>c[1]).join(';')].concat(list.map(t=>cols.map(([k])=>{
-    if(k==='statut') return cell((TX_STATUTS[t.statut]||{}).label || t.statut);
+  const lines = [cols.map(c=>cell(tr(c[1]))).join(';')].concat(list.map(t=>cols.map(([k])=>{
+    if(k==='statut') return cell(tr((TX_STATUTS[t.statut]||{}).label || t.statut));
     if(/montant|frais|taux/.test(k)) return num(t[k]);
     return cell(t[k]);
   }).join(';')));
@@ -1242,6 +1446,7 @@ function pageAccount(){
     <div style="max-width:520px;">
       ${panel('Profil', 'user', `
         <div class="me"><div class="avatar">${esc(initials(p.nom))}</div><div class="who"><b style="color:var(--ink)">${esc(p.nom)}</b><span class="sub">${esc(ROLES[p.role]||p.role)}</span></div></div>`)}
+      ${panel('Langue', 'globe', `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><span>${LANG==='en'?'English':'Français'}</span>${langSwitch()}</div>`)}
       ${panel('Changer mon mot de passe', 'lock', `
         <form id="passwordForm">
           <div class="field"><label for="a-p1">Nouveau mot de passe</label><input id="a-p1" type="password" name="password" minlength="6" required autocomplete="new-password"><span class="hint">6 caractères minimum</span></div>
@@ -1290,11 +1495,11 @@ function attachPageHandlers(){
       document.getElementById('cvAed').textContent = fmt(aed) + ' AED';
       document.getElementById('cvUsd').textContent = fmt(c.usd) + ' $';
       document.getElementById('cvBif').textContent = fmt(c.bif, 0) + ' BIF';
-      document.getElementById('cvOp1').textContent = '÷ ' + (au ? fmt(au, 4) : 'taux');
-      document.getElementById('cvOp2').textContent = '× ' + (ub ? fmt(ub) : 'taux');
-      document.getElementById('cvNote').textContent = c.bif
+      document.getElementById('cvOp1').textContent = tr('÷ ' + (au ? fmt(au, 4) : 'taux'));
+      document.getElementById('cvOp2').textContent = tr('× ' + (ub ? fmt(ub) : 'taux'));
+      document.getElementById('cvNote').textContent = tr(c.bif
         ? `Calcul exact ${fmt(c.bifExact, 0)} BIF, arrondi au multiple de 50 BIF inférieur.`
-        : 'Saisissez le montant et le taux du jour pour voir le calcul.';
+        : 'Saisissez le montant et le taux du jour pour voir le calcul.');
       if(!touched) bifInput.value = c.bif || '';
     };
     ['montant_aed','taux_aed_usd','taux_usd_bif'].forEach(n=>txForm.querySelector(`[name=${n}]`).addEventListener('input', ()=>{ touched = false; update(); }));
