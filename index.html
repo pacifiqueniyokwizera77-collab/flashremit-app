@@ -216,6 +216,14 @@
   .checkrow .sub{display:block;}
   .gainline{font-size:13.5px;font-weight:700;color:var(--gold);background:var(--gold-soft);border-radius:9px;padding:10px 12px;margin:-6px 0 16px;}
   .gainline:empty{display:none;}
+  .legend-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+  .legend-row .legend{margin-bottom:8px;}
+  .legend-row .actions{gap:14px;}
+  details.linked{margin-top:4px;font-weight:500;}
+  details.linked summary{cursor:pointer;font-size:12.5px;color:var(--brand);font-weight:700;}
+  details.linked ul{list-style:none;margin:6px 0 0;padding:0;font-size:12.5px;color:var(--muted);}
+  details.linked li{display:flex;justify-content:space-between;gap:12px;padding:2px 0;}
+  td details.linked{text-align:left;}
 
   /* ---------- Language switch ---------- */
   .lang{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none;}
@@ -472,12 +480,17 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Accès refusé':'Access denied','Montant invalide':'Invalid amount',
+  'Gain':'Earnings','Tout cocher':'Tick all','Tout décocher':'Untick all','Frais de cet envoi (AED)':'Fee for this transfer (AED)',
+  "Payés une seule fois pour tout l'envoi, puis répartis à parts égales entre les transactions cochées. Laissez 0 s'ils sont déjà saisis sur chaque transaction.":'Paid once for the whole transfer, then split equally between the ticked transactions. Leave 0 if already entered on each transaction.',
+  "Laissez 0 si cette transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.":'Leave 0 if this transaction goes in a grouped transfer: the fee is then entered on the transfer.','Accès refusé':'Access denied','Montant invalide':'Invalid amount',
   // account
   'Profil':'Profile','Changer mon mot de passe':'Change my password','Mettre à jour le mot de passe':'Update password',
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(\d+) transaction\(s\) : (.+) AED − (.+) AED de frais d'envoi = (.+) AED\.$/, '$1 transaction(s): $2 AED − $3 AED transfer fees = $4 AED.'],
+  [/^Soit (.+) AED de frais par transaction\.$/, 'That is $1 AED of fees per transaction.'],
+  [/^Taux de vente (.+)$/, 'Selling rate $1'],
   [/^Frais nets : (.+) − (.+) = (.+) AED\. Gain de l'agent : (.+) AED\.$/, 'Net fees: $1 − $2 = $3 AED. Agent earnings: $4 AED.'],
   [/^Payer (.+) AED à (.+) pour (\d+) transaction\(s\) et remettre ses gains à zéro \?$/, 'Pay $1 AED to $2 for $3 transaction(s) and reset their earnings?'],
   [/^Paiement de (.+) AED enregistré pour (.+)$/, 'Payment of $1 AED recorded for $2'],
@@ -773,7 +786,7 @@ function deleteTransaction(id){
   run(sb.from('transactions').delete().eq('id', id), 'Transaction supprimée');
 }
 async function addVersement(v, txIds){
-  const { error } = await sb.rpc('agent_create_versement', { p_montant: v.montant_aed, p_moyen: v.moyen, p_note: v.note, p_tx: txIds || [] });
+  const { error } = await sb.rpc('agent_create_versement', { p_montant: v.montant_aed, p_moyen: v.moyen, p_note: v.note, p_tx: txIds || [], p_methode: v.methode, p_frais: v.frais });
   if(error){ toast(error.message, 'bad'); return false; }
   await loadAll(); toast('Envoi enregistré'); return true;
 }
@@ -1340,7 +1353,7 @@ function pageNew(){
           <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
           <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
           <div class="field"><label for="t-meth">Méthode d'envoi</label><select id="t-meth" name="methode_envoi">${METHODES_ENVOI.map(m=>`<option value="${m}" ${r.methode===m?'selected':''}>${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"></div>
+          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"><span class="hint">Laissez 0 si cette transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.</span></div>
         </div>
         <div class="convert" aria-live="polite">
           <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
@@ -1465,17 +1478,20 @@ function pageVersements(){
     </div></div>
     ${isAgent() ? panel('Déclarer un envoi', 'send', `
       <form id="vsForm" autocomplete="off">
-        <div class="legend">${ic('list')}Transactions couvertes par cet envoi</div>
+        <div class="legend-row"><div class="legend">${ic('list')}Transactions couvertes par cet envoi</div>
+          ${openTxForVersement().length > 1 ? `<div class="actions"><button type="button" class="linkbtn" data-check="all">Tout cocher</button><button type="button" class="linkbtn" data-check="none">Tout décocher</button></div>` : ''}</div>
         ${openTxForVersement().length ? `<div class="checklist">${openTxForVersement().map(t=>`
-          <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-amt="${amountToSend(t)}">
+          <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-gross="${(+t.montant_aed)+(+t.frais_aed)}" data-fe="${+t.frais_envoi_aed||0}">
             <span><b>${esc(t.beneficiaire)}</b><span class="sub">${fmtDate(t.date)}, ${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais</span></span>
-            <span class="strong">${fmt(amountToSend(t))} AED</span></label>`).join('')}</div>`
+            <span class="strong">${fmt((+t.montant_aed)+(+t.frais_aed))} AED</span></label>`).join('')}</div>`
           : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi.</div>`}
         <div class="grid3">
-          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" value="${openTxForVersement().reduce((a,t)=>a+amountToSend(t),0) ? Math.round(openTxForVersement().reduce((a,t)=>a+amountToSend(t),0)*100)/100 : ''}"><span class="hint">Montant suggéré : argent des clients + frais − frais d'envoi des transactions cochées.</span></div>
-          <div class="field"><label for="v-moy">Moyen d'envoi</label><input id="v-moy" name="moyen" placeholder="Binance, M-Pesa, cash…"></div>
-          <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
+          <div class="field"><label for="v-meth">Méthode d'envoi</label><select id="v-meth" name="methode">${METHODES_ENVOI.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
+          <div class="field"><label for="v-fe">Frais de cet envoi (AED)</label><input id="v-fe" name="frais" type="number" step="0.01" min="0" value="0" inputmode="decimal"><span class="hint">Payés une seule fois pour tout l'envoi, puis répartis à parts égales entre les transactions cochées. Laissez 0 s'ils sont déjà saisis sur chaque transaction.</span></div>
+          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
         </div>
+        <div class="gainline" id="vsSummary"></div>
+        <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
         <button class="btn" type="submit">${ic('send')}Enregistrer l'envoi</button>
       </form>`) : ''}
     <div class="filters">
@@ -1491,7 +1507,14 @@ function pageVersements(){
 }
 function openTxForVersement(){ return state.transactions.filter(t=>t.agent_id===state.profile.id && !t.versement_id && t.statut!=='ANNULEE'); }
 function amountToSend(t){ return (+t.montant_aed) + (+t.frais_aed) - (+t.frais_envoi_aed||0); }
-function linkedCount(v){ return state.transactions.filter(t=>t.versement_id===v.id).length; }
+function linkedTx(v){ return state.transactions.filter(t=>t.versement_id===v.id); }
+function linkedCount(v){ return linkedTx(v).length; }
+function linkedDetails(v){
+  const l = linkedTx(v);
+  if(!l.length) return `<div class="sub">0 transaction(s) liée(s)</div>`;
+  return `<details class="linked"><summary>${l.length} transaction(s) liée(s)</summary><ul>${l.map(t=>`<li><span>${esc(t.beneficiaire)}</span><span>${fmt(t.montant_aed)} AED</span></li>`).join('')}</ul></details>`;
+}
+function vsFeeText(v){ return (+v.frais_envoi_aed>0) ? `${esc(v.methode_envoi||v.moyen||'')} −${fmt(v.frais_envoi_aed)} AED` : esc(v.moyen||''); }
 function vsActions(v){
   const a = [];
   if(isStaff() && v.statut==='ENVOYE') a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Reçu</button>`);
@@ -1508,14 +1531,14 @@ function vsList(list){
     </tr></thead><tbody>
     ${list.map(v=>`<tr>
       <td>${fmtDate(v.date)}</td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
-      <td class="r strong">${fmt(v.montant_aed)} AED<div class="sub">${linkedCount(v)} transaction(s) liée(s)</div></td><td class="r">${v.taux_vente ? fmt(v.taux_vente) : '—'}</td><td>${esc(v.moyen||'')}</td><td class="sub">${esc(v.note||'')}</td>
+      <td class="r strong">${fmt(v.montant_aed)} AED${linkedDetails(v)}</td><td class="r">${v.taux_vente ? fmt(v.taux_vente) : '—'}</td><td>${vsFeeText(v)}</td><td class="sub">${esc(v.note||'')}</td>
       <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
       <td><div class="actions">${vsActions(v)}</div></td>
     </tr>`).join('')}
     </tbody></table></div>`;
   const cards = `<div class="cards">${list.map(v=>`
     <div class="tcard">
-      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div><div class="meta">${linkedCount(v)} transaction(s) liée(s)${v.taux_vente?`, taux de vente ${fmt(v.taux_vente)}`:''}</div></div>
+      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div>${v.taux_vente?`<div class="meta">Taux de vente ${fmt(v.taux_vente)}</div>`:''}${+v.frais_envoi_aed>0?`<div class="meta">${vsFeeText(v)}</div>`:''}${linkedDetails(v)}</div>
       <div class="bif">${fmt(v.montant_aed)} AED</div></div>
       <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">${vsActions(v)}</div></div>
     </div>`).join('')}</div>`;
@@ -1799,20 +1822,38 @@ function attachPageHandlers(){
   const vsForm = document.getElementById('vsForm');
   if(vsForm){
     const amt = vsForm.querySelector('[name=montant_aed]');
+    const fee = vsForm.querySelector('[name=frais]');
     let amtTouched = false;
     amt.addEventListener('input', ()=>{ amtTouched = true; });
-    vsForm.querySelectorAll('[name=tx]').forEach(cb=>cb.addEventListener('change', ()=>{
-      if(amtTouched) return;
-      const total = [...vsForm.querySelectorAll('[name=tx]:checked')].reduce((a,c)=>a+(+c.dataset.amt||0),0);
-      amt.value = total ? Math.round(total*100)/100 : '';
-    }));
+    const recompute = ()=>{
+      const checked = [...vsForm.querySelectorAll('[name=tx]:checked')];
+      const n = checked.length;
+      const gross = checked.reduce((a,c)=>a+(+c.dataset.gross||0),0);
+      const f = parseFloat(fee.value)||0;
+      const perTx = checked.reduce((a,c)=>a+(+c.dataset.fe||0),0);
+      const deduct = f>0 ? f : perTx;
+      const total = Math.round((gross - deduct)*100)/100;
+      if(!amtTouched) amt.value = total>0 ? total : '';
+      const box = document.getElementById('vsSummary');
+      box.textContent = n ? tr(`${n} transaction(s) : ${fmt(gross)} AED − ${fmt(deduct)} AED de frais d'envoi = ${fmt(total)} AED.`)
+        + (f>0 && n>1 ? ' ' + tr(`Soit ${fmt(f/n)} AED de frais par transaction.`) : '') : '';
+    };
+    vsForm.querySelectorAll('[name=tx]').forEach(cb=>cb.addEventListener('change', recompute));
+    fee.addEventListener('input', recompute);
+    vsForm.querySelectorAll('[data-check]').forEach(b=>b.onclick = ()=>{
+      vsForm.querySelectorAll('[name=tx]').forEach(cb=>{ cb.checked = b.dataset.check==='all'; });
+      recompute();
+    });
+    recompute();
     vsForm.onsubmit = async (e)=>{
       e.preventDefault();
       const fd = new FormData(vsForm);
       const btn = vsForm.querySelector('button[type=submit]'); btn.disabled = true;
       const ok = await addVersement({
         montant_aed: parseFloat(fd.get('montant_aed')),
-        moyen: String(fd.get('moyen')||'').trim() || null,
+        moyen: fd.get('methode') || null,
+        methode: fd.get('methode') || null,
+        frais: parseFloat(fd.get('frais')) || 0,
         note: String(fd.get('note')||'').trim() || null,
       }, fd.getAll('tx'));
       if(!ok) btn.disabled = false;
