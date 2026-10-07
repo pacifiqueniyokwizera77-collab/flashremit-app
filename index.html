@@ -470,7 +470,7 @@ const EN = {
   'Gains des agents à payer':'Agent earnings to pay','Depuis le dernier paiement':'Since the last payment','Gain à payer':'Earnings to pay',
   'Dernier paiement':'Last payment','Payer et remettre à zéro':'Pay and reset','Détail par transaction':'Breakdown by transaction',
   'Taux achat':'Buying rate','Taux vente':'Selling rate','Profit change':'Exchange profit','Frais nets':'Net fees','Gain agent':'Agent earnings',
-  'Part Pax':'Pax share','Achat → vente':'Buy → sell','Gain agent et part Pax':'Agent and Pax share','chacun':'each','Profit':'Profit','Pas encore vendu':'Not sold yet','Historique des paiements aux agents':'Agent payment history',
+  'Part Pax':'Pax share',"Profit de change, part de Pax et gains des agents. Gain d'un agent = (frais collectés − frais de transfert) ÷ 2.":'Exchange profit, Pax share and agent earnings. Agent earnings = (fees collected − transfer fee) ÷ 2.','Achat → vente':'Buy → sell','Gain agent et part Pax':'Agent and Pax share','chacun':'each','Profit':'Profit','Pas encore vendu':'Not sold yet','Historique des paiements aux agents':'Agent payment history',
   'Payé par':'Paid by','Aucun paiement enregistré.':'No payments recorded.','Annuler ce paiement':'Cancel this payment','Paiement annulé':'Payment cancelled',
   'Annuler ce paiement ? Les gains correspondants redeviendront « à payer ».':'Cancel this payment? The related earnings will be “to pay” again.',
   'Aucun gain à payer':'No earnings to pay','Gain à recevoir':'Earnings to receive','Déjà reçu':'Already received',
@@ -958,7 +958,7 @@ function pageProfits(){
     const last = state.paiements.find(p=>p.agent_id===id);
     return { id, nom, n:list.length, amt:list.reduce((a,t)=>a+gainOf(t),0), last };
   }).sort((a,b)=>b.amt-a.amt);
-  const payBtn = d => `<button class="btn gold sm" ${d.n?'':'disabled'} onclick="payAgent('${d.id}')">${ic('wallet')}Payer et remettre à zéro</button>`;
+  const payBtn = d => isAdmin() ? `<button class="btn gold sm" ${d.n?'':'disabled'} onclick="payAgent('${d.id}')">${ic('wallet')}Payer et remettre à zéro</button>` : '';
   const dueHtml = due.length ? `
     <div class="only-desk tblwrap"><table><thead><tr><th>Agent</th><th class="r">Transactions</th><th class="r">Gain à payer</th><th>Dernier paiement</th><th></th></tr></thead><tbody>
       ${due.map(d=>`<tr><td class="strong">${esc(d.nom)}</td><td class="r">${d.n}</td><td class="r cell-gold">${fmt(d.amt)} AED</td>
@@ -981,7 +981,7 @@ function pageProfits(){
         <td class="r">${fmt(p.usd)} $<div class="sub">${fmt(t.montant_aed)} AED</div></td>
         <td class="r">${fmt(t.taux_usd_bif)} → ${p.rs ? fmt(p.rs) : '?'}${p.rs ? '' : '<div class="sub">Pas encore vendu</div>'}</td>
         <td class="r ${p.change==null?'':(p.change>=0?'cell-good':'cell-bad')}">${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</td>
-        <td class="r">${fmt(p.fraisNet)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)}</div>`:''}</td>
+        <td class="r">${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)} = ${fmt(p.fraisNet)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td>
         <td class="r cell-gold">${fmt(p.part)} AED<div class="sub">chacun</div></td>
         <td class="r strong">${p.total==null ? '—' : fmt(p.total,0)+' BIF'}</td>
       </tr>`).join('')}
@@ -994,8 +994,8 @@ function pageProfits(){
           <div><span>Taux achat</span><b>${fmt(t.taux_usd_bif)}</b></div>
           <div><span>Taux vente</span><b>${p.rs ? fmt(p.rs) : '—'}</b></div>
           <div><span>Profit change</span><b>${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</b></div>
-          <div><span>Frais nets</span><b>${fmt(p.fraisNet)} AED</b></div>
-          <div><span>Gain agent</span><b>${fmt(p.gain)} AED</b></div>
+          <div><span>Frais nets</span><b>${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)} = ${fmt(p.fraisNet)} AED</b></div>
+          <div><span>Gain agent</span><b>${fmt(p.fraisNet)} ÷ 2 = ${fmt(p.gain)} AED</b></div>
           <div><span>Part Pax</span><b class="cell-gold">${fmt(p.part)} AED</b></div>
         </div>
       </div>`).join('')}</div>`
@@ -1005,16 +1005,16 @@ function pageProfits(){
   const paysHtml = pays.length ? `
     <div class="only-desk tblwrap"><table><thead><tr><th>Date</th><th>Agent</th><th class="r">Montant</th><th class="r">Transactions</th><th>Payé par</th><th></th></tr></thead><tbody>
       ${pays.map(p=>`<tr><td>${fmtDate(p.date)}</td><td class="strong">${esc(p.agent_nom)}</td><td class="r">${fmt(p.montant_aed)} AED</td><td class="r">${p.nb_transactions}</td><td>${esc(p.paye_par||'')}</td>
-        <td><div class="actions" style="flex-direction:row;"><button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button></div></td></tr>`).join('')}
+        <td><div class="actions" style="flex-direction:row;">${isAdmin() ? `<button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button>` : ''}</div></td></tr>`).join('')}
     </tbody></table></div>
     <div class="cards">${pays.map(p=>`
       <div class="tcard"><div class="row"><div><div class="name">${esc(p.agent_nom)}</div><div class="meta">${fmtDate(p.date)}, ${p.nb_transactions} transaction(s)</div></div><div class="strong">${fmt(p.montant_aed)} AED</div></div>
-        <div class="foot"><span class="sub">${esc(p.paye_par||'')}</span><button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button></div></div>`).join('')}</div>`
+        <div class="foot"><span class="sub">${esc(p.paye_par||'')}</span>${isAdmin() ? `<button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button>` : ''}</div></div>`).join('')}</div>`
     : emptyState('wallet', 'Aucun paiement enregistré.');
 
   return `
     <div class="pagehead">
-      <div><h1>Profits</h1><p>Profit de change et votre moitié des frais nets</p></div>
+      <div><h1>Profits</h1><p>Profit de change, part de Pax et gains des agents. Gain d'un agent = (frais collectés − frais de transfert) ÷ 2.</p></div>
     </div>
     ${presetChips('pf')}
     <div class="range">
@@ -1046,10 +1046,10 @@ function pageGains(){
   const list = unpaid.length ? `
     <div class="only-desk tblwrap"><table><thead><tr><th>Date</th><th>Bénéficiaire</th><th class="r">Frais</th><th class="r">Frais envoi</th><th class="r">Gain</th></tr></thead><tbody>
       ${unpaid.map(t=>`<tr><td>${fmtDate(t.date)}</td><td>${esc(t.beneficiaire)}</td><td class="r">${fmt(t.frais_aed)} AED</td>
-        <td class="r">${fmt(t.frais_envoi_aed)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td><td class="r cell-gold">${fmt(gainOf(t))} AED</td></tr>`).join('')}
+        <td class="r">${fmt(t.frais_envoi_aed)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td><td class="r cell-gold">${fmt(gainOf(t))} AED<div class="sub">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2</div></td></tr>`).join('')}
     </tbody><tfoot><tr><td colspan="4">Total</td><td class="r">${fmt(due)} AED</td></tr></tfoot></table></div>
     <div class="cards">${unpaid.map(t=>`
-      <div class="tcard"><div class="row"><div><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}, ${fmt(t.frais_aed)} AED de frais${t.methode_envoi?`, ${esc(t.methode_envoi)} ${fmt(t.frais_envoi_aed)} AED`:''}</div></div>
+      <div class="tcard"><div class="row"><div><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}${t.methode_envoi?`, ${esc(t.methode_envoi)}`:''}</div><div class="meta">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2</div></div>
         <div class="cell-gold">${fmt(gainOf(t))} AED</div></div></div>`).join('')}
       <div class="tcard"><div class="row"><div class="name">Total</div><div class="strong">${fmt(due)} AED</div></div></div></div>`
     : emptyState('check', 'Aucun gain en attente.');
@@ -1077,7 +1077,7 @@ function navItems(){
   items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
   items.push({ id:'versements', label: r==='AGENT' ? 'Envois à Naomie' : 'Fonds reçus de Dubaï', short: r==='AGENT' ? 'Envois' : 'Fonds', icon: r==='AGENT' ? 'send' : 'inbox', badge: r!=='AGENT' ? vsAConfirmer().length : 0 });
   items.push({ id:'stats', label: r==='AGENT' ? 'Mes statistiques' : 'Statistiques', short:'Stats', icon:'chart' });
-  if(r!=='BUJA') items.push({ id:'profits', label: r==='AGENT' ? 'Mes gains' : 'Profits', short: r==='AGENT' ? 'Gains' : 'Profits', icon:'trend' });
+  items.push({ id:'profits', label: r==='AGENT' ? 'Mes gains' : 'Profits', short: r==='AGENT' ? 'Gains' : 'Profits', icon:'trend' });
   if(r==='ADMIN') items.push({ id:'users', label:'Utilisateurs', icon:'users', badge: pendingUsers().length });
   items.push({ id:'account', label:'Mon compte', icon:'user' });
   return items;
@@ -1253,7 +1253,7 @@ function renderPage(){
     case 'versements': return pageVersements();
     case 'stats': return pageStats();
     case 'users': return isAdmin() ? pageUsers() : pageDashboard();
-    case 'profits': return isBuja() ? pageDashboard() : (isAgent() ? pageGains() : pageProfits());
+    case 'profits': return isAgent() ? pageGains() : pageProfits();
     case 'account': return pageAccount();
     default: return pageDashboard();
   }
