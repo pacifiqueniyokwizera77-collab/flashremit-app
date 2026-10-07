@@ -208,6 +208,15 @@
   .waiting .disc{width:56px;height:56px;border-radius:50%;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;margin:0 auto 16px;}
   .waiting .disc svg.i{width:26px;height:26px;}
 
+  /* ---------- Checklist & gain line ---------- */
+  .checklist{border:1px solid var(--line);border-radius:10px;max-height:320px;overflow:auto;margin-bottom:16px;}
+  .checkrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .checkrow:last-child{border-bottom:0;}
+  .checkrow input{width:20px;height:20px;padding:0;accent-color:var(--brand);}
+  .checkrow .sub{display:block;}
+  .gainline{font-size:13.5px;font-weight:700;color:var(--gold);background:var(--gold-soft);border-radius:9px;padding:10px 12px;margin:-6px 0 16px;}
+  .gainline:empty{display:none;}
+
   /* ---------- Language switch ---------- */
   .lang{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none;}
   .lang button{border:0;background:#fff;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer;color:var(--muted);letter-spacing:.02em;}
@@ -310,6 +319,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_AED_USD = 3.66;   // 1 USD = 3,66 AED
 const BIF_ROUND_STEP = 50;      // montant BIF arrondi au multiple de 50 inférieur
 const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash à Bujumbura'];
+const METHODES_ENVOI = ['Binance','M-Pesa','Autre'];
 const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï' };
 
 /* ---------- Language (FR / EN) ---------- */
@@ -437,11 +447,51 @@ const EN = {
   "Donner l'accès":'Grant access','Refuser':'Decline','Aucune demande en attente.':'No pending requests.','Comptes':'Accounts','Rôle':'Role',
   'Actif':'Active','Inactif':'Inactive','(vous)':'(you)','Renommer':'Rename','Désactiver':'Disable','Réactiver':'Re-enable',
   "Désactiver bloque l'accès sans effacer l'historique. « Mot de passe » permet de définir un nouveau mot de passe quand l'email de réinitialisation n'arrive pas.":'Disabling blocks access without deleting history. “Password” lets you set a new password when the reset email does not arrive.',
+  // profits & earnings
+  'Profits':'Profits','Mes gains':'My earnings','Gains':'Earnings',"Méthode d'envoi":'Transfer method',
+  "Frais de la méthode d'envoi (AED)":'Transfer method fee (AED)','Autre':'Other',
+  'Taux de vente de cet argent : 1 $ = ? BIF':'Selling rate for this money: $1 = ? BIF','Nouveau taux de vente : 1 $ = ? BIF':'New selling rate: $1 = ? BIF',
+  'Saisissez un taux de vente valide':'Enter a valid selling rate','Taux de vente mis à jour':'Selling rate updated','Taux de vente':'Selling rate',
+  'Modifier le taux de vente':'Edit selling rate','Taux':'Rate','Transactions couvertes par cet envoi':'Transactions covered by this transfer',
+  'Toutes vos transactions sont déjà couvertes par un envoi.':'All your transactions are already covered by a transfer.',
+  "Montant suggéré : argent des clients + frais − frais d'envoi des transactions cochées.":'Suggested amount: client money + fees − transfer fees of the ticked transactions.',
+  'Profit de change et votre moitié des frais nets':'Exchange profit and your half of net fees','Profit total':'Total profit','Profit de change':'Exchange profit',
+  'Votre part des frais':'Your share of fees','Gains des agents':'Agent earnings','Moitié des frais nets':'Half of net fees','Frais collectés':'Fees collected',
+  "Frais d'envoi payés":'Transfer fees paid','En attente du taux de vente':'Awaiting selling rate',
+  'Profit calculé dès que Naomie saisit le taux de vente':'Profit is calculated once Naomie enters the selling rate','Montant vendu':'Amount sold',
+  'Gains des agents à payer':'Agent earnings to pay','Depuis le dernier paiement':'Since the last payment','Gain à payer':'Earnings to pay',
+  'Dernier paiement':'Last payment','Payer et remettre à zéro':'Pay and reset','Détail par transaction':'Breakdown by transaction',
+  'Taux achat':'Buying rate','Taux vente':'Selling rate','Profit change':'Exchange profit','Frais nets':'Net fees','Gain agent':'Agent earnings',
+  'Part Pax':'Pax share','Achat → vente':'Buy → sell','Gain agent et part Pax':'Agent and Pax share','chacun':'each','Profit':'Profit','Pas encore vendu':'Not sold yet','Historique des paiements aux agents':'Agent payment history',
+  'Payé par':'Paid by','Aucun paiement enregistré.':'No payments recorded.','Annuler ce paiement':'Cancel this payment','Paiement annulé':'Payment cancelled',
+  'Annuler ce paiement ? Les gains correspondants redeviendront « à payer ».':'Cancel this payment? The related earnings will be “to pay” again.',
+  'Aucun gain à payer':'No earnings to pay','Gain à recevoir':'Earnings to receive','Déjà reçu':'Already received',
+  'Gain moyen par transaction':'Average earnings per transaction',
+  "Votre gain par transaction = (frais collectés − frais de la méthode d'envoi) ÷ 2. Le compteur repart à zéro à chaque paiement.":'Your earnings per transaction = (fees collected − transfer method fee) ÷ 2. The counter resets at each payment.',
+  'Gains non encore payés':'Earnings not yet paid','Historique de mes paiements':'My payment history','Mon gain à recevoir':'My earnings to receive',
+  'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
+  "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
+  "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
+  'Gain':'Earnings','Accès refusé':'Access denied','Montant invalide':'Invalid amount',
   // account
   'Profil':'Profile','Changer mon mot de passe':'Change my password','Mettre à jour le mot de passe':'Update password',
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Frais nets : (.+) − (.+) = (.+) AED\. Gain de l'agent : (.+) AED\.$/, 'Net fees: $1 − $2 = $3 AED. Agent earnings: $4 AED.'],
+  [/^Payer (.+) AED à (.+) pour (\d+) transaction\(s\) et remettre ses gains à zéro \?$/, 'Pay $1 AED to $2 for $3 transaction(s) and reset their earnings?'],
+  [/^Paiement de (.+) AED enregistré pour (.+)$/, 'Payment of $1 AED recorded for $2'],
+  [/^Sur (\d+) transactions vendues$/, 'On $1 sold transactions'],
+  [/^Taux moyen : achat (.+), vente (.+)$/, 'Average rate: bought $1, sold $2'],
+  [/^≈ (.+) BIF sur les transactions vendues$/, '≈ $1 BIF on sold transactions'],
+  [/^(\d+) transaction\(s\) depuis le dernier paiement$/, '$1 transaction(s) since the last payment'],
+  [/^(\d+) transaction\(s\) liée\(s\)$/, '$1 linked transaction(s)'],
+  [/^(\d+) transaction\(s\) liée\(s\), taux de vente (.+)$/, '$1 linked transaction(s), selling rate $2'],
+  [/^(\d+) transaction\(s\), dernier paiement le (.+)$/, '$1 transaction(s), last paid on $2'],
+  [/^(\d+) transaction\(s\)$/, '$1 transaction(s)'],
+  [/^(.+), (\d+) transaction\(s\)$/, '$1, $2 transaction(s)'],
+  [/^(.+), (.+) AED \+ (.+) AED de frais$/, '$1, $2 AED + $3 AED fee'],
+  [/^(.+), (.+) AED de frais(.*)$/, '$1, $2 AED fee$3'],
   [/^Bienvenue (.*)$/, 'Welcome $1'],
   [/^Accès donné à (.+)$/, 'Access granted to $1'],
   [/^Mot de passe changé\. Transmettez-le à (.+)\.$/, 'Password changed. Pass it on to $1.'],
@@ -498,6 +548,7 @@ function askText(msg, def){ return prompt(tr(msg), def); }
 const ICONS = {
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  trend:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
   list:'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
   send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
@@ -541,6 +592,8 @@ let state = {
   txf:{ q:'', agent:'', statut:'', periode:'all' },
   vsf:{ agent:'', periode:'all' },
   st:{ preset:'today', from:'', to:'', agent:'', group:'day' },
+  pf:{ preset:'month', from:'', to:'', agent:'' },
+  paiements:[],
 };
 (function readHashError(){
   const m = INITIAL_HASH.match(/error_description=([^&]+)/);
@@ -677,15 +730,17 @@ async function afterLogin(session){
 
 /* ---------- Data ---------- */
 async function loadAll(){
-  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}] = await Promise.all([
+  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
     sb.from('transactions').select('*').order('created_at',{ascending:false}),
     sb.from('versements').select('*').order('created_at',{ascending:false}),
+    sb.from('paiements_agents').select('*').order('created_at',{ascending:false}),
   ]);
   if(e1 || e2) toast('Chargement incomplet : ' + ((e1||e2).message), 'bad');
   state.profiles = profiles || [];
   state.transactions = txs || [];
   state.versements = vs || [];
+  state.paiements = pays || [];
   render();
 }
 async function refresh(){ await loadAll(); toast('Données à jour'); }
@@ -717,12 +772,27 @@ function deleteTransaction(id){
   if(!ask('Supprimer définitivement cette transaction ?')) return;
   run(sb.from('transactions').delete().eq('id', id), 'Transaction supprimée');
 }
-function addVersement(v){
-  return run(sb.from('versements').insert({ ...v, agent_id: state.profile.id, agent_nom: state.profile.nom, date: today() }), 'Envoi enregistré');
+async function addVersement(v, txIds){
+  const { error } = await sb.rpc('agent_create_versement', { p_montant: v.montant_aed, p_moyen: v.moyen, p_note: v.note, p_tx: txIds || [] });
+  if(error){ toast(error.message, 'bad'); return false; }
+  await loadAll(); toast('Envoi enregistré'); return true;
 }
+function lastSellRate(){ const v = state.versements.find(x=>x.taux_vente); return v ? v.taux_vente : ''; }
+function parseRate(x){ return parseFloat(String(x||'').replace(/\s/g,'').replace(',', '.')); }
 function confirmVersement(id){
-  if(!ask('Confirmer que cet argent est bien arrivé à Bujumbura ?')) return;
-  run(sb.from('versements').update({ statut:'RECU', confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Réception confirmée');
+  const rate = askText('Taux de vente de cet argent : 1 $ = ? BIF', lastSellRate());
+  if(rate === null) return;
+  const r = parseRate(rate);
+  if(!(r > 0)){ toast('Saisissez un taux de vente valide', 'bad'); return; }
+  run(sb.from('versements').update({ statut:'RECU', taux_vente:r, confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Réception confirmée');
+}
+function setSellRate(id){
+  const v = state.versements.find(x=>x.id===id); if(!v) return;
+  const rate = askText('Nouveau taux de vente : 1 $ = ? BIF', v.taux_vente || lastSellRate());
+  if(rate === null) return;
+  const r = parseRate(rate);
+  if(!(r > 0)){ toast('Saisissez un taux de vente valide', 'bad'); return; }
+  run(sb.from('versements').update({ taux_vente:r }).eq('id', id), 'Taux de vente mis à jour');
 }
 function unconfirmVersement(id){
   if(!ask('Annuler la confirmation de réception ?')) return;
@@ -783,11 +853,11 @@ function sum(list, k){ return list.reduce((s,x)=>s + (Number(x[k])||0), 0); }
 /* Per-agent summary: clients, amounts, fees, sent to Naomie, remaining with the agent */
 function bilan(range, agentId){
   const map = {};
-  const ensure = (id, nom) => (map[id] ||= { id, nom, n:0, aed:0, frais:0, usd:0, bif:0, aPayer:0, envoye:0, envoyeAttente:0 });
+  const ensure = (id, nom) => (map[id] ||= { id, nom, n:0, aed:0, frais:0, fraisEnvoi:0, usd:0, bif:0, aPayer:0, envoye:0, envoyeAttente:0 });
   if(!agentId) state.profiles.filter(p=>p.role==='AGENT' && p.statut==='actif').forEach(p=>ensure(p.id, p.nom));
   activeTx(range, agentId).forEach(t=>{
     const a = ensure(t.agent_id, t.agent_nom);
-    a.n++; a.aed += +t.montant_aed; a.frais += +t.frais_aed; a.usd += +t.montant_usd; a.bif += +t.montant_bif;
+    a.n++; a.aed += +t.montant_aed; a.frais += +t.frais_aed; a.fraisEnvoi += +(t.frais_envoi_aed||0); a.usd += +t.montant_usd; a.bif += +t.montant_bif;
     if(t.statut==='EN_ATTENTE') a.aPayer++;
   });
   state.versements.filter(v=>inRange(v.date, range) && (!agentId || v.agent_id===agentId)).forEach(v=>{
@@ -795,13 +865,195 @@ function bilan(range, agentId){
     if(v.statut==='RECU') a.envoye += +v.montant_aed; else a.envoyeAttente += +v.montant_aed;
   });
   return Object.values(map)
-    .map(a=>({ ...a, encaisse: a.aed + a.frais, reste: a.aed + a.frais - a.envoye }))
+    .map(a=>({ ...a, encaisse: a.aed + a.frais, reste: a.aed + a.frais - a.fraisEnvoi - a.envoye }))
     .sort((x,y)=>x.nom.localeCompare(y.nom));
 }
 function totals(list){
   const t = {};
   list.forEach(a=>Object.keys(a).forEach(k=>{ if(typeof a[k]==='number') t[k] = (t[k]||0) + a[k]; }));
   return t;
+}
+
+
+/* ---------- Profits (admins) & earnings (agents) ---------- */
+function vsById(id){ return state.versements.find(v=>v.id===id); }
+/* Selling rate of a transaction = rate Naomie entered on the received transfer that covers it */
+function sellRate(t){ const v = t.versement_id ? vsById(t.versement_id) : null; return v && v.statut==='RECU' && v.taux_vente ? +v.taux_vente : null; }
+/* Agent earnings per transaction = (fees collected − transfer method fee) ÷ 2 */
+function gainOf(t){ return ((+t.frais_aed||0) - (+t.frais_envoi_aed||0)) / 2; }
+function txProfit(t){
+  const fraisNet = (+t.frais_aed||0) - (+t.frais_envoi_aed||0);
+  const usd = (+t.montant_aed) / (+t.taux_aed_usd);
+  const rs = sellRate(t);
+  const change = rs ? usd * rs - (+t.montant_bif) : null;           // exchange profit in BIF
+  const part = fraisNet / 2;                                         // Pax half of net fees (AED)
+  const partBif = part / (+t.taux_aed_usd) * (rs || +t.taux_usd_bif); // same, converted to BIF
+  return { usd, rs, change, fraisNet, gain: fraisNet / 2, part, partBif, total: change==null ? null : change + partBif };
+}
+function unpaidGains(agentId){ return state.transactions.filter(t=>t.statut!=='ANNULEE' && !t.gain_paiement_id && (!agentId || t.agent_id===agentId)); }
+function profitsRange(){
+  const s = state.pf;
+  if(s.preset==='custom') return [s.from || today(), s.to || today()];
+  if(s.preset==='all') return null;
+  return presetRange(s.preset);
+}
+function rangeLabel(range){ return range ? (range[0]===range[1] ? `le ${fmtDate(range[0])}` : `du ${fmtDate(range[0])} au ${fmtDate(range[1])}`) : 'depuis le début'; }
+function presetChips(grp){
+  const s = state[grp];
+  return `<div class="chips" role="group" aria-label="Période">${PRESETS.map(([k,l])=>`<button class="chipbtn ${s.preset===k?'on':''}" data-preset="${grp}:${k}">${l}</button>`).join('')}</div>`;
+}
+async function payAgent(id){
+  const list = unpaidGains(id);
+  const amt = list.reduce((a,t)=>a+gainOf(t),0);
+  const p = profileById(id) || { nom: (list[0]||{}).agent_nom || 'agent' };
+  if(!list.length){ toast('Aucun gain à payer', 'bad'); return; }
+  if(!ask(`Payer ${fmt(amt)} AED à ${p.nom} pour ${list.length} transaction(s) et remettre ses gains à zéro ?`)) return;
+  const { error } = await sb.rpc('admin_pay_agent', { p_agent:id, p_note:null });
+  if(error){ toast(error.message, 'bad'); return; }
+  await loadAll();
+  toast(`Paiement de ${fmt(amt)} AED enregistré pour ${p.nom}`);
+}
+function deletePaiement(id){
+  if(!ask('Annuler ce paiement ? Les gains correspondants redeviendront « à payer ».')) return;
+  run(sb.from('paiements_agents').delete().eq('id', id), 'Paiement annulé');
+}
+
+function pageProfits(){
+  const s = state.pf;
+  const range = profitsRange();
+  const agentId = s.agent || null;
+  const rows = activeTx(range, agentId).map(t=>({ t, p: txProfit(t) }));
+  const sold = rows.filter(r=>r.p.change!=null);
+  const pending = rows.filter(r=>r.p.change==null);
+  const change = sold.reduce((a,r)=>a+r.p.change,0);
+  const partBif = sold.reduce((a,r)=>a+r.p.partBif,0);
+  const partAed = rows.reduce((a,r)=>a+r.p.part,0);
+  const gains = rows.reduce((a,r)=>a+r.p.gain,0);
+  const total = change + partBif;
+  const usdSold = sold.reduce((a,r)=>a+r.p.usd,0);
+  const avgSell = usdSold ? sold.reduce((a,r)=>a+r.p.usd*r.p.rs,0)/usdSold : 0;
+  const avgBuy = usdSold ? sold.reduce((a,r)=>a+r.p.usd*(+r.t.taux_usd_bif),0)/usdSold : 0;
+  const fromVal = range ? range[0] : '', toVal = range ? range[1] : '';
+  const tx = rows.map(r=>r.t);
+
+  // agents' unpaid earnings (all time, independent of the period)
+  const agentIds = new Map();
+  state.profiles.filter(p=>p.role==='AGENT' && p.statut==='actif').forEach(p=>agentIds.set(p.id, p.nom));
+  unpaidGains().forEach(t=>{ if(!agentIds.has(t.agent_id)) agentIds.set(t.agent_id, t.agent_nom); });
+  const due = [...agentIds.entries()].map(([id,nom])=>{
+    const list = unpaidGains(id);
+    const last = state.paiements.find(p=>p.agent_id===id);
+    return { id, nom, n:list.length, amt:list.reduce((a,t)=>a+gainOf(t),0), last };
+  }).sort((a,b)=>b.amt-a.amt);
+  const payBtn = d => `<button class="btn gold sm" ${d.n?'':'disabled'} onclick="payAgent('${d.id}')">${ic('wallet')}Payer et remettre à zéro</button>`;
+  const dueHtml = due.length ? `
+    <div class="only-desk tblwrap"><table><thead><tr><th>Agent</th><th class="r">Transactions</th><th class="r">Gain à payer</th><th>Dernier paiement</th><th></th></tr></thead><tbody>
+      ${due.map(d=>`<tr><td class="strong">${esc(d.nom)}</td><td class="r">${d.n}</td><td class="r cell-gold">${fmt(d.amt)} AED</td>
+        <td>${d.last ? `${fmtDate(d.last.date)}<div class="sub">${fmt(d.last.montant_aed)} AED</div>` : '<span class="sub">—</span>'}</td>
+        <td><div class="actions" style="flex-direction:row;">${payBtn(d)}</div></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="cards">${due.map(d=>`
+      <div class="tcard"><div class="row"><div class="name">${esc(d.nom)}</div><div class="cell-gold">${fmt(d.amt)} AED</div></div>
+        <div class="meta">${d.n} transaction(s)${d.last ? `, dernier paiement le ${fmtDate(d.last.date)}` : ''}</div>
+        <div class="foot"><span></span>${payBtn(d)}</div></div>`).join('')}</div>`
+    : emptyState('users', 'Aucun agent actif pour le moment.');
+
+  const detail = rows.length ? `
+    <div class="only-desk tblwrap"><table><thead><tr>
+      <th>Date</th>${agentId?'':'<th>Agent</th>'}<th>Bénéficiaire</th><th class="r">Montant</th><th class="r">Achat → vente</th>
+      <th class="r">Profit change</th><th class="r">Frais nets</th><th class="r">Gain agent et part Pax</th><th class="r">Profit</th>
+    </tr></thead><tbody>
+      ${rows.map(({t,p})=>`<tr>
+        <td>${fmtDate(t.date)}</td>${agentId?'':`<td>${esc(t.agent_nom)}</td>`}<td>${esc(t.beneficiaire)}</td>
+        <td class="r">${fmt(p.usd)} $<div class="sub">${fmt(t.montant_aed)} AED</div></td>
+        <td class="r">${fmt(t.taux_usd_bif)} → ${p.rs ? fmt(p.rs) : '?'}${p.rs ? '' : '<div class="sub">Pas encore vendu</div>'}</td>
+        <td class="r ${p.change==null?'':(p.change>=0?'cell-good':'cell-bad')}">${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</td>
+        <td class="r">${fmt(p.fraisNet)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)}</div>`:''}</td>
+        <td class="r cell-gold">${fmt(p.part)} AED<div class="sub">chacun</div></td>
+        <td class="r strong">${p.total==null ? '—' : fmt(p.total,0)+' BIF'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    <div class="cards">${rows.map(({t,p})=>`
+      <div class="tcard">
+        <div class="row"><div style="min-width:0;"><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}${agentId?'':`, agent ${esc(t.agent_nom)}`}</div></div>
+          <div class="strong ${p.total==null?'':(p.total>=0?'cell-good':'cell-bad')}">${p.total==null ? '—' : fmt(p.total,0)+' BIF'}</div></div>
+        <div class="mini">
+          <div><span>Taux achat</span><b>${fmt(t.taux_usd_bif)}</b></div>
+          <div><span>Taux vente</span><b>${p.rs ? fmt(p.rs) : '—'}</b></div>
+          <div><span>Profit change</span><b>${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</b></div>
+          <div><span>Frais nets</span><b>${fmt(p.fraisNet)} AED</b></div>
+          <div><span>Gain agent</span><b>${fmt(p.gain)} AED</b></div>
+          <div><span>Part Pax</span><b class="cell-gold">${fmt(p.part)} AED</b></div>
+        </div>
+      </div>`).join('')}</div>`
+    : emptyState('chart', 'Aucune activité sur cette période.');
+
+  const pays = state.paiements.filter(p=>!agentId || p.agent_id===agentId);
+  const paysHtml = pays.length ? `
+    <div class="only-desk tblwrap"><table><thead><tr><th>Date</th><th>Agent</th><th class="r">Montant</th><th class="r">Transactions</th><th>Payé par</th><th></th></tr></thead><tbody>
+      ${pays.map(p=>`<tr><td>${fmtDate(p.date)}</td><td class="strong">${esc(p.agent_nom)}</td><td class="r">${fmt(p.montant_aed)} AED</td><td class="r">${p.nb_transactions}</td><td>${esc(p.paye_par||'')}</td>
+        <td><div class="actions" style="flex-direction:row;"><button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button></div></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="cards">${pays.map(p=>`
+      <div class="tcard"><div class="row"><div><div class="name">${esc(p.agent_nom)}</div><div class="meta">${fmtDate(p.date)}, ${p.nb_transactions} transaction(s)</div></div><div class="strong">${fmt(p.montant_aed)} AED</div></div>
+        <div class="foot"><span class="sub">${esc(p.paye_par||'')}</span><button class="btn ghost sm sq" onclick="deletePaiement('${p.id}')" title="Annuler ce paiement" aria-label="Annuler ce paiement">${ic('undo')}</button></div></div>`).join('')}</div>`
+    : emptyState('wallet', 'Aucun paiement enregistré.');
+
+  return `
+    <div class="pagehead">
+      <div><h1>Profits</h1><p>Profit de change et votre moitié des frais nets</p></div>
+    </div>
+    ${presetChips('pf')}
+    <div class="range">
+      <div class="field"><label for="p-from">Du</label><input id="p-from" type="date" data-bind="pf.from" value="${fromVal}"></div>
+      <div class="field"><label for="p-to">Au</label><input id="p-to" type="date" data-bind="pf.to" value="${toVal}"></div>
+      <div class="field"><label for="p-ag">Agent</label><select id="p-ag" data-bind="pf.agent">${agentOptions(s.agent)}</select></div>
+    </div>
+    <div class="kpis">
+      ${kpi('Profit total', 'trend', fmt(total,0), 'BIF', `Sur ${sold.length} transactions vendues`, total>=0?'good':'bad', true)}
+      ${kpi('Profit de change', 'chart', fmt(change,0), 'BIF', usdSold ? `Taux moyen : achat ${fmt(avgBuy)}, vente ${fmt(avgSell)}` : '')}
+      ${kpi('Votre part des frais', 'coins', fmt(partAed), 'AED', `≈ ${fmt(partBif,0)} BIF sur les transactions vendues`, 'gold')}
+      ${kpi('Gains des agents', 'users', fmt(gains), 'AED', 'Moitié des frais nets')}
+      ${kpi('Frais collectés', 'coins', fmt(sum(tx,'frais_aed')), 'AED', '')}
+      ${kpi("Frais d'envoi payés", 'send', fmt(sum(tx,'frais_envoi_aed')), 'AED', 'Binance, M-Pesa…')}
+      ${kpi('En attente du taux de vente', 'hourglass', pending.length, '', 'Profit calculé dès que Naomie saisit le taux de vente', pending.length?'bad':'')}
+      ${kpi('Montant vendu', 'wallet', fmt(usdSold), '$', '')}
+    </div>
+    ${panel('Gains des agents à payer', 'wallet', dueHtml, { flush:true, right:`<span class="count">Depuis le dernier paiement</span>` })}
+    ${panel('Détail par transaction', 'list', detail, { flush:true, right:`<span class="count">${rangeLabel(range)}</span>` })}
+    ${panel('Historique des paiements aux agents', 'clock', paysHtml, { flush:true })}`;
+}
+
+function pageGains(){
+  const mine = state.transactions.filter(t=>t.agent_id===state.profile.id && t.statut!=='ANNULEE');
+  const unpaid = mine.filter(t=>!t.gain_paiement_id);
+  const due = unpaid.reduce((a,t)=>a+gainOf(t),0);
+  const pays = state.paiements.filter(p=>p.agent_id===state.profile.id);
+  const last = pays[0];
+  const list = unpaid.length ? `
+    <div class="only-desk tblwrap"><table><thead><tr><th>Date</th><th>Bénéficiaire</th><th class="r">Frais</th><th class="r">Frais envoi</th><th class="r">Gain</th></tr></thead><tbody>
+      ${unpaid.map(t=>`<tr><td>${fmtDate(t.date)}</td><td>${esc(t.beneficiaire)}</td><td class="r">${fmt(t.frais_aed)} AED</td>
+        <td class="r">${fmt(t.frais_envoi_aed)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td><td class="r cell-gold">${fmt(gainOf(t))} AED</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="4">Total</td><td class="r">${fmt(due)} AED</td></tr></tfoot></table></div>
+    <div class="cards">${unpaid.map(t=>`
+      <div class="tcard"><div class="row"><div><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}, ${fmt(t.frais_aed)} AED de frais${t.methode_envoi?`, ${esc(t.methode_envoi)} ${fmt(t.frais_envoi_aed)} AED`:''}</div></div>
+        <div class="cell-gold">${fmt(gainOf(t))} AED</div></div></div>`).join('')}
+      <div class="tcard"><div class="row"><div class="name">Total</div><div class="strong">${fmt(due)} AED</div></div></div></div>`
+    : emptyState('check', 'Aucun gain en attente.');
+  const paysHtml = pays.length ? `<div>${pays.map(p=>`
+      <div class="tcard"><div class="row"><div><div class="name">${fmtDate(p.date)}</div><div class="meta">${p.nb_transactions} transaction(s)</div></div><div class="strong">${fmt(p.montant_aed)} AED</div></div></div>`).join('')}</div>`
+    : emptyState('wallet', 'Aucun paiement pour le moment.');
+  return `
+    <div class="pagehead"><div><h1>Mes gains</h1><p>Votre part des frais sur chaque transaction</p></div></div>
+    <div class="kpis">
+      ${kpi('Gain à recevoir', 'wallet', fmt(due), 'AED', `${unpaid.length} transaction(s) depuis le dernier paiement`, 'gold', true)}
+      ${kpi('Déjà reçu', 'check', fmt(sum(pays,'montant_aed')), 'AED', '', 'good')}
+      ${kpi('Dernier paiement', 'calendar', last ? fmtDate(last.date) : '—', '', last ? fmt(last.montant_aed)+' AED' : '')}
+      ${kpi('Gain moyen par transaction', 'chart', fmt(unpaid.length ? due/unpaid.length : 0), 'AED', '')}
+    </div>
+    <div class="note" style="margin-bottom:18px;">Votre gain par transaction = (frais collectés − frais de la méthode d'envoi) ÷ 2. Le compteur repart à zéro à chaque paiement.</div>
+    ${panel('Gains non encore payés', 'coins', list, { flush:true })}
+    ${panel('Historique de mes paiements', 'clock', paysHtml, { flush:true })}`;
 }
 
 /* ---------- Navigation ---------- */
@@ -812,6 +1064,7 @@ function navItems(){
   items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
   items.push({ id:'versements', label: r==='AGENT' ? 'Envois à Naomie' : 'Fonds reçus de Dubaï', short: r==='AGENT' ? 'Envois' : 'Fonds', icon: r==='AGENT' ? 'send' : 'inbox', badge: r!=='AGENT' ? vsAConfirmer().length : 0 });
   items.push({ id:'stats', label: r==='AGENT' ? 'Mes statistiques' : 'Statistiques', short:'Stats', icon:'chart' });
+  if(r!=='BUJA') items.push({ id:'profits', label: r==='AGENT' ? 'Mes gains' : 'Profits', short: r==='AGENT' ? 'Gains' : 'Profits', icon:'trend' });
   if(r==='ADMIN') items.push({ id:'users', label:'Utilisateurs', icon:'users', badge: pendingUsers().length });
   items.push({ id:'account', label:'Mon compte', icon:'user' });
   return items;
@@ -987,6 +1240,7 @@ function renderPage(){
     case 'versements': return pageVersements();
     case 'stats': return pageStats();
     case 'users': return isAdmin() ? pageUsers() : pageDashboard();
+    case 'profits': return isBuja() ? pageDashboard() : (isAgent() ? pageGains() : pageProfits());
     case 'account': return pageAccount();
     default: return pageDashboard();
   }
@@ -1018,14 +1272,14 @@ function dashboardAgent(){
       <div class="actions desk-only"><button class="btn gold" onclick="setPage('new')">${ic('plus')}Nouvelle transaction</button></div>
     </div>
     <div class="kpis">
-      ${kpi('Reste chez moi', 'wallet', fmt(me.reste), 'AED', 'Encaissé moins envois confirmés', me.reste>0?'bad':'good', true)}
+      ${kpi('Reste chez moi', 'wallet', fmt(me.reste), 'AED', "Encaissé moins frais d'envoi et envois confirmés", me.reste>0?'bad':'good', true)}
       ${kpi('Clients servis', 'users', me.n, '', `${me.aPayer} en attente de paiement`)}
       ${kpi('Argent des clients', 'coins', fmt(me.aed), 'AED', '')}
       ${kpi('Frais encaissés', 'coins', fmt(me.frais), 'AED', '', 'gold')}
       ${kpi('Total encaissé', 'wallet', fmt(me.encaisse), 'AED', 'Argent des clients et frais')}
       ${kpi('Envoyé à Naomie', 'send', fmt(me.envoye), 'AED', 'Réception confirmée', 'good')}
       ${kpi('Envoi en attente', 'hourglass', fmt(me.envoyeAttente), 'AED', 'Pas encore confirmé')}
-      ${kpi('Transactions du jour', 'calendar', mine.filter(t=>t.date===today() && t.statut!=='ANNULEE').length, '', '')}
+      ${kpi('Mon gain à recevoir', 'trend', fmt(unpaidGains(state.profile.id).reduce((a,t)=>a+gainOf(t),0)), 'AED', '', 'gold')}
     </div>
     ${panel('Mes dernières transactions', 'list', txList(mine.slice(0,8)), { flush:true, right:`<button class="btn ghost sm" onclick="setPage('transactions')">Tout voir</button>` })}`;
 }
@@ -1058,7 +1312,7 @@ function dashboardStaff(){
 /* New transaction */
 function lastRates(){
   const mine = state.transactions.find(t=>t.agent_id===state.profile.id) || state.transactions[0];
-  return { aedUsd: mine ? mine.taux_aed_usd : DEFAULT_AED_USD, usdBif: mine ? mine.taux_usd_bif : '' };
+  return { aedUsd: mine ? mine.taux_aed_usd : DEFAULT_AED_USD, usdBif: mine ? mine.taux_usd_bif : '', methode: mine ? mine.methode_envoi : 'Binance' };
 }
 function pageNew(){
   const r = lastRates();
@@ -1085,6 +1339,8 @@ function pageNew(){
           <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"></div>
           <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
           <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
+          <div class="field"><label for="t-meth">Méthode d'envoi</label><select id="t-meth" name="methode_envoi">${METHODES_ENVOI.map(m=>`<option value="${m}" ${r.methode===m?'selected':''}>${m}</option>`).join('')}</select></div>
+          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="0" required inputmode="decimal"></div>
         </div>
         <div class="convert" aria-live="polite">
           <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
@@ -1094,6 +1350,7 @@ function pageNew(){
           <div class="step final"><span>Le bénéficiaire reçoit</span><b id="cvBif">0 BIF</b></div>
         </div>
         <div class="convert-note" id="cvNote">Arrondi au multiple de 50 BIF inférieur.</div>
+        <div class="gainline" id="gainLine"></div>
         <div class="grid2">
           <div class="field"><label for="t-bif">Montant à verser en BIF</label><input id="t-bif" name="montant_bif" type="number" step="1" min="1" required inputmode="numeric"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
           <div class="field"><label for="t-note">Note</label><input id="t-note" name="note" placeholder="Facultatif"></div>
@@ -1171,7 +1428,7 @@ function txList(list){
       ${staff?`<td>${esc(t.agent_nom)}</td>`:''}
       <td>${esc(t.client)}${t.client_tel?`<div class="sub">${esc(t.client_tel)}</div>`:''}</td>
       <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
-      <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div></td>
+      <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div>${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED</div>`:''}</td>
       <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
       <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>
       <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}</td>
@@ -1185,7 +1442,7 @@ function txList(list){
         <div class="bif">${fmt(t.montant_bif,0)} BIF</div>
       </div>
       <div class="meta" style="margin-top:6px;">${fmtDate(t.date)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
-      <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}</div>
+      <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}${t.methode_envoi?`, ${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED`:''}</div>
       <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
     </div>`).join('')}</div>`;
   return table + cards;
@@ -1208,9 +1465,15 @@ function pageVersements(){
     </div></div>
     ${isAgent() ? panel('Déclarer un envoi', 'send', `
       <form id="vsForm" autocomplete="off">
+        <div class="legend">${ic('list')}Transactions couvertes par cet envoi</div>
+        ${openTxForVersement().length ? `<div class="checklist">${openTxForVersement().map(t=>`
+          <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-amt="${amountToSend(t)}">
+            <span><b>${esc(t.beneficiaire)}</b><span class="sub">${fmtDate(t.date)}, ${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais</span></span>
+            <span class="strong">${fmt(amountToSend(t))} AED</span></label>`).join('')}</div>`
+          : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi.</div>`}
         <div class="grid3">
-          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"></div>
-          <div class="field"><label for="v-moy">Moyen d'envoi</label><input id="v-moy" name="moyen" placeholder="USDT, banque, cash…"></div>
+          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" value="${openTxForVersement().reduce((a,t)=>a+amountToSend(t),0) ? Math.round(openTxForVersement().reduce((a,t)=>a+amountToSend(t),0)*100)/100 : ''}"><span class="hint">Montant suggéré : argent des clients + frais − frais d'envoi des transactions cochées.</span></div>
+          <div class="field"><label for="v-moy">Moyen d'envoi</label><input id="v-moy" name="moyen" placeholder="Binance, M-Pesa, cash…"></div>
           <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
         </div>
         <button class="btn" type="submit">${ic('send')}Enregistrer l'envoi</button>
@@ -1226,9 +1489,13 @@ function pageVersements(){
     </div>
     ${panel('Historique des envois', 'inbox', vsList(list), { flush:true })}`;
 }
+function openTxForVersement(){ return state.transactions.filter(t=>t.agent_id===state.profile.id && !t.versement_id && t.statut!=='ANNULEE'); }
+function amountToSend(t){ return (+t.montant_aed) + (+t.frais_aed) - (+t.frais_envoi_aed||0); }
+function linkedCount(v){ return state.transactions.filter(t=>t.versement_id===v.id).length; }
 function vsActions(v){
   const a = [];
   if(isStaff() && v.statut==='ENVOYE') a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Reçu</button>`);
+  if(isStaff() && v.statut==='RECU') a.push(`<button class="btn ghost sm" onclick="setSellRate('${v.id}')" title="Modifier le taux de vente">${ic('edit')}Taux</button>`);
   if(isStaff() && v.statut==='RECU') a.push(`<button class="btn ghost sm sq" onclick="unconfirmVersement('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
   if(isAdmin() || (isAgent() && v.statut==='ENVOYE')) a.push(`<button class="btn ghost sm sq" onclick="deleteVersement('${v.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
   return a.join('');
@@ -1237,18 +1504,18 @@ function vsList(list){
   if(!list.length) return emptyState('inbox', 'Aucun envoi enregistré.');
   const staff = isStaff();
   const table = `<div class="only-desk tblwrap"><table><thead><tr>
-      <th>Date</th>${staff?'<th>Agent</th>':''}<th class="r">Montant</th><th>Moyen</th><th>Note</th><th>Statut</th><th></th>
+      <th>Date</th>${staff?'<th>Agent</th>':''}<th class="r">Montant</th><th class="r">Taux de vente</th><th>Moyen</th><th>Note</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(v=>`<tr>
       <td>${fmtDate(v.date)}</td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
-      <td class="r strong">${fmt(v.montant_aed)} AED</td><td>${esc(v.moyen||'')}</td><td class="sub">${esc(v.note||'')}</td>
+      <td class="r strong">${fmt(v.montant_aed)} AED<div class="sub">${linkedCount(v)} transaction(s) liée(s)</div></td><td class="r">${v.taux_vente ? fmt(v.taux_vente) : '—'}</td><td>${esc(v.moyen||'')}</td><td class="sub">${esc(v.note||'')}</td>
       <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
       <td><div class="actions">${vsActions(v)}</div></td>
     </tr>`).join('')}
     </tbody></table></div>`;
   const cards = `<div class="cards">${list.map(v=>`
     <div class="tcard">
-      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div></div>
+      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div><div class="meta">${linkedCount(v)} transaction(s) liée(s)${v.taux_vente?`, taux de vente ${fmt(v.taux_vente)}`:''}</div></div>
       <div class="bif">${fmt(v.montant_aed)} AED</div></div>
       <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">${vsActions(v)}</div></div>
     </div>`).join('')}</div>`;
@@ -1344,9 +1611,7 @@ function pageStats(){
       <div><h1>${isAgent() ? 'Mes statistiques' : 'Statistiques'}</h1><p>Activité ${rangeText}${!isAgent() && s.agent ? ', '+esc((profileById(s.agent)||{}).nom||'agent') : ''}.</p></div>
       <div class="actions"><button class="btn ghost" onclick="exportCsv(activeTx(statsRange(), ${agentId?`'${agentId}'`:'null'}), 'statistiques')">${ic('download')}Exporter</button></div>
     </div>
-    <div class="chips" role="group" aria-label="Période">
-      ${PRESETS.map(([k,l])=>`<button class="chipbtn ${s.preset===k?'on':''}" data-preset="${k}">${l}</button>`).join('')}
-    </div>
+    ${presetChips('st')}
     <div class="range">
       <div class="field"><label for="s-from">Du</label><input id="s-from" type="date" data-bind="st.from" value="${fromVal}"></div>
       <div class="field"><label for="s-to">Au</label><input id="s-to" type="date" data-bind="st.to" value="${toVal}"></div>
@@ -1362,7 +1627,7 @@ function pageStats(){
       ${kpi('Total encaissé', 'wallet', fmt(aed+frais), 'AED', 'Argent des clients et frais')}
       ${kpi('Versé au Burundi', 'send', fmt(sum(tx,'montant_bif'),0), 'BIF', '')}
       ${kpi('Envoyé à Naomie', 'inbox', fmt(envoye), 'AED', 'Réception confirmée', 'good')}
-      ${kpi('Écart de la période', 'wallet', fmt(aed+frais-envoye), 'AED', 'Encaissé moins envoyé', (aed+frais-envoye)>0?'bad':'good')}
+      ${kpi('Écart de la période', 'wallet', fmt(aed+frais-sum(tx,'frais_envoi_aed')-envoye), 'AED', "Encaissé moins frais d'envoi et envoyé", (aed+frais-sum(tx,'frais_envoi_aed')-envoye)>0?'bad':'good')}
       ${kpi('Moyenne par transaction', 'chart', fmt(tx.length ? aed/tx.length : 0), 'AED', '')}
     </div>
     ${panel(`Détail par ${gLabel}`, 'calendar', detail, { flush:true })}
@@ -1370,7 +1635,7 @@ function pageStats(){
 }
 function exportCsv(list, name){
   if(!list.length){ toast('Rien à exporter sur cette sélection', 'bad'); return; }
-  const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['statut','Statut'],['valide_par','Validé par']];
+  const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['methode_envoi',"Méthode d'envoi"],['frais_envoi_aed',"Frais d'envoi AED"],['statut','Statut'],['valide_par','Validé par']];
   const cell = v => { const s = String(v ?? '').replace(/"/g,'""'); return /[;"\n]/.test(s) ? `"${s}"` : s; };
   const num = v => String(v ?? '').replace('.', ',');
   const lines = [cols.map(c=>cell(tr(c[1]))).join(';')].concat(list.map(t=>cols.map(([k])=>{
@@ -1465,11 +1730,11 @@ function attachPageHandlers(){
     const evt = (el.tagName==='INPUT' && el.type!=='date') ? 'input' : 'change';
     el.addEventListener(evt, ()=>{
       state[grp][key] = el.value;
-      if(grp==='st' && (key==='from' || key==='to')){
-        const r = statsRange() || [today(), today()];
-        state.st.from = key==='from' ? el.value : r[0];
-        state.st.to = key==='to' ? el.value : r[1];
-        state.st.preset = 'custom';
+      if((grp==='st' || grp==='pf') && (key==='from' || key==='to')){
+        const r = (grp==='st' ? statsRange() : profitsRange()) || [today(), today()];
+        state[grp].from = key==='from' ? el.value : r[0];
+        state[grp].to = key==='to' ? el.value : r[1];
+        state[grp].preset = 'custom';
       }
       const pos = el.selectionStart;
       render();
@@ -1478,8 +1743,9 @@ function attachPageHandlers(){
     });
   });
   document.querySelectorAll('[data-preset]').forEach(b=> b.onclick = ()=>{
-    state.st.preset = b.dataset.preset;
-    if(b.dataset.preset==='custom' && !state.st.from){ const r = presetRange('week'); state.st.from = r[0]; state.st.to = r[1]; }
+    const [grp, k] = b.dataset.preset.split(':');
+    state[grp].preset = k;
+    if(k==='custom' && !state[grp].from){ const r = presetRange('week'); state[grp].from = r[0]; state[grp].to = r[1]; }
     render();
   });
 
@@ -1501,8 +1767,11 @@ function attachPageHandlers(){
         ? `Calcul exact ${fmt(c.bifExact, 0)} BIF, arrondi au multiple de 50 BIF inférieur.`
         : 'Saisissez le montant et le taux du jour pour voir le calcul.');
       if(!touched) bifInput.value = c.bif || '';
+      const fr = parseFloat(fd.get('frais_aed'))||0, fe = parseFloat(fd.get('frais_envoi_aed'))||0;
+      document.getElementById('gainLine').textContent = tr(`Frais nets : ${fmt(fr)} − ${fmt(fe)} = ${fmt(fr-fe)} AED. Gain de l'agent : ${fmt((fr-fe)/2)} AED.`);
     };
     ['montant_aed','taux_aed_usd','taux_usd_bif'].forEach(n=>txForm.querySelector(`[name=${n}]`).addEventListener('input', ()=>{ touched = false; update(); }));
+    ['frais_aed','frais_envoi_aed'].forEach(n=>txForm.querySelector(`[name=${n}]`).addEventListener('input', update));
     update();
     txForm.onsubmit = async (e)=>{
       e.preventDefault();
@@ -1519,6 +1788,8 @@ function attachPageHandlers(){
         taux_aed_usd: parseFloat(fd.get('taux_aed_usd')),
         taux_usd_bif: parseFloat(fd.get('taux_usd_bif')),
         montant_bif: parseInt(fd.get('montant_bif'), 10),
+        methode_envoi: fd.get('methode_envoi') || null,
+        frais_envoi_aed: parseFloat(fd.get('frais_envoi_aed')) || 0,
         note: String(fd.get('note')||'').trim() || null,
       });
       if(ok) setPage('transactions'); else btn.disabled = false;
@@ -1526,16 +1797,27 @@ function attachPageHandlers(){
   }
 
   const vsForm = document.getElementById('vsForm');
-  if(vsForm) vsForm.onsubmit = async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(vsForm);
-    vsForm.querySelector('button[type=submit]').disabled = true;
-    await addVersement({
-      montant_aed: parseFloat(fd.get('montant_aed')),
-      moyen: String(fd.get('moyen')||'').trim() || null,
-      note: String(fd.get('note')||'').trim() || null,
-    });
-  };
+  if(vsForm){
+    const amt = vsForm.querySelector('[name=montant_aed]');
+    let amtTouched = false;
+    amt.addEventListener('input', ()=>{ amtTouched = true; });
+    vsForm.querySelectorAll('[name=tx]').forEach(cb=>cb.addEventListener('change', ()=>{
+      if(amtTouched) return;
+      const total = [...vsForm.querySelectorAll('[name=tx]:checked')].reduce((a,c)=>a+(+c.dataset.amt||0),0);
+      amt.value = total ? Math.round(total*100)/100 : '';
+    }));
+    vsForm.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(vsForm);
+      const btn = vsForm.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await addVersement({
+        montant_aed: parseFloat(fd.get('montant_aed')),
+        moyen: String(fd.get('moyen')||'').trim() || null,
+        note: String(fd.get('note')||'').trim() || null,
+      }, fd.getAll('tx'));
+      if(!ok) btn.disabled = false;
+    };
+  }
 
   const pw = document.getElementById('passwordForm');
   if(pw) pw.onsubmit = async (e)=>{
