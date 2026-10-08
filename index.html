@@ -480,7 +480,10 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Tout cocher':'Tick all','Tout décocher':'Untick all','Frais de cet envoi (AED)':'Fee for this transfer (AED)',
+  'Gain':'Earnings','Réinitialiser les opérations':'Reset operations',
+  "Efface toutes les transactions, tous les envois à Naomie et tous les paiements d'agents, pour repartir de zéro. Les comptes utilisateurs sont conservés.":'Deletes all transactions, transfers to Naomie and agent payments so you can start again. User accounts are kept.',
+  "Une copie de sauvegarde est faite automatiquement avant l'effacement. Pour effacer une seule transaction, utilisez le bouton Supprimer dans la liste des transactions.":'A backup copy is made automatically before deleting. To delete a single transaction, use the Delete button in the transaction list.',
+  "Confirmation incorrecte : rien n'a été effacé":'Incorrect confirmation: nothing was deleted','Confirmation incorrecte':'Incorrect confirmation','Tout cocher':'Tick all','Tout décocher':'Untick all','Frais de cet envoi (AED)':'Fee for this transfer (AED)',
   "Payés une seule fois pour tout l'envoi, puis répartis à parts égales entre les transactions cochées. Laissez 0 s'ils sont déjà saisis sur chaque transaction.":'Paid once for the whole transfer, then split equally between the ticked transactions. Leave 0 if already entered on each transaction.',
   "Laissez 0 si cette transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.":'Leave 0 if this transaction goes in a grouped transfer: the fee is then entered on the transfer.','Accès refusé':'Access denied','Montant invalide':'Invalid amount',
   // account
@@ -488,6 +491,8 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Vous allez effacer (\d+) transaction\(s\) et (\d+) envoi\(s\)\. Une sauvegarde est faite avant\. Tapez REINITIALISER pour confirmer :$/, 'You are about to delete $1 transaction(s) and $2 transfer(s). A backup is made first. Type REINITIALISER to confirm:'],
+  [/^Opérations réinitialisées : (\d+) transaction\(s\) et (\d+) envoi\(s\) effacés$/, 'Operations reset: $1 transaction(s) and $2 transfer(s) deleted'],
   [/^(\d+) transaction\(s\) : (.+) AED − (.+) AED de frais d'envoi = (.+) AED\.$/, '$1 transaction(s): $2 AED − $3 AED transfer fees = $4 AED.'],
   [/^Soit (.+) AED de frais par transaction\.$/, 'That is $1 AED of fees per transaction.'],
   [/^Taux de vente (.+)$/, 'Selling rate $1'],
@@ -843,6 +848,16 @@ function renameUser(id){
   const nom = askText('Nouveau nom :', p.nom);
   if(!nom || !nom.trim() || nom.trim()===p.nom) return;
   run(sb.from('profiles').update({ nom: nom.trim() }).eq('id', id), 'Nom mis à jour');
+}
+async function resetOperations(){
+  const n = state.transactions.length, v = state.versements.length;
+  const typed = askText(`Vous allez effacer ${n} transaction(s) et ${v} envoi(s). Une sauvegarde est faite avant. Tapez REINITIALISER pour confirmer :`);
+  if(typed === null) return;
+  if(typed.trim().toUpperCase() !== 'REINITIALISER'){ toast('Confirmation incorrecte : rien n\'a été effacé', 'bad'); return; }
+  const { data, error } = await sb.rpc('admin_reset_operations', { p_confirm: 'REINITIALISER' });
+  if(error){ toast(error.message, 'bad'); return; }
+  await loadAll();
+  toast(`Opérations réinitialisées : ${data.transactions} transaction(s) et ${data.versements} envoi(s) effacés`);
 }
 async function resetUserPassword(id){
   const p = profileById(id); if(!p) return;
@@ -1425,7 +1440,7 @@ function txActions(t){
     a.push(`<button class="btn ghost sm" onclick="markAnnulee('${t.id}')">Annuler</button>`);
   }
   if(isStaff() && t.statut!=='EN_ATTENTE') a.push(`<button class="btn ghost sm sq" onclick="markAttente('${t.id}')" title="Remettre à payer" aria-label="Remettre à payer">${ic('undo')}</button>`);
-  if(isAdmin() || (isAgent() && t.statut==='EN_ATTENTE')) a.push(`<button class="btn ghost sm sq" onclick="deleteTransaction('${t.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
+  if(isAdmin() || (isAgent() && t.statut==='EN_ATTENTE')) a.push(`<button class="btn ghost sm" onclick="deleteTransaction('${t.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}Supprimer</button>`);
   return a.join('');
 }
 function statusPill(map, s){ const st = map[s] || { label:s, cls:'', icon:'clock' }; return `<span class="pill ${st.cls}">${ic(st.icon)}${st.label}</span>`; }
@@ -1741,6 +1756,10 @@ function pageAccount(){
           <div class="field"><label for="a-p2">Confirmer le mot de passe</label><input id="a-p2" type="password" name="password2" minlength="6" required autocomplete="new-password"></div>
           <button class="btn" type="submit">Mettre à jour le mot de passe</button>
         </form>`)}
+      ${isAdmin() ? panel('Réinitialiser les opérations', 'alert', `
+        <p style="margin:0 0 12px;">Efface toutes les transactions, tous les envois à Naomie et tous les paiements d'agents, pour repartir de zéro. Les comptes utilisateurs sont conservés.</p>
+        <p class="sub" style="margin:0 0 14px;">Une copie de sauvegarde est faite automatiquement avant l'effacement. Pour effacer une seule transaction, utilisez le bouton Supprimer dans la liste des transactions.</p>
+        <button class="btn danger" onclick="resetOperations()">${ic('trash')}Réinitialiser les opérations</button>`, { cls:'flag-bad' }) : ''}
       <button class="btn ghost block" onclick="signOut()">${ic('logout')}Se déconnecter</button>
     </div>`;
 }
