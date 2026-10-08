@@ -219,8 +219,10 @@
   .benef{border:1px solid var(--line);border-radius:10px;padding:14px 14px 4px;margin-bottom:12px;background:var(--surface-2);}
   .benef-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;min-height:32px;}
   .benef-n{font-weight:800;color:var(--brand);}
-  .benef-calc{font-size:12.5px;color:var(--muted);margin:-4px 0 10px;}
-  .benef-calc:empty{display:none;}
+  .repart{font-size:13.5px;font-weight:700;border-radius:9px;padding:10px 12px;margin:0 0 14px;}
+  .repart:empty{display:none;}
+  .repart.ok{background:var(--good-soft);color:var(--good);}
+  .repart.bad{background:var(--bad-soft);color:var(--bad);}
   .legend-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
   .legend-row .legend{margin-bottom:8px;}
   .legend-row .actions{gap:14px;}
@@ -485,7 +487,9 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Retirer':'Remove','Ajouter un bénéficiaire':'Add a beneficiary','Bénéficiaires au Burundi':'Beneficiaries in Burundi',
+  'Gain':'Earnings','Montant payé et taux':'Amount paid and rates','Montant payé par le client (AED)':'Amount paid by the client (AED)',
+  'Montant total à envoyer, sans les frais.':'Total amount to send, excluding fees.','Total à verser':'Total to pay out','Total à verser en BIF':'Total to pay out (BIF)',
+  'Montant à recevoir (BIF)':'Amount to receive (BIF)','Ex. 1000':'E.g. 1000','Retirer':'Remove','Ajouter un bénéficiaire':'Add a beneficiary','Bénéficiaires au Burundi':'Beneficiaries in Burundi',
   'Montant pour ce bénéficiaire (AED)':'Amount for this beneficiary (AED)','Taux et méthode d\'envoi':'Rates and transfer method',
   'Total des montants':'Total amount','Les bénéficiaires reçoivent':'Beneficiaries receive',
   'Enregistrez un client reçu à Dubaï. Un client peut envoyer à plusieurs bénéficiaires.':'Record a client served in Dubai. A client can send to several beneficiaries.',
@@ -501,6 +505,11 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Répartition correcte : (.+) BIF sur (.+) BIF\.$/, 'Split is correct: $1 BIF of $2 BIF.'],
+  [/^Reste à répartir : (.+) BIF \(réparti (.+) sur (.+) BIF\)\.$/, 'Left to split: $1 BIF ($2 of $3 BIF split).'],
+  [/^Trop réparti : (.+) BIF de plus que le total de (.+) BIF\.$/, 'Over-split: $1 BIF more than the $2 BIF total.'],
+  [/^Il reste (.+) BIF à répartir entre les bénéficiaires$/, '$1 BIF still to split between beneficiaries'],
+  [/^Les bénéficiaires dépassent le total de (.+) BIF$/, 'Beneficiaries exceed the total by $1 BIF'],
   [/^Bénéficiaire (\d+)$/, 'Beneficiary $1'],
   [/^(\d+) transactions enregistrées$/, '$1 transactions saved'],
   [/^(\d+) bénéficiaires, chaque montant arrondi au multiple de 50 BIF inférieur\.$/, '$1 beneficiaries, each amount rounded down to the nearest 50 BIF.'],
@@ -1377,23 +1386,18 @@ function lastRates(){
   const mine = state.transactions.find(t=>t.agent_id===state.profile.id) || state.transactions[0];
   return { aedUsd: mine ? mine.taux_aed_usd : DEFAULT_AED_USD, usdBif: mine ? mine.taux_usd_bif : '', methode: mine ? mine.methode_envoi : 'Binance' };
 }
-function benBlock(i, b, canRemove){
+function benBlock(i, b, canRemove, bif){
   const v = k => b && b[k] != null ? esc(b[k]) : '';
   return `
     <div class="benef" data-row="${i}">
       <div class="benef-h"><span class="benef-n">Bénéficiaire ${i+1}</span>
         ${canRemove ? `<button type="button" class="btn ghost sm" data-remove="${i}">${ic('x')}Retirer</button>` : ''}</div>
-      <div class="grid3">
+      <div class="grid2">
         <div class="field"><label>Nom du bénéficiaire</label><input name="b_nom" required placeholder="Ex. Nizigiyimana Anastase" value="${v('beneficiaire')}"></div>
         <div class="field"><label>Numéro</label><input name="b_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806" value="${v('beneficiaire_tel')}"></div>
         <div class="field"><label>Mode de réception</label><select name="b_mode">${MODES_RECEPTION.map(m=>`<option value="${esc(m)}" ${b && b.mode_reception===m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+        <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="number" step="1" min="1" required inputmode="numeric" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
       </div>
-      <div class="grid3">
-        <div class="field"><label>Montant pour ce bénéficiaire (AED)</label><input name="b_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 785" value="${v('montant_aed')}"></div>
-        <div class="field"><label>Frais de transfert reçus (AED)</label><input name="b_frais" type="number" step="0.01" min="0" required inputmode="decimal" value="${b ? v('frais_aed') : 0}"></div>
-        <div class="field"><label>Montant à verser en BIF</label><input name="b_bif" type="number" step="1" min="1" required inputmode="numeric" value="${v('montant_bif')}" data-touched="${b && b.montant_bif ? 1 : ''}"></div>
-      </div>
-      <div class="benef-calc" data-calc></div>
     </div>`;
 }
 function pageNew(edit){
@@ -1412,25 +1416,29 @@ function pageNew(edit){
           <div class="field"><label for="t-ctel">Téléphone du client</label><input id="t-ctel" name="client_tel" type="tel" inputmode="tel" placeholder="Facultatif" value="${v('client_tel')}"></div>
         </div>
         <div class="sep"></div>
-        <div class="legend">${ic('coins')}Taux et méthode d'envoi</div>
+        <div class="legend">${ic('coins')}Montant payé et taux</div>
         <div class="grid2">
+          <div class="field"><label for="t-aed">Montant payé par le client (AED)</label><input id="t-aed" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 1000" value="${v('montant_aed')}"><span class="hint">Montant total à envoyer, sans les frais.</span></div>
+          <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="number" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"></div>
           <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
           <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
           <div class="field"><label for="t-meth">Méthode d'envoi</label><select id="t-meth" name="methode_envoi">${METHODES_ENVOI.map(m=>`<option value="${m}" ${r.methode===m?'selected':''}>${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="${edit ? v('frais_envoi_aed') : 0}" required inputmode="decimal"><span class="hint">${edit ? '' : "Pour plusieurs bénéficiaires, saisissez le total : il est réparti à parts égales. "}Laissez 0 si la transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.</span></div>
+          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="${edit ? v('frais_envoi_aed') : 0}" required inputmode="decimal"><span class="hint">Laissez 0 si la transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.</span></div>
         </div>
-        <div class="sep"></div>
-        <div class="legend">${ic('phone')}${edit ? 'Bénéficiaire au Burundi' : 'Bénéficiaires au Burundi'}</div>
-        <div id="benefs">${benBlock(0, edit, false)}</div>
-        ${edit ? '' : `<button type="button" class="btn ghost" id="addBenef" style="margin:0 0 18px;">${ic('plus')}Ajouter un bénéficiaire</button>`}
         <div class="convert" aria-live="polite">
-          <div class="step"><span id="cvLbl">Montant client</span><b id="cvAed">0 AED</b></div>
+          <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
           <div class="op">${ic('arrow')}<span id="cvOp1">÷ ${fmt(r.aedUsd,4)}</span></div>
           <div class="step"><span>En dollars</span><b id="cvUsd">0 $</b></div>
           <div class="op">${ic('arrow')}<span id="cvOp2">× ${r.usdBif ? fmt(r.usdBif) : 'taux'}</span></div>
-          <div class="step final"><span id="cvLbl2">Le bénéficiaire reçoit</span><b id="cvBif">0 BIF</b></div>
+          <div class="step final"><span>Total à verser</span><b id="cvBif">0 BIF</b></div>
         </div>
         <div class="convert-note" id="cvNote">Arrondi au multiple de 50 BIF inférieur.</div>
+        <div class="field" style="max-width:380px;"><label for="t-total">Total à verser en BIF</label><input id="t-total" name="total_bif" type="number" step="1" min="1" required inputmode="numeric" value="${v('montant_bif')}" data-touched="${edit ? 1 : ''}"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+        <div class="sep"></div>
+        <div class="legend">${ic('phone')}${edit ? 'Bénéficiaire au Burundi' : 'Bénéficiaires au Burundi'}</div>
+        <div id="benefs">${benBlock(0, edit, false)}</div>
+        ${edit ? '' : `<button type="button" class="btn ghost" id="addBenef" style="margin:0 0 14px;">${ic('plus')}Ajouter un bénéficiaire</button>`}
+        <div class="repart" id="repart"></div>
         <div class="gainline" id="gainLine"></div>
         <div class="field"><label for="t-note">Note</label><input id="t-note" name="note" placeholder="Facultatif" value="${v('note')}"></div>
         <div class="actions" style="justify-content:flex-start;">
@@ -1849,47 +1857,46 @@ function attachPageHandlers(){
   if(txForm){
     const editId = txForm.dataset.edit;
     const box = document.getElementById('benefs');
+    const totalIn = txForm.querySelector('[name=total_bif]');
     const rows = () => [...box.querySelectorAll('.benef')];
+    const sumBif = () => rows().reduce((a,el)=>a+(parseInt(el.querySelector('[name=b_bif]').value,10)||0),0);
     const renumber = () => rows().forEach((el,i)=>{
       el.dataset.row = i;
       el.querySelector('.benef-n').textContent = tr(`Bénéficiaire ${i+1}`);
-      const rm = el.querySelector('[data-remove]');
-      if(rm) rm.style.display = rows().length > 1 ? '' : 'none';
     });
     const update = ()=>{
       const fd = new FormData(txForm);
-      const au = fd.get('taux_aed_usd'), ub = fd.get('taux_usd_bif');
-      let tAed = 0, tUsd = 0, tBif = 0, tFrais = 0;
-      rows().forEach(el=>{
-        const aed = el.querySelector('[name=b_aed]').value;
-        const bifIn = el.querySelector('[name=b_bif]');
-        const c = computeTx(aed, au, ub);
-        if(!bifIn.dataset.touched) bifIn.value = c.bif || '';
-        el.querySelector('[data-calc]').textContent = c.bif
-          ? `${fmt(aed)} AED ÷ ${fmt(au,4)} × ${fmt(ub)} = ${fmt(c.bifExact,0)} BIF, arrondi ${fmt(c.bif,0)} BIF` : '';
-        tAed += +aed||0; tUsd += c.usd||0; tBif += +bifIn.value||0;
-        tFrais += +el.querySelector('[name=b_frais]').value||0;
-      });
-      const n = rows().length;
-      document.getElementById('cvLbl').textContent = tr(n>1 ? 'Total des montants' : 'Montant client');
-      document.getElementById('cvLbl2').textContent = tr(n>1 ? 'Les bénéficiaires reçoivent' : 'Le bénéficiaire reçoit');
-      document.getElementById('cvAed').textContent = fmt(tAed) + ' AED';
-      document.getElementById('cvUsd').textContent = fmt(tUsd) + ' $';
-      document.getElementById('cvBif').textContent = fmt(tBif, 0) + ' BIF';
+      const aed = fd.get('montant_aed'), au = fd.get('taux_aed_usd'), ub = fd.get('taux_usd_bif');
+      const c = computeTx(aed, au, ub);
+      if(!totalIn.dataset.touched) totalIn.value = c.bif || '';
+      const total = parseInt(totalIn.value,10) || 0;
+      // a single beneficiary simply receives the whole amount
+      if(rows().length === 1){
+        const b = rows()[0].querySelector('[name=b_bif]');
+        if(!b.dataset.touched) b.value = total || '';
+      }
+      document.getElementById('cvAed').textContent = fmt(aed) + ' AED';
+      document.getElementById('cvUsd').textContent = fmt(c.usd) + ' $';
+      document.getElementById('cvBif').textContent = fmt(total, 0) + ' BIF';
       document.getElementById('cvOp1').textContent = tr('÷ ' + (au ? fmt(au, 4) : 'taux'));
       document.getElementById('cvOp2').textContent = tr('× ' + (ub ? fmt(ub) : 'taux'));
-      document.getElementById('cvNote').textContent = tr(tBif
-        ? (n>1 ? `${n} bénéficiaires, chaque montant arrondi au multiple de 50 BIF inférieur.` : 'Arrondi au multiple de 50 BIF inférieur.')
+      document.getElementById('cvNote').textContent = tr(c.bif
+        ? `Calcul exact ${fmt(c.bifExact, 0)} BIF, arrondi au multiple de 50 BIF inférieur.`
         : 'Saisissez le montant et le taux du jour pour voir le calcul.');
-      const fe = parseFloat(fd.get('frais_envoi_aed'))||0;
-      document.getElementById('gainLine').textContent = tr(`Frais nets : ${fmt(tFrais)} − ${fmt(fe)} = ${fmt(tFrais-fe)} AED. Gain de l'agent : ${fmt((tFrais-fe)/2)} AED.`);
+      const s = sumBif(), diff = total - s, rep = document.getElementById('repart');
+      if(!total){ rep.className = 'repart'; rep.textContent = ''; }
+      else if(diff === 0){ rep.className = 'repart ok'; rep.textContent = tr(`Répartition correcte : ${fmt(s,0)} BIF sur ${fmt(total,0)} BIF.`); }
+      else if(diff > 0){ rep.className = 'repart bad'; rep.textContent = tr(`Reste à répartir : ${fmt(diff,0)} BIF (réparti ${fmt(s,0)} sur ${fmt(total,0)} BIF).`); }
+      else { rep.className = 'repart bad'; rep.textContent = tr(`Trop réparti : ${fmt(-diff,0)} BIF de plus que le total de ${fmt(total,0)} BIF.`); }
+      const fr = parseFloat(fd.get('frais_aed'))||0, fe = parseFloat(fd.get('frais_envoi_aed'))||0;
+      document.getElementById('gainLine').textContent = tr(`Frais nets : ${fmt(fr)} − ${fmt(fe)} = ${fmt(fr-fe)} AED. Gain de l'agent : ${fmt((fr-fe)/2)} AED.`);
     };
-    // live recalculation (event delegation covers rows added later)
     txForm.addEventListener('input', (e)=>{
       const n = e.target.name;
-      if(n==='b_bif'){ e.target.dataset.touched = '1'; }
-      if(n==='b_aed'){ const b = e.target.closest('.benef').querySelector('[name=b_bif]'); b.dataset.touched = ''; }
-      if(n==='taux_aed_usd' || n==='taux_usd_bif'){ rows().forEach(el=>{ el.querySelector('[name=b_bif]').dataset.touched = ''; }); }
+      if(n==='b_bif' || n==='total_bif') e.target.dataset.touched = e.target.value ? '1' : '';
+      if(n==='montant_aed' || n==='taux_aed_usd' || n==='taux_usd_bif') totalIn.dataset.touched = '';
+      // with a single beneficiary, their amount follows the total
+      if(['montant_aed','taux_aed_usd','taux_usd_bif','total_bif'].includes(n) && rows().length === 1) rows()[0].querySelector('[name=b_bif]').dataset.touched = '';
       update();
     });
     box.addEventListener('click', (e)=>{
@@ -1899,8 +1906,12 @@ function attachPageHandlers(){
     });
     const add = document.getElementById('addBenef');
     if(add) add.onclick = ()=>{
+      // the first beneficiary keeps what was typed; the new one is prefilled with what is left
+      const first = rows()[0] && rows()[0].querySelector('[name=b_bif]');
+      if(first) first.dataset.touched = '1';
+      const left = (parseInt(totalIn.value,10)||0) - sumBif();
       const tmp = document.createElement('div');
-      tmp.innerHTML = benBlock(rows().length, null, true);
+      tmp.innerHTML = benBlock(rows().length, null, true, left > 0 ? left : '');
       const el = tmp.firstElementChild;
       translateDom(el);
       box.appendChild(el);
@@ -1912,10 +1923,24 @@ function attachPageHandlers(){
     txForm.onsubmit = async (e)=>{
       e.preventDefault();
       const fd = new FormData(txForm);
-      const btn = txForm.querySelector('button[type=submit]'); btn.disabled = true;
-      const fe = parseFloat(fd.get('frais_envoi_aed')) || 0;
+      const total = parseInt(fd.get('total_bif'),10) || 0;
       const list = rows();
-      const share = Math.round(fe / list.length * 100) / 100;
+      const bifs = list.map(el=>parseInt(el.querySelector('[name=b_bif]').value,10)||0);
+      const s = bifs.reduce((a,x)=>a+x,0);
+      if(s !== total){
+        toast(s < total ? `Il reste ${fmt(total-s,0)} BIF à répartir entre les bénéficiaires` : `Les bénéficiaires dépassent le total de ${fmt(s-total,0)} BIF`, 'bad');
+        document.getElementById('repart').scrollIntoView({ behavior:'smooth', block:'center' });
+        return;
+      }
+      const btn = txForm.querySelector('button[type=submit]'); btn.disabled = true;
+      const aed = parseFloat(fd.get('montant_aed')), fr = parseFloat(fd.get('frais_aed')) || 0, fe = parseFloat(fd.get('frais_envoi_aed')) || 0;
+      // split AED amount and fees in proportion to each beneficiary's BIF share; rounding remainder goes to the first
+      const split = (amount) => {
+        const parts = bifs.map(b=>Math.round(amount * b / total * 100) / 100);
+        parts[0] = Math.round((amount - parts.slice(1).reduce((a,x)=>a+x,0)) * 100) / 100;
+        return parts;
+      };
+      const aedP = split(aed), frP = split(fr), feP = split(fe);
       const common = {
         client: String(fd.get('client')).trim(),
         client_tel: String(fd.get('client_tel')||'').trim() || null,
@@ -1929,10 +1954,7 @@ function attachPageHandlers(){
         beneficiaire: el.querySelector('[name=b_nom]').value.trim(),
         beneficiaire_tel: el.querySelector('[name=b_tel]').value.trim() || null,
         mode_reception: el.querySelector('[name=b_mode]').value,
-        montant_aed: parseFloat(el.querySelector('[name=b_aed]').value),
-        frais_aed: parseFloat(el.querySelector('[name=b_frais]').value) || 0,
-        montant_bif: parseInt(el.querySelector('[name=b_bif]').value, 10),
-        frais_envoi_aed: i===0 ? Math.round((fe - share*(list.length-1))*100)/100 : share,
+        montant_aed: aedP[i], frais_aed: frP[i], frais_envoi_aed: feP[i], montant_bif: bifs[i],
       }));
       if(editId){
         const ok = await updateTransaction(editId, items[0]);
