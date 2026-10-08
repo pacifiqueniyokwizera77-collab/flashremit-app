@@ -487,7 +487,8 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Montant payé et taux':'Amount paid and rates','Montant payé par le client (AED)':'Amount paid by the client (AED)',
+  'Gain':'Earnings','Provisoire : pas encore envoyé':'Provisional: not sent yet','Frais de transfert de cet envoi (AED)':'Transfer fee for this transfer (AED)',
+  "Ce que coûte l'envoi (Binance, M-Pesa…). Ils sont retirés des frais collectés, pas de l'argent des clients, avant le partage en deux.":'What the transfer costs (Binance, M-Pesa…). It is taken from the fees collected, not from client money, before splitting in two.','Montant payé et taux':'Amount paid and rates','Montant payé par le client (AED)':'Amount paid by the client (AED)',
   'Montant total à envoyer, sans les frais.':'Total amount to send, excluding fees.','Total à verser':'Total to pay out','Total à verser en BIF':'Total to pay out (BIF)',
   'Montant à recevoir (BIF)':'Amount to receive (BIF)','Ex. 1000':'E.g. 1000','Retirer':'Remove','Ajouter un bénéficiaire':'Add a beneficiary','Bénéficiaires au Burundi':'Beneficiaries in Burundi',
   'Montant pour ce bénéficiaire (AED)':'Amount for this beneficiary (AED)','Taux et méthode d\'envoi':'Rates and transfer method',
@@ -505,6 +506,9 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^\((.+) − (.+)\) ÷ 2, provisoire : pas encore envoyé$/, '($1 − $2) ÷ 2, provisional: not sent yet'],
+  [/^Frais collectés : (.+) AED\. Les frais de transfert seront déduits lors de l'envoi à Naomie, puis le reste sera partagé en deux\.$/, 'Fees collected: $1 AED. Transfer fees will be deducted when sending to Naomie, then the rest is split in two.'],
+  [/^Frais collectés (.+) − frais de transfert (.+) = (.+) AED, gain de l'agent (.+) AED\.$/, 'Fees collected $1 − transfer fee $2 = $3 AED, agent earnings $4 AED.'],
   [/^Répartition correcte : (.+) BIF sur (.+) BIF\.$/, 'Split is correct: $1 BIF of $2 BIF.'],
   [/^Reste à répartir : (.+) BIF \(réparti (.+) sur (.+) BIF\)\.$/, 'Left to split: $1 BIF ($2 of $3 BIF split).'],
   [/^Trop réparti : (.+) BIF de plus que le total de (.+) BIF\.$/, 'Over-split: $1 BIF more than the $2 BIF total.'],
@@ -1104,10 +1108,10 @@ function pageGains(){
   const list = unpaid.length ? `
     <div class="only-desk tblwrap"><table><thead><tr><th>Date</th><th>Bénéficiaire</th><th class="r">Frais</th><th class="r">Frais envoi</th><th class="r">Gain</th></tr></thead><tbody>
       ${unpaid.map(t=>`<tr><td>${fmtDate(t.date)}</td><td>${esc(t.beneficiaire)}</td><td class="r">${fmt(t.frais_aed)} AED</td>
-        <td class="r">${fmt(t.frais_envoi_aed)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td><td class="r cell-gold">${fmt(gainOf(t))} AED<div class="sub">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2</div></td></tr>`).join('')}
+        <td class="r">${fmt(t.frais_envoi_aed)} AED${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)}</div>`:''}</td><td class="r cell-gold">${fmt(gainOf(t))} AED<div class="sub">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2</div>${t.versement_id ? '' : '<div class="sub">Provisoire : pas encore envoyé</div>'}</td></tr>`).join('')}
     </tbody><tfoot><tr><td colspan="4">Total</td><td class="r">${fmt(due)} AED</td></tr></tfoot></table></div>
     <div class="cards">${unpaid.map(t=>`
-      <div class="tcard"><div class="row"><div><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}${t.methode_envoi?`, ${esc(t.methode_envoi)}`:''}</div><div class="meta">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2</div></div>
+      <div class="tcard"><div class="row"><div><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${fmtDate(t.date)}${t.methode_envoi?`, ${esc(t.methode_envoi)}`:''}</div><div class="meta">(${fmt(t.frais_aed)} − ${fmt(t.frais_envoi_aed)}) ÷ 2${t.versement_id ? '' : ', provisoire : pas encore envoyé'}</div></div>
         <div class="cell-gold">${fmt(gainOf(t))} AED</div></div></div>`).join('')}
       <div class="tcard"><div class="row"><div class="name">Total</div><div class="strong">${fmt(due)} AED</div></div></div></div>`
     : emptyState('check', 'Aucun gain en attente.');
@@ -1422,8 +1426,6 @@ function pageNew(edit){
           <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="number" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"></div>
           <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
           <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
-          <div class="field"><label for="t-meth">Méthode d'envoi</label><select id="t-meth" name="methode_envoi">${METHODES_ENVOI.map(m=>`<option value="${m}" ${r.methode===m?'selected':''}>${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="t-fe">Frais de la méthode d'envoi (AED)</label><input id="t-fe" name="frais_envoi_aed" type="number" step="0.01" min="0" value="${edit ? v('frais_envoi_aed') : 0}" required inputmode="decimal"><span class="hint">Laissez 0 si la transaction part dans un envoi groupé : les frais se saisissent alors sur l'envoi.</span></div>
         </div>
         <div class="convert" aria-live="polite">
           <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
@@ -1558,13 +1560,13 @@ function pageVersements(){
         <div class="legend-row"><div class="legend">${ic('list')}Transactions couvertes par cet envoi</div>
           ${openTxForVersement().length > 1 ? `<div class="actions"><button type="button" class="linkbtn" data-check="all">Tout cocher</button><button type="button" class="linkbtn" data-check="none">Tout décocher</button></div>` : ''}</div>
         ${openTxForVersement().length ? `<div class="checklist">${openTxForVersement().map(t=>`
-          <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-gross="${(+t.montant_aed)+(+t.frais_aed)}" data-fe="${+t.frais_envoi_aed||0}">
+          <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-gross="${(+t.montant_aed)+(+t.frais_aed)}" data-frais="${+t.frais_aed||0}" data-fe="${+t.frais_envoi_aed||0}">
             <span><b>${esc(t.beneficiaire)}</b><span class="sub">${fmtDate(t.date)}, ${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais</span></span>
             <span class="strong">${fmt((+t.montant_aed)+(+t.frais_aed))} AED</span></label>`).join('')}</div>`
           : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi.</div>`}
         <div class="grid3">
           <div class="field"><label for="v-meth">Méthode d'envoi</label><select id="v-meth" name="methode">${METHODES_ENVOI.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="v-fe">Frais de cet envoi (AED)</label><input id="v-fe" name="frais" type="number" step="0.01" min="0" value="0" inputmode="decimal"><span class="hint">Payés une seule fois pour tout l'envoi, puis répartis à parts égales entre les transactions cochées. Laissez 0 s'ils sont déjà saisis sur chaque transaction.</span></div>
+          <div class="field"><label for="v-fe">Frais de transfert de cet envoi (AED)</label><input id="v-fe" name="frais" type="number" step="0.01" min="0" value="0" required inputmode="decimal"><span class="hint">Ce que coûte l'envoi (Binance, M-Pesa…). Ils sont retirés des frais collectés, pas de l'argent des clients, avant le partage en deux.</span></div>
           <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
         </div>
         <div class="gainline" id="vsSummary"></div>
@@ -1888,8 +1890,8 @@ function attachPageHandlers(){
       else if(diff === 0){ rep.className = 'repart ok'; rep.textContent = tr(`Répartition correcte : ${fmt(s,0)} BIF sur ${fmt(total,0)} BIF.`); }
       else if(diff > 0){ rep.className = 'repart bad'; rep.textContent = tr(`Reste à répartir : ${fmt(diff,0)} BIF (réparti ${fmt(s,0)} sur ${fmt(total,0)} BIF).`); }
       else { rep.className = 'repart bad'; rep.textContent = tr(`Trop réparti : ${fmt(-diff,0)} BIF de plus que le total de ${fmt(total,0)} BIF.`); }
-      const fr = parseFloat(fd.get('frais_aed'))||0, fe = parseFloat(fd.get('frais_envoi_aed'))||0;
-      document.getElementById('gainLine').textContent = tr(`Frais nets : ${fmt(fr)} − ${fmt(fe)} = ${fmt(fr-fe)} AED. Gain de l'agent : ${fmt((fr-fe)/2)} AED.`);
+      const fr = parseFloat(fd.get('frais_aed'))||0;
+      document.getElementById('gainLine').textContent = fr ? tr(`Frais collectés : ${fmt(fr)} AED. Les frais de transfert seront déduits lors de l'envoi à Naomie, puis le reste sera partagé en deux.`) : '';
     };
     txForm.addEventListener('input', (e)=>{
       const n = e.target.name;
@@ -1933,20 +1935,19 @@ function attachPageHandlers(){
         return;
       }
       const btn = txForm.querySelector('button[type=submit]'); btn.disabled = true;
-      const aed = parseFloat(fd.get('montant_aed')), fr = parseFloat(fd.get('frais_aed')) || 0, fe = parseFloat(fd.get('frais_envoi_aed')) || 0;
+      const aed = parseFloat(fd.get('montant_aed')), fr = parseFloat(fd.get('frais_aed')) || 0;
       // split AED amount and fees in proportion to each beneficiary's BIF share; rounding remainder goes to the first
       const split = (amount) => {
         const parts = bifs.map(b=>Math.round(amount * b / total * 100) / 100);
         parts[0] = Math.round((amount - parts.slice(1).reduce((a,x)=>a+x,0)) * 100) / 100;
         return parts;
       };
-      const aedP = split(aed), frP = split(fr), feP = split(fe);
+      const aedP = split(aed), frP = split(fr);
       const common = {
         client: String(fd.get('client')).trim(),
         client_tel: String(fd.get('client_tel')||'').trim() || null,
         taux_aed_usd: parseFloat(fd.get('taux_aed_usd')),
         taux_usd_bif: parseFloat(fd.get('taux_usd_bif')),
-        methode_envoi: fd.get('methode_envoi') || null,
         note: String(fd.get('note')||'').trim() || null,
       };
       const items = list.map((el,i)=>({
@@ -1954,7 +1955,7 @@ function attachPageHandlers(){
         beneficiaire: el.querySelector('[name=b_nom]').value.trim(),
         beneficiaire_tel: el.querySelector('[name=b_tel]').value.trim() || null,
         mode_reception: el.querySelector('[name=b_mode]').value,
-        montant_aed: aedP[i], frais_aed: frP[i], frais_envoi_aed: feP[i], montant_bif: bifs[i],
+        montant_aed: aedP[i], frais_aed: frP[i], montant_bif: bifs[i],
       }));
       if(editId){
         const ok = await updateTransaction(editId, items[0]);
@@ -1979,11 +1980,12 @@ function attachPageHandlers(){
       const f = parseFloat(fee.value)||0;
       const perTx = checked.reduce((a,c)=>a+(+c.dataset.fe||0),0);
       const deduct = f>0 ? f : perTx;
+      const frais = checked.reduce((a,c)=>a+(+c.dataset.frais||0),0);
       const total = Math.round((gross - deduct)*100)/100;
       if(!amtTouched) amt.value = total>0 ? total : '';
       const box = document.getElementById('vsSummary');
       box.textContent = n ? tr(`${n} transaction(s) : ${fmt(gross)} AED − ${fmt(deduct)} AED de frais d'envoi = ${fmt(total)} AED.`)
-        + (f>0 && n>1 ? ' ' + tr(`Soit ${fmt(f/n)} AED de frais par transaction.`) : '') : '';
+        + ' ' + tr(`Frais collectés ${fmt(frais)} − frais de transfert ${fmt(deduct)} = ${fmt(frais-deduct)} AED, gain de l'agent ${fmt((frais-deduct)/2)} AED.`) : '';
     };
     vsForm.querySelectorAll('[name=tx]').forEach(cb=>cb.addEventListener('change', recompute));
     fee.addEventListener('input', recompute);
