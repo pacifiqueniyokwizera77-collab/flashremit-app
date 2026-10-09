@@ -232,6 +232,13 @@
   details.linked li{display:flex;justify-content:space-between;gap:12px;padding:2px 0;}
   td details.linked{text-align:left;}
 
+  .agstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
+  .agstats span{display:block;font-size:12px;color:var(--muted);font-weight:600;}
+  .agstats b{font-size:14.5px;}
+  .sectiontitle{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;margin:6px 0 10px;color:var(--ink);}
+  .sectiontitle svg.i{color:var(--bad);}
+  @media (max-width:860px){ .agstats{grid-template-columns:1fr 1fr;padding:12px 14px;} }
+
   /* ---------- Modal & sales ---------- */
   .modal-bg{position:fixed;inset:0;background:rgba(9,26,23,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;}
   .modal{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow:auto;padding:22px;}
@@ -497,7 +504,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
+  'Gain':'Earnings','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
   'Enregistrer une vente':'Record a sale','Reçu sur':'Received on','Frais de vente (BIF)':'Sale fees (BIF)',
   'Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.':'For example Lumicash agent code fees. Deducted before calculating profit.',
@@ -525,6 +532,9 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(\d+) \((.+) BIF\)$/, '$1 ($2 BIF)'],
+  [/^1 envoi$/, '1 transfer'],
+  [/^(\d+) envois$/, '$1 transfers'],
   [/^Envoi de (.+) du (\S+) : (.+) AED déclarés(.*)\.$/, (m,a,b,c,d)=>`Transfer from ${a} on ${b}: ${c} AED declared${d.replace(', par ',', via ')}.`],
   [/^Envoi de (.+) : reçu (.+), reste à vendre$/, 'Transfer from $1: received $2, left to sell'],
   [/^Quantité vendue \((.*)\)$/, 'Quantity sold ($1)'],
@@ -1243,6 +1253,49 @@ function pageGains(){
     ${panel('Historique de mes paiements', 'clock', paysHtml, { flush:true })}`;
 }
 
+
+/* ---------- Grouping by agent (Naomie & admins) ---------- */
+function groupByAgent(list){
+  const m = new Map();
+  list.forEach(x=>{ if(!m.has(x.agent_id)) m.set(x.agent_id, { id:x.agent_id, nom:x.agent_nom, items:[] }); m.get(x.agent_id).items.push(x); });
+  return [...m.values()].sort((a,b)=>a.nom.localeCompare(b.nom));
+}
+function miniStats(cells){
+  return `<div class="agstats">${cells.map(([l,v,c])=>`<div><span>${l}</span><b class="${c||''}">${v}</b></div>`).join('')}</div>`;
+}
+function txGroupStats(items){
+  const act = items.filter(t=>t.statut!=='ANNULEE');
+  const att = act.filter(t=>t.statut==='EN_ATTENTE'), paid = act.filter(t=>t.statut==='PAYEE');
+  return miniStats([
+    ['À payer', `${att.length} (${fmt(sum(att,'montant_bif'),0)} BIF)`, att.length?'cell-bad':'cell-good'],
+    ['Déjà payé', `${paid.length} (${fmt(sum(paid,'montant_bif'),0)} BIF)`, 'cell-good'],
+    ['Argent des clients', `${fmt(sum(act,'montant_aed'))} AED`],
+    ['Frais', `${fmt(sum(act,'frais_aed'))} AED`, 'cell-gold'],
+  ]);
+}
+function vsGroupStats(items){
+  const recu = items.filter(v=>v.statut==='RECU'), att = items.filter(v=>v.statut==='ENVOYE');
+  const left = {}; recu.forEach(v=>{ const l = vsLeft(v); if(l>0) left[v.recu_devise] = (left[v.recu_devise]||0)+l; });
+  const leftTxt = Object.entries(left).map(([d,q])=>`${fmt(q)} ${d}`).join(', ') || '0';
+  const net = state.ventes.filter(x=>items.some(v=>v.id===x.versement_id)).reduce((a,x)=>a+(+x.net_bif),0);
+  return miniStats([
+    ['Reçu, confirmé', `${fmt(sum(recu,'montant_aed'))} AED`, 'cell-good'],
+    ['À confirmer', `${fmt(sum(att,'montant_aed'))} AED`, att.length?'cell-bad':''],
+    ['Reste à vendre', leftTxt],
+    ['Ventes nettes', `${fmt(net,0)} BIF`, 'cell-gold'],
+  ]);
+}
+function agentPanels(list, kind, opts={}){
+  if(!list.length) return panel(opts.emptyTitle || 'Liste', kind==='tx'?'list':'inbox', emptyState(kind==='tx'?'list':'inbox', kind==='tx' ? 'Aucune transaction pour le moment.' : 'Aucun envoi enregistré.'), { flush:true });
+  return groupByAgent(list).map(g=>{
+    const count = kind==='tx'
+      ? `${g.items.length} transaction${g.items.length>1?'s':''}`
+      : `${g.items.length} envoi${g.items.length>1?'s':''}`;
+    return panel(g.nom, 'user', (kind==='tx' ? txGroupStats(g.items) : vsGroupStats(g.items)) + (kind==='tx' ? txList(g.items) : vsList(g.items)),
+      { cls: opts.cls || '', flush:true, right:`<span class="count">${count}</span>` });
+  }).join('');
+}
+
 /* ---------- Navigation ---------- */
 function navItems(){
   const r = role();
@@ -1492,9 +1545,9 @@ function dashboardStaff(){
     </div>
     ${pend.length && isAdmin() ? panel(`${pend.length} demande${pend.length>1?'s':''} d'accès en attente`, 'users', null, { cls:'flag-warn calm', right:`<button class="btn sm" onclick="setPage('users')">Voir les demandes</button>` }) : ''}
     ${aPayer.length
-      ? panel('Bénéficiaires à payer', 'hourglass', txList(aPayer), { cls:'flag-bad', flush:true, right:`<span class="count">${aPayer.length} transaction${aPayer.length>1?'s':''}</span>` })
+      ? `<h3 class="sectiontitle">${ic('hourglass')}Bénéficiaires à payer, agent par agent</h3>` + agentPanels(aPayer, 'tx', { cls:'flag-bad' })
       : panel('Tous les bénéficiaires sont payés', 'check', null, { cls:'calm' })}
-    ${vs.length ? panel('Fonds envoyés par les agents, à confirmer', 'inbox', vsList(vs), { cls:'flag-warn', flush:true, right:`<span class="count">${fmt(sum(vs,'montant_aed'))} AED</span>` }) : ''}
+    ${vs.length ? `<h3 class="sectiontitle">${ic('inbox')}Fonds envoyés par les agents, à confirmer</h3>` + agentPanels(vs, 'vs', { cls:'flag-warn' }) : ''}
     ${panel('Résumé par agent', 'users', bilanList(all, true), { flush:true, right:`<span class="count">Depuis le début</span>` })}`;
 }
 
@@ -1607,7 +1660,9 @@ function pageTransactions(){
       ${kpi('Frais', 'coins', fmt(sum(act,'frais_aed')), 'AED', '', 'gold')}
       ${kpi('Versé au Burundi', 'send', fmt(sum(act,'montant_bif'),0), 'BIF', '')}
     </div>
-    ${panel('Liste des transactions', 'list', txList(list), { flush:true, right:`<span class="count">${list.length} résultat${list.length>1?'s':''}</span>` })}`;
+    ${isStaff() && !f.agent
+      ? agentPanels(list, 'tx', { emptyTitle:'Liste des transactions' })
+      : panel('Liste des transactions', 'list', (isStaff() && list.length ? txGroupStats(list) : '') + txList(list), { flush:true, right:`<span class="count">${list.length} résultat${list.length>1?'s':''}</span>` })}`;
 }
 function txActions(t){
   const a = [];
@@ -1698,7 +1753,7 @@ function pageVersements(){
         : kpi("Nombre d'envois", 'list', list.length, '', '')}
       ${isStaff() ? kpi('Ventes nettes', 'coins', fmt(state.ventes.filter(x=>list.some(v=>v.id===x.versement_id)).reduce((a,x)=>a+(+x.net_bif),0),0), 'BIF', `Frais de vente : ${fmt(state.ventes.filter(x=>list.some(v=>v.id===x.versement_id)).reduce((a,x)=>a+(+x.frais_bif),0),0)} BIF`, 'gold') : ''}
     </div>
-    ${panel('Historique des envois', 'inbox', vsList(list), { flush:true })}`;
+    ${isStaff() && !state.vsf.agent ? agentPanels(list, 'vs', { emptyTitle:'Historique des envois' }) : panel('Historique des envois', 'inbox', (isStaff() && list.length ? vsGroupStats(list) : '') + vsList(list), { flush:true })}`;
 }
 function openTxForVersement(){ return state.transactions.filter(t=>t.agent_id===state.profile.id && !t.versement_id && t.statut!=='ANNULEE'); }
 function amountToSend(t){ return (+t.montant_aed) + (+t.frais_aed) - (+t.frais_envoi_aed||0); }
