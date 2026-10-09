@@ -735,6 +735,7 @@ function addDays(s, n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return 
 function today(){ return ymd(new Date()); }
 function weekStart(s){ const d = parseYmd(s); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ymd(d); }
 function fmtDate(s){ if(!s) return ''; const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
+function fmtLocalDate(ts, fallback){ return ts ? new Date(ts).toLocaleDateString(LOCALE()) : fmtDate(fallback); }
 function fmtTime(ts){ if(!ts) return ''; return new Date(ts).toLocaleTimeString(LOCALE(),{hour:'2-digit',minute:'2-digit'}); }
 const BANQUES = ['BANCOBU','BCB','Interbank Burundi (IBB)','KCB Bank','Ecobank','BBCI','CRDB Bank','Finbank','Diamond Trust Bank','BGF','BHB','BNDE','COOPEC','FENACOBU','Microfinance'];
 /* "Banque (BANCOBU)" <-> { mode:'Banque', banque:'BANCOBU' } */
@@ -1190,7 +1191,7 @@ function pageProfits(){
       <th class="r">Profit change</th><th class="r">Frais nets</th><th class="r">Gain agent et part Pax</th><th class="r">Profit</th>
     </tr></thead><tbody>
       ${rows.map(({t,p})=>`<tr>
-        <td>${fmtDate(t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>${agentId?'':`<td>${esc(t.agent_nom)}</td>`}<td>${esc(t.beneficiaire)}</td>
+        <td>${fmtLocalDate(t.created_at, t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>${agentId?'':`<td>${esc(t.agent_nom)}</td>`}<td>${esc(t.beneficiaire)}</td>
         <td class="r">${fmt(p.usd)} $<div class="sub">${fmt(t.montant_aed)} AED</div></td>
         <td class="r">${fmt(t.taux_usd_bif)} → ${p.rs ? fmt(p.rs,0) : '?'}${p.rs ? (p.frac<1 ? `<div class="sub">Vendu à ${Math.round(p.frac*100)} %, estimé</div>` : '') : '<div class="sub">Pas encore vendu</div>'}</td>
         <td class="r ${p.change==null?'':(p.change>=0?'cell-good':'cell-bad')}">${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</td>
@@ -1713,7 +1714,7 @@ function txList(list){
       <th class="r">Montant</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(t=>`<tr>
-      <td>${fmtDate(t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>
+      <td>${fmtLocalDate(t.created_at, t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>
       ${staff?`<td>${esc(t.agent_nom)}</td>`:''}
       <td>${esc(t.client)}${t.client_tel?`<div class="sub">${esc(t.client_tel)}</div>`:''}</td>
       <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
@@ -1810,7 +1811,7 @@ function vsList(list){
       <th>Date</th>${staff?'<th>Agent</th>':''}<th class="r">Montant</th><th>Reçu et ventes</th><th>Moyen</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(v=>`<tr>
-      <td>${fmtDate(v.date)}<div class="sub">${fmtTime(v.created_at)}</div></td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
+      <td>${fmtLocalDate(v.created_at, v.date)}<div class="sub">${fmtTime(v.created_at)}</div></td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
       <td class="r strong">${fmt(v.montant_aed)} AED${linkedDetails(v)}</td><td style="min-width:200px;">${salesBlock(v) || '<span class="sub">—</span>'}</td><td>${vsFeeText(v)}${v.note?`<div class="sub">${esc(v.note)}</div>`:''}</td>
       <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
       <td><div class="actions">${vsActions(v)}</div></td>
