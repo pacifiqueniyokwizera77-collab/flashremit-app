@@ -219,6 +219,7 @@
   .benef{border:1px solid var(--line);border-radius:10px;padding:14px 14px 4px;margin-bottom:12px;background:var(--surface-2);}
   .benef-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;min-height:32px;}
   .benef-n{font-weight:800;color:var(--brand);}
+  .bankfield[hidden]{display:none;}
   .repart{font-size:13.5px;font-weight:700;border-radius:9px;padding:10px 12px;margin:0 0 14px;}
   .repart:empty{display:none;}
   .repart.ok{background:var(--good-soft);color:var(--good);}
@@ -337,6 +338,7 @@
 <body>
 <div id="app"></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<datalist id="banques"></datalist>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -504,7 +506,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
+  'Gain':'Earnings','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
   'Enregistrer une vente':'Record a sale','Reçu sur':'Received on','Frais de vente (BIF)':'Sale fees (BIF)',
   'Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.':'For example Lumicash agent code fees. Deducted before calculating profit.',
@@ -532,6 +534,7 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Banque \((.+)\)(.*)$/, 'Bank ($1)$2'],
   [/^(\d+) \((.+) BIF\)$/, '$1 ($2 BIF)'],
   [/^1 envoi$/, '1 transfer'],
   [/^(\d+) envois$/, '$1 transfers'],
@@ -732,6 +735,16 @@ function addDays(s, n){ const d = parseYmd(s); d.setDate(d.getDate()+n); return 
 function today(){ return ymd(new Date()); }
 function weekStart(s){ const d = parseYmd(s); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ymd(d); }
 function fmtDate(s){ if(!s) return ''; const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
+function fmtTime(ts){ if(!ts) return ''; return new Date(ts).toLocaleTimeString(LOCALE(),{hour:'2-digit',minute:'2-digit'}); }
+const BANQUES = ['BANCOBU','BCB','Interbank Burundi (IBB)','KCB Bank','Ecobank','BBCI','CRDB Bank','Finbank','Diamond Trust Bank','BGF','BHB','BNDE','COOPEC','FENACOBU','Microfinance'];
+/* "Banque (BANCOBU)" <-> { mode:'Banque', banque:'BANCOBU' } */
+function splitMode(m){ const r = /^Banque \((.+)\)$/.exec(m||''); return r ? { mode:'Banque', banque:r[1] } : { mode:m||'', banque:'' }; }
+function joinMode(mode, banque){ banque = String(banque||'').trim(); return mode==='Banque' && banque ? `Banque (${banque})` : mode; }
+function modeField(selName, bankName, current, idPrefix){
+  const sm = splitMode(current);
+  return `<div class="field"><label ${idPrefix?`for="${idPrefix}-sel"`:''}>Mode de réception</label><select ${idPrefix?`id="${idPrefix}-sel"`:''} name="${selName}" data-bankfor="${bankName}">${MODES_RECEPTION.map(m=>`<option value="${esc(m)}" ${sm.mode===m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+    <div class="field bankfield" ${sm.mode==='Banque' ? '' : 'hidden'}><label>Quelle banque ou microfinance ?</label><input name="${bankName}" list="banques" placeholder="Ex. BANCOBU, KCB, COOPEC…" value="${esc(sm.banque)}" ${sm.mode==='Banque' ? 'required' : ''}></div>`;
+}
 function fmtDT(ts){ if(!ts) return ''; const d = new Date(ts); return d.toLocaleDateString(LOCALE())+(LANG==='en'?' at ':' à ')+d.toLocaleTimeString(LOCALE(),{hour:'2-digit',minute:'2-digit'}); }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function longToday(){ return cap(new Date().toLocaleDateString(LOCALE(),{weekday:'long', day:'numeric', month:'long', year:'numeric'})); }
@@ -1042,7 +1055,7 @@ function modalHtml(){
         <div class="grid2">
           <div class="field"><label for="s-q">Quantité vendue (${esc(dev)})</label><input id="s-q" name="quantite" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" max="${left}" required inputmode="decimal" value="${left}"></div>
           <div class="field"><label for="s-t">Prix de vente : 1 ${esc(dev)} = ? BIF</label><input id="s-t" name="taux" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required inputmode="decimal" value="${esc(lastSaleRate(dev))}" placeholder="Ex. 6000"></div>
-          <div class="field"><label for="s-mode">Reçu sur</label><select id="s-mode" name="mode">${MODES_RECEPTION.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select></div>
+          ${modeField('mode', 'banque', '', 's-mode').replace('>Mode de réception<','>Reçu sur<')}
           <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="0" value="0" required inputmode="numeric"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
         </div>
         <div class="gainline" id="saleSummary"></div>
@@ -1177,7 +1190,7 @@ function pageProfits(){
       <th class="r">Profit change</th><th class="r">Frais nets</th><th class="r">Gain agent et part Pax</th><th class="r">Profit</th>
     </tr></thead><tbody>
       ${rows.map(({t,p})=>`<tr>
-        <td>${fmtDate(t.date)}</td>${agentId?'':`<td>${esc(t.agent_nom)}</td>`}<td>${esc(t.beneficiaire)}</td>
+        <td>${fmtDate(t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>${agentId?'':`<td>${esc(t.agent_nom)}</td>`}<td>${esc(t.beneficiaire)}</td>
         <td class="r">${fmt(p.usd)} $<div class="sub">${fmt(t.montant_aed)} AED</div></td>
         <td class="r">${fmt(t.taux_usd_bif)} → ${p.rs ? fmt(p.rs,0) : '?'}${p.rs ? (p.frac<1 ? `<div class="sub">Vendu à ${Math.round(p.frac*100)} %, estimé</div>` : '') : '<div class="sub">Pas encore vendu</div>'}</td>
         <td class="r ${p.change==null?'':(p.change>=0?'cell-good':'cell-bad')}">${p.change==null ? '—' : fmt(p.change,0)+' BIF'}</td>
@@ -1581,7 +1594,7 @@ function benBlock(i, b, canRemove, bif){
       <div class="grid2">
         <div class="field"><label>Nom du bénéficiaire</label><input name="b_nom" required placeholder="Ex. Nizigiyimana Anastase" value="${v('beneficiaire')}"></div>
         <div class="field"><label>Numéro</label><input name="b_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806" value="${v('beneficiaire_tel')}"></div>
-        <div class="field"><label>Mode de réception</label><select name="b_mode">${MODES_RECEPTION.map(m=>`<option value="${esc(m)}" ${b && b.mode_reception===m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+        ${modeField('b_mode', 'b_banque', b ? b.mode_reception : '')}
         <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="numeric" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
       </div>
     </div>`;
@@ -1700,7 +1713,7 @@ function txList(list){
       <th class="r">Montant</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(t=>`<tr>
-      <td>${fmtDate(t.date)}</td>
+      <td>${fmtDate(t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>
       ${staff?`<td>${esc(t.agent_nom)}</td>`:''}
       <td>${esc(t.client)}${t.client_tel?`<div class="sub">${esc(t.client_tel)}</div>`:''}</td>
       <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
@@ -1717,7 +1730,7 @@ function txList(list){
         <div style="min-width:0;"><div class="name">${esc(t.beneficiaire)}</div><div class="meta">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></div>
         <div class="bif">${fmt(t.montant_bif,0)} BIF</div>
       </div>
-      <div class="meta" style="margin-top:6px;">${fmtDate(t.date)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
+      <div class="meta" style="margin-top:6px;">${fmtDT(t.created_at)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
       <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}${t.methode_envoi?`, ${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED`:''}</div>
       <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
     </div>`).join('')}</div>`;
@@ -1797,7 +1810,7 @@ function vsList(list){
       <th>Date</th>${staff?'<th>Agent</th>':''}<th class="r">Montant</th><th>Reçu et ventes</th><th>Moyen</th><th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(v=>`<tr>
-      <td>${fmtDate(v.date)}</td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
+      <td>${fmtDate(v.date)}<div class="sub">${fmtTime(v.created_at)}</div></td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
       <td class="r strong">${fmt(v.montant_aed)} AED${linkedDetails(v)}</td><td style="min-width:200px;">${salesBlock(v) || '<span class="sub">—</span>'}</td><td>${vsFeeText(v)}${v.note?`<div class="sub">${esc(v.note)}</div>`:''}</td>
       <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
       <td><div class="actions">${vsActions(v)}</div></td>
@@ -1805,7 +1818,7 @@ function vsList(list){
     </tbody></table></div>`;
   const cards = `<div class="cards">${list.map(v=>`
     <div class="tcard">
-      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDate(v.date)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div>${salesBlock(v)}${+v.frais_envoi_aed>0?`<div class="meta">${vsFeeText(v)}</div>`:''}${linkedDetails(v)}</div>
+      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDT(v.created_at)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div>${salesBlock(v)}${+v.frais_envoi_aed>0?`<div class="meta">${vsFeeText(v)}</div>`:''}${linkedDetails(v)}</div>
       <div class="bif">${fmt(v.montant_aed)} AED</div></div>
       <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">${vsActions(v)}</div></div>
     </div>`).join('')}</div>`;
@@ -2017,6 +2030,17 @@ function pageAccount(){
 }
 
 /* ---------- Handlers ---------- */
+document.addEventListener('change', (e)=>{
+  const sel = e.target.closest && e.target.closest('select[data-bankfor]');
+  if(!sel) return;
+  const wrap = sel.closest('.grid2, .grid3, form');
+  const f = wrap && wrap.querySelector(`.bankfield input[name="${sel.dataset.bankfor}"]`);
+  if(!f) return;
+  const show = sel.value === 'Banque';
+  f.closest('.bankfield').hidden = !show;
+  f.required = show;
+  if(show) f.focus();
+});
 function attachPageHandlers(){
   // generic bindings for filters: data-bind="group.key"
   document.querySelectorAll('[data-bind]').forEach(el=>{
@@ -2142,7 +2166,7 @@ function attachPageHandlers(){
         ...common,
         beneficiaire: el.querySelector('[name=b_nom]').value.trim(),
         beneficiaire_tel: el.querySelector('[name=b_tel]').value.trim() || null,
-        mode_reception: el.querySelector('[name=b_mode]').value,
+        mode_reception: joinMode(el.querySelector('[name=b_mode]').value, el.querySelector('[name=b_banque]').value),
         montant_aed: aedP[i], frais_aed: frP[i], montant_bif: bifs[i],
       }));
       if(editId){
@@ -2222,7 +2246,7 @@ function attachPageHandlers(){
       const q = parseNum(fd.get('quantite')), left = parseNum(saleForm.dataset.left);
       if(q > left + 0.001){ toast(`Il ne reste que ${fmt(left)} à vendre sur cet envoi`, 'bad'); return; }
       saleForm.querySelector('button[type=submit]').disabled = true;
-      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:fd.get('mode'), frais:parseNum(fd.get('frais'))||0, note:String(fd.get('note')||'').trim()||null });
+      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:joinMode(fd.get('mode'), fd.get('banque')), frais:parseNum(fd.get('frais'))||0, note:String(fd.get('note')||'').trim()||null });
     };
   }
 
@@ -2238,6 +2262,7 @@ function attachPageHandlers(){
 }
 
 /* ---------- Start ---------- */
+document.getElementById('banques').innerHTML = BANQUES.map(b=>`<option value="${b}">`).join('');
 (async function boot(){
   sb.auth.onAuthStateChange((event, session)=>{
     if(event==='PASSWORD_RECOVERY'){ state.recovery = true; state.session = session; render(); }
