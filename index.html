@@ -708,7 +708,23 @@ const VS_STATUTS = {
 
 /* ---------- Helpers ---------- */
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmt(n, dec=2){ return (Number(n)||0).toLocaleString(NUMLOCALE(),{minimumFractionDigits:0, maximumFractionDigits:dec}); }
+/* Accepts 136,5 or 136.5, spaces as thousands separators, 1.234,56 and 1,234.56 */
+function parseNum(x){
+  if(x==null) return NaN;
+  if(typeof x === 'number') return x;
+  let s = String(x).trim().replace(/[\s\u00a0\u202f']/g,'');
+  if(!s) return NaN;
+  const lc = s.lastIndexOf(','), ld = s.lastIndexOf('.');
+  const commas = (s.match(/,/g)||[]).length, dots = (s.match(/\./g)||[]).length;
+  if(lc > -1 && ld > -1){ s = lc > ld ? s.replace(/\./g,'').replace(',', '.') : s.replace(/,/g,''); }
+  else if(commas > 1){ s = s.replace(/,/g,''); }
+  else if(dots > 1){ s = s.replace(/\./g,''); }
+  else if(commas === 1){ s = s.replace(',', '.'); }
+  const v = Number(s);
+  return isFinite(v) ? v : NaN;
+}
+function parseIntNum(x){ const v = parseNum(x); return isNaN(v) ? NaN : Math.round(v); }
+function fmt(n, dec=2){ return (parseNum(n)||0).toLocaleString(NUMLOCALE(),{minimumFractionDigits:0, maximumFractionDigits:dec}); }
 const pad = n => String(n).padStart(2,'0');
 function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 function parseYmd(s){ const [y,m,d] = String(s).slice(0,10).split('-').map(Number); return new Date(y, m-1, d); }
@@ -746,7 +762,7 @@ function inRange(d, r){ return !r || (d >= r[0] && d <= r[1]); }
 
 /* AED ÷ taux AED/USD = USD ; USD × taux USD/BIF = BIF, arrondi au multiple de 50 inférieur */
 function computeTx(aed, tauxAedUsd, tauxUsdBif){
-  aed = Number(aed)||0; tauxAedUsd = Number(tauxAedUsd)||0; tauxUsdBif = Number(tauxUsdBif)||0;
+  aed = parseNum(aed)||0; tauxAedUsd = parseNum(tauxAedUsd)||0; tauxUsdBif = parseNum(tauxUsdBif)||0;
   if(!aed || !tauxAedUsd || !tauxUsdBif) return { usd: aed && tauxAedUsd ? aed/tauxAedUsd : 0, bifExact:0, bif:0 };
   const usd = aed / tauxAedUsd;
   const bifExact = usd * tauxUsdBif;
@@ -888,7 +904,7 @@ async function addVersement(v, txIds){
   await loadAll(); toast('Envoi enregistré'); return true;
 }
 function lastSellRate(){ const v = state.versements.find(x=>x.taux_vente); return v ? v.taux_vente : ''; }
-function parseRate(x){ return parseFloat(String(x||'').replace(/\s/g,'').replace(',', '.')); }
+function parseRate(x){ return parseNum(x); }
 function confirmVersement(id){ openModal('recv', id); }
 function unconfirmVersement(id){
   if(!ask('Annuler la confirmation de réception ?')) return;
@@ -1011,7 +1027,7 @@ function modalHtml(){
       <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} du ${fmtDate(v.date)} : ${fmt(v.montant_aed)} AED déclarés${v.methode_envoi||v.moyen ? `, par ${esc(v.methode_envoi||v.moyen)}` : ''}.</p>
       <form id="recvForm" autocomplete="off">
         <div class="grid2">
-          <div class="field"><label for="r-m">Montant reçu</label><input id="r-m" name="montant" type="number" step="0.01" min="0.01" required inputmode="decimal" value="${v.recu_montant ? esc(v.recu_montant) : ''}" placeholder="Ex. 1000"></div>
+          <div class="field"><label for="r-m">Montant reçu</label><input id="r-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal" value="${v.recu_montant ? esc(v.recu_montant) : ''}" placeholder="Ex. 1000"></div>
           <div class="field"><label for="r-d">Devise reçue</label><select id="r-d" name="devise">${DEVISES_RECUES.map(d=>`<option ${ (v.recu_devise||'USDT')===d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
         </div>
         <p class="sub" style="margin:0 0 16px;">Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.</p>
@@ -1024,10 +1040,10 @@ function modalHtml(){
       <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} : reçu ${fmt(v.recu_montant)} ${esc(dev)}, reste à vendre <b>${fmt(left)} ${esc(dev)}</b>.</p>
       <form id="saleForm" autocomplete="off" data-left="${left}">
         <div class="grid2">
-          <div class="field"><label for="s-q">Quantité vendue (${esc(dev)})</label><input id="s-q" name="quantite" type="number" step="0.01" min="0.01" max="${left}" required inputmode="decimal" value="${left}"></div>
-          <div class="field"><label for="s-t">Prix de vente : 1 ${esc(dev)} = ? BIF</label><input id="s-t" name="taux" type="number" step="0.0001" min="0.0001" required inputmode="decimal" value="${esc(lastSaleRate(dev))}" placeholder="Ex. 6000"></div>
+          <div class="field"><label for="s-q">Quantité vendue (${esc(dev)})</label><input id="s-q" name="quantite" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" max="${left}" required inputmode="decimal" value="${left}"></div>
+          <div class="field"><label for="s-t">Prix de vente : 1 ${esc(dev)} = ? BIF</label><input id="s-t" name="taux" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required inputmode="decimal" value="${esc(lastSaleRate(dev))}" placeholder="Ex. 6000"></div>
           <div class="field"><label for="s-mode">Reçu sur</label><select id="s-mode" name="mode">${MODES_RECEPTION.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select></div>
-          <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="number" step="1" min="0" value="0" required inputmode="numeric"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
+          <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="0" value="0" required inputmode="numeric"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
         </div>
         <div class="gainline" id="saleSummary"></div>
         <div class="field"><label for="s-n">Note</label><input id="s-n" name="note" placeholder="Facultatif"></div>
@@ -1566,7 +1582,7 @@ function benBlock(i, b, canRemove, bif){
         <div class="field"><label>Nom du bénéficiaire</label><input name="b_nom" required placeholder="Ex. Nizigiyimana Anastase" value="${v('beneficiaire')}"></div>
         <div class="field"><label>Numéro</label><input name="b_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806" value="${v('beneficiaire_tel')}"></div>
         <div class="field"><label>Mode de réception</label><select name="b_mode">${MODES_RECEPTION.map(m=>`<option value="${esc(m)}" ${b && b.mode_reception===m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
-        <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="number" step="1" min="1" required inputmode="numeric" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
+        <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="numeric" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
       </div>
     </div>`;
 }
@@ -1588,10 +1604,10 @@ function pageNew(edit){
         <div class="sep"></div>
         <div class="legend">${ic('coins')}Montant payé et taux</div>
         <div class="grid2">
-          <div class="field"><label for="t-aed">Montant payé par le client (AED)</label><input id="t-aed" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 1000" value="${v('montant_aed')}"><span class="hint">Montant total à envoyer, sans les frais.</span></div>
-          <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="number" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"></div>
-          <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="number" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
-          <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="number" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
+          <div class="field"><label for="t-aed">Montant payé par le client (AED)</label><input id="t-aed" name="montant_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 1000" value="${v('montant_aed')}"><span class="hint">Montant total à envoyer, sans les frais.</span></div>
+          <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"></div>
+          <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
+          <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
         </div>
         <div class="convert" aria-live="polite">
           <div class="step"><span>Montant client</span><b id="cvAed">0 AED</b></div>
@@ -1601,7 +1617,7 @@ function pageNew(edit){
           <div class="step final"><span>Total à verser</span><b id="cvBif">0 BIF</b></div>
         </div>
         <div class="convert-note" id="cvNote">Arrondi au multiple de 50 BIF inférieur.</div>
-        <div class="field" style="max-width:380px;"><label for="t-total">Total à verser en BIF</label><input id="t-total" name="total_bif" type="number" step="1" min="1" required inputmode="numeric" value="${v('montant_bif')}" data-touched="${edit ? 1 : ''}"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+        <div class="field" style="max-width:380px;"><label for="t-total">Total à verser en BIF</label><input id="t-total" name="total_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="numeric" value="${v('montant_bif')}" data-touched="${edit ? 1 : ''}"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
         <div class="sep"></div>
         <div class="legend">${ic('phone')}${edit ? 'Bénéficiaire au Burundi' : 'Bénéficiaires au Burundi'}</div>
         <div id="benefs">${benBlock(0, edit, false)}</div>
@@ -1734,8 +1750,8 @@ function pageVersements(){
           : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi.</div>`}
         <div class="grid3">
           <div class="field"><label for="v-meth">Méthode d'envoi</label><select id="v-meth" name="methode">${METHODES_ENVOI.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="v-fe">Frais de transfert de cet envoi (AED)</label><input id="v-fe" name="frais" type="number" step="0.01" min="0" value="0" required inputmode="decimal"><span class="hint">Ce que coûte l'envoi (Binance, M-Pesa…). Ils sont retirés des frais collectés, pas de l'argent des clients, avant le partage en deux.</span></div>
-          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="number" step="0.01" min="0.01" required inputmode="decimal"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+          <div class="field"><label for="v-fe">Frais de transfert de cet envoi (AED)</label><input id="v-fe" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0" value="0" required inputmode="decimal"><span class="hint">Ce que coûte l'envoi (Binance, M-Pesa…). Ils sont retirés des frais collectés, pas de l'argent des clients, avant le partage en deux.</span></div>
+          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
         </div>
         <div class="gainline" id="vsSummary"></div>
         <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
@@ -2033,7 +2049,7 @@ function attachPageHandlers(){
     const box = document.getElementById('benefs');
     const totalIn = txForm.querySelector('[name=total_bif]');
     const rows = () => [...box.querySelectorAll('.benef')];
-    const sumBif = () => rows().reduce((a,el)=>a+(parseInt(el.querySelector('[name=b_bif]').value,10)||0),0);
+    const sumBif = () => rows().reduce((a,el)=>a+(parseIntNum(el.querySelector('[name=b_bif]').value)||0),0);
     const renumber = () => rows().forEach((el,i)=>{
       el.dataset.row = i;
       el.querySelector('.benef-n').textContent = tr(`Bénéficiaire ${i+1}`);
@@ -2043,7 +2059,7 @@ function attachPageHandlers(){
       const aed = fd.get('montant_aed'), au = fd.get('taux_aed_usd'), ub = fd.get('taux_usd_bif');
       const c = computeTx(aed, au, ub);
       if(!totalIn.dataset.touched) totalIn.value = c.bif || '';
-      const total = parseInt(totalIn.value,10) || 0;
+      const total = parseIntNum(totalIn.value) || 0;
       // a single beneficiary simply receives the whole amount
       if(rows().length === 1){
         const b = rows()[0].querySelector('[name=b_bif]');
@@ -2062,7 +2078,7 @@ function attachPageHandlers(){
       else if(diff === 0){ rep.className = 'repart ok'; rep.textContent = tr(`Répartition correcte : ${fmt(s,0)} BIF sur ${fmt(total,0)} BIF.`); }
       else if(diff > 0){ rep.className = 'repart bad'; rep.textContent = tr(`Reste à répartir : ${fmt(diff,0)} BIF (réparti ${fmt(s,0)} sur ${fmt(total,0)} BIF).`); }
       else { rep.className = 'repart bad'; rep.textContent = tr(`Trop réparti : ${fmt(-diff,0)} BIF de plus que le total de ${fmt(total,0)} BIF.`); }
-      const fr = parseFloat(fd.get('frais_aed'))||0;
+      const fr = parseNum(fd.get('frais_aed'))||0;
       document.getElementById('gainLine').textContent = fr ? tr(`Frais collectés : ${fmt(fr)} AED. Les frais de transfert seront déduits lors de l'envoi à Naomie, puis le reste sera partagé en deux.`) : '';
     };
     txForm.addEventListener('input', (e)=>{
@@ -2083,7 +2099,7 @@ function attachPageHandlers(){
       // the first beneficiary keeps what was typed; the new one is prefilled with what is left
       const first = rows()[0] && rows()[0].querySelector('[name=b_bif]');
       if(first) first.dataset.touched = '1';
-      const left = (parseInt(totalIn.value,10)||0) - sumBif();
+      const left = (parseIntNum(totalIn.value)||0) - sumBif();
       const tmp = document.createElement('div');
       tmp.innerHTML = benBlock(rows().length, null, true, left > 0 ? left : '');
       const el = tmp.firstElementChild;
@@ -2097,9 +2113,9 @@ function attachPageHandlers(){
     txForm.onsubmit = async (e)=>{
       e.preventDefault();
       const fd = new FormData(txForm);
-      const total = parseInt(fd.get('total_bif'),10) || 0;
+      const total = parseIntNum(fd.get('total_bif')) || 0;
       const list = rows();
-      const bifs = list.map(el=>parseInt(el.querySelector('[name=b_bif]').value,10)||0);
+      const bifs = list.map(el=>parseIntNum(el.querySelector('[name=b_bif]').value)||0);
       const s = bifs.reduce((a,x)=>a+x,0);
       if(s !== total){
         toast(s < total ? `Il reste ${fmt(total-s,0)} BIF à répartir entre les bénéficiaires` : `Les bénéficiaires dépassent le total de ${fmt(s-total,0)} BIF`, 'bad');
@@ -2107,7 +2123,7 @@ function attachPageHandlers(){
         return;
       }
       const btn = txForm.querySelector('button[type=submit]'); btn.disabled = true;
-      const aed = parseFloat(fd.get('montant_aed')), fr = parseFloat(fd.get('frais_aed')) || 0;
+      const aed = parseNum(fd.get('montant_aed')), fr = parseNum(fd.get('frais_aed')) || 0;
       // split AED amount and fees in proportion to each beneficiary's BIF share; rounding remainder goes to the first
       const split = (amount) => {
         const parts = bifs.map(b=>Math.round(amount * b / total * 100) / 100);
@@ -2118,8 +2134,8 @@ function attachPageHandlers(){
       const common = {
         client: String(fd.get('client')).trim(),
         client_tel: String(fd.get('client_tel')||'').trim() || null,
-        taux_aed_usd: parseFloat(fd.get('taux_aed_usd')),
-        taux_usd_bif: parseFloat(fd.get('taux_usd_bif')),
+        taux_aed_usd: parseNum(fd.get('taux_aed_usd')),
+        taux_usd_bif: parseNum(fd.get('taux_usd_bif')),
         note: String(fd.get('note')||'').trim() || null,
       };
       const items = list.map((el,i)=>({
@@ -2149,7 +2165,7 @@ function attachPageHandlers(){
       const checked = [...vsForm.querySelectorAll('[name=tx]:checked')];
       const n = checked.length;
       const gross = checked.reduce((a,c)=>a+(+c.dataset.gross||0),0);
-      const f = parseFloat(fee.value)||0;
+      const f = parseNum(fee.value)||0;
       const perTx = checked.reduce((a,c)=>a+(+c.dataset.fe||0),0);
       const deduct = f>0 ? f : perTx;
       const frais = checked.reduce((a,c)=>a+(+c.dataset.frais||0),0);
@@ -2171,10 +2187,10 @@ function attachPageHandlers(){
       const fd = new FormData(vsForm);
       const btn = vsForm.querySelector('button[type=submit]'); btn.disabled = true;
       const ok = await addVersement({
-        montant_aed: parseFloat(fd.get('montant_aed')),
+        montant_aed: parseNum(fd.get('montant_aed')),
         moyen: fd.get('methode') || null,
         methode: fd.get('methode') || null,
-        frais: parseFloat(fd.get('frais')) || 0,
+        frais: parseNum(fd.get('frais')) || 0,
         note: String(fd.get('note')||'').trim() || null,
       }, fd.getAll('tx'));
       if(!ok) btn.disabled = false;
@@ -2188,14 +2204,14 @@ function attachPageHandlers(){
       e.preventDefault();
       const fd = new FormData(recvForm);
       recvForm.querySelector('button[type=submit]').disabled = true;
-      saveReception(state.modal.id, parseFloat(fd.get('montant')), fd.get('devise'));
+      saveReception(state.modal.id, parseNum(fd.get('montant')), fd.get('devise'));
     };
   }
   const saleForm = document.getElementById('saleForm');
   if(saleForm){
     const sum2 = ()=>{
       const fd = new FormData(saleForm);
-      const q = parseFloat(fd.get('quantite'))||0, t = parseFloat(fd.get('taux'))||0, f = parseFloat(fd.get('frais'))||0;
+      const q = parseNum(fd.get('quantite'))||0, t = parseNum(fd.get('taux'))||0, f = parseNum(fd.get('frais'))||0;
       const brut = Math.round(q*t);
       document.getElementById('saleSummary').textContent = q && t ? tr(`${fmt(q)} × ${fmt(t)} = ${fmt(brut,0)} BIF − ${fmt(f,0)} BIF de frais = ${fmt(brut-f,0)} BIF net.`) : '';
     };
@@ -2203,10 +2219,10 @@ function attachPageHandlers(){
     saleForm.onsubmit = (e)=>{
       e.preventDefault();
       const fd = new FormData(saleForm);
-      const q = parseFloat(fd.get('quantite')), left = parseFloat(saleForm.dataset.left);
+      const q = parseNum(fd.get('quantite')), left = parseNum(saleForm.dataset.left);
       if(q > left + 0.001){ toast(`Il ne reste que ${fmt(left)} à vendre sur cet envoi`, 'bad'); return; }
       saleForm.querySelector('button[type=submit]').disabled = true;
-      saveSale(state.modal.id, { quantite:q, taux:parseFloat(fd.get('taux')), mode:fd.get('mode'), frais:parseFloat(fd.get('frais'))||0, note:String(fd.get('note')||'').trim()||null });
+      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:fd.get('mode'), frais:parseNum(fd.get('frais'))||0, note:String(fd.get('note')||'').trim()||null });
     };
   }
 
