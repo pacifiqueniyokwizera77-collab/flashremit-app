@@ -506,7 +506,8 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
+  'Gain':'Earnings','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
+  'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
   'Enregistrer une vente':'Record a sale','Reçu sur':'Received on','Frais de vente (BIF)':'Sale fees (BIF)',
   'Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.':'For example Lumicash agent code fees. Deducted before calculating profit.',
@@ -534,6 +535,8 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(\d+) \/ (\d+) \((\d+) estimées?\)$/, '$1 / $2 ($3 estimated)'],
+  [/^(\d+) \/ (\d+)( \(\d+ estimées?\))? transactions vendues$/, (m,a,b,c)=>`${a} / ${b}${c?c.replace(/estimées?/,'estimated'):''} sold transactions`],
   [/^Banque \((.+)\)(.*)$/, 'Bank ($1)$2'],
   [/^(\d+) \((.+) BIF\)$/, '$1 ($2 BIF)'],
   [/^1 envoi$/, '1 transfer'],
@@ -1145,6 +1148,42 @@ function deletePaiement(id){
   run(sb.from('paiements_agents').delete().eq('id', id), 'Paiement annulé');
 }
 
+
+/* Profit summary grouped by agent or by day */
+function profitGroups(rows, keyFn, labelFn){
+  const m = new Map();
+  rows.forEach(r=>{
+    const k = keyFn(r.t);
+    if(!m.has(k)) m.set(k, { k, label: labelFn(r.t, k), n:0, sold:0, est:0, change:0, partBif:0, total:0, gains:0, frais:0 });
+    const g = m.get(k);
+    g.n++; g.gains += r.p.gain; g.frais += (+r.t.frais_aed||0);
+    if(r.p.change!=null){ g.sold++; g.change += r.p.change; g.partBif += r.p.partBif; g.total += r.p.total; if(r.p.frac<1) g.est++; }
+  });
+  return [...m.values()];
+}
+function profitTable(groups, firstHeader){
+  if(!groups.length) return emptyState('chart', 'Aucune activité sur cette période.');
+  const T = groups.reduce((a,g)=>{ ['n','sold','change','partBif','total','gains','frais'].forEach(k=>a[k]=(a[k]||0)+g[k]); return a; }, {});
+  const soldTxt = g => `${g.sold} / ${g.n}${g.est ? ` (${g.est} estimée${g.est>1?'s':''})` : ''}`;
+  const table = `<div class="only-desk tblwrap"><table><thead><tr>
+      <th>${firstHeader}</th><th class="r">Vendues / transactions</th><th class="r">Profit de change</th><th class="r">Part Pax des frais</th><th class="r">Profit total</th><th class="r">Gains des agents</th>
+    </tr></thead><tbody>
+    ${groups.map(g=>`<tr><td class="strong">${esc(g.label)}</td><td class="r">${soldTxt(g)}</td>
+      <td class="r">${fmt(g.change,0)} BIF</td><td class="r cell-gold">${fmt(g.partBif,0)} BIF</td>
+      <td class="r strong ${g.total>=0?'cell-good':'cell-bad'}">${fmt(g.total,0)} BIF</td><td class="r">${fmt(g.gains)} AED</td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total</td><td class="r">${T.sold} / ${T.n}</td><td class="r">${fmt(T.change,0)} BIF</td><td class="r">${fmt(T.partBif,0)} BIF</td><td class="r">${fmt(T.total,0)} BIF</td><td class="r">${fmt(T.gains)} AED</td></tr></tfoot></table></div>`;
+  const cards = `<div class="cards">${groups.map(g=>`
+    <div class="tcard"><div class="row"><div class="name">${esc(g.label)}</div><div class="strong ${g.total>=0?'cell-good':'cell-bad'}">${fmt(g.total,0)} BIF</div></div>
+      <div class="meta">${soldTxt(g)} transactions vendues</div>
+      <div class="mini">
+        <div><span>Profit de change</span><b>${fmt(g.change,0)} BIF</b></div>
+        <div><span>Part Pax des frais</span><b class="cell-gold">${fmt(g.partBif,0)} BIF</b></div>
+        <div><span>Gains des agents</span><b>${fmt(g.gains)} AED</b></div>
+      </div></div>`).join('')}
+    <div class="tcard"><div class="row"><div class="name">Total</div><div class="strong">${fmt(T.total,0)} BIF</div></div><div class="meta">${T.sold} / ${T.n} transactions vendues</div></div></div>`;
+  return table + cards + `<div class="sub" style="padding:10px 16px;">Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.</div>`;
+}
+
 function pageProfits(){
   const s = state.pf;
   const range = profitsRange();
@@ -1246,8 +1285,10 @@ function pageProfits(){
       ${kpi('En attente de vente', 'hourglass', pending.length, '', 'Profit calculé dès que Naomie enregistre une vente de leur envoi', pending.length?'bad':'')}
       ${kpi('Montant vendu', 'wallet', fmt(usdSold), '$', '')}
     </div>
-    ${panel('Gains des agents à payer', 'wallet', dueHtml, { flush:true, right:`<span class="count">Depuis le dernier paiement</span>` })}
+    ${agentId ? '' : panel('Profit par agent', 'users', profitTable(profitGroups(rows, t=>t.agent_id, t=>t.agent_nom).sort((a,b)=>b.total-a.total), 'Agent'), { flush:true, right:`<span class="count">${rangeLabel(range)}</span>` })}
+    ${panel('Profit jour par jour', 'calendar', profitTable(profitGroups(rows, t=>t.date, t=>cap(parseYmd(t.date).toLocaleDateString(LOCALE(),{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}))).sort((a,b)=>b.k.localeCompare(a.k)), 'Jour'), { flush:true, right:`<span class="count">${rangeLabel(range)}</span>` })}
     ${panel('Détail par transaction', 'list', detail, { flush:true, right:`<span class="count">${rangeLabel(range)}</span>` })}
+    ${panel('Gains des agents à payer', 'wallet', dueHtml, { flush:true, right:`<span class="count">Depuis le dernier paiement</span>` })}
     ${panel('Historique des paiements aux agents', 'clock', paysHtml, { flush:true })}`;
 }
 
