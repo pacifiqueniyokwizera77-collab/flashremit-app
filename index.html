@@ -96,8 +96,8 @@
   /* ---------- Tables ---------- */
   .tblwrap{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;}
-  th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);}
-  td{padding:12px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);}
+  td{padding:12px 9px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:0;}
   tbody tr:hover td{background:#FAFBFB;}
   tfoot td{font-weight:800;border-top:1px solid var(--line);background:var(--surface-2);}
@@ -233,7 +233,9 @@
   details.linked li{display:flex;justify-content:space-between;gap:12px;padding:2px 0;}
   td details.linked{text-align:left;}
 
-  .agstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
+  .profitline{font-size:13px;margin-top:6px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;}
+  .profitline .sub{display:inline;}
+  .agstats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 16px;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
   .agstats span{display:block;font-size:12px;color:var(--muted);font-weight:600;}
   .agstats b{font-size:14.5px;}
   .sectiontitle{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;margin:6px 0 10px;color:var(--ink);}
@@ -288,7 +290,7 @@
   @media (max-width:1120px){
     .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
   }
-  @media (max-width:1240px){
+  @media (max-width:1320px){
     .only-desk{display:none;}
     .cards{display:block;}
   }
@@ -506,7 +508,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
+  'Gain':'Earnings','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
   'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
   'Enregistrer une vente':'Record a sale','Reçu sur':'Received on','Frais de vente (BIF)':'Sale fees (BIF)',
@@ -535,6 +537,7 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(.+) BIF \((\d+)\/(\d+) vendues\)$/, '$1 BIF ($2/$3 sold)'],
   [/^(\d+) \/ (\d+) \((\d+) estimées?\)$/, '$1 / $2 ($3 estimated)'],
   [/^(\d+) \/ (\d+)( \(\d+ estimées?\))? transactions vendues$/, (m,a,b,c)=>`${a} / ${b}${c?c.replace(/estimées?/,'estimated'):''} sold transactions`],
   [/^Banque \((.+)\)(.*)$/, 'Bank ($1)$2'],
@@ -1342,6 +1345,7 @@ function txGroupStats(items){
     ['Déjà payé', `${paid.length} (${fmt(sum(paid,'montant_bif'),0)} BIF)`, 'cell-good'],
     ['Argent des clients', `${fmt(sum(act,'montant_aed'))} AED`],
     ['Frais', `${fmt(sum(act,'frais_aed'))} AED`, 'cell-gold'],
+    ['Profit', (()=>{ const ps = act.map(txProfit).filter(p=>p.total!=null); return `${fmt(ps.reduce((a,p)=>a+p.total,0),0)} BIF (${ps.length}/${act.length} vendues)`; })(), 'cell-good'],
   ]);
 }
 function vsGroupStats(items){
@@ -1747,12 +1751,19 @@ function txActions(t){
   return a.join('');
 }
 function statusPill(map, s){ const st = map[s] || { label:s, cls:'', icon:'clock' }; return `<span class="pill ${st.cls}">${ic(st.icon)}${st.label}</span>`; }
+/* Profit of one transaction as shown in lists (staff only) */
+function profitCell(t){
+  if(t.statut==='ANNULEE') return '<span class="sub">—</span>';
+  const p = txProfit(t);
+  if(p.total==null) return `<span class="sub">${t.versement_id ? 'En attente de vente' : 'Pas encore envoyé'}</span>`;
+  return `<span class="strong ${p.total>=0?'cell-good':'cell-bad'}">${fmt(p.total,0)} BIF</span>${p.frac<1?'<div class="sub">estimé</div>':''}`;
+}
 function txList(list){
   if(!list.length) return emptyState('list', 'Aucune transaction pour le moment.');
   const staff = isStaff();
   const table = `<div class="only-desk tblwrap"><table><thead><tr>
       <th>Date</th>${staff?'<th>Agent</th>':''}<th>Client</th><th>Bénéficiaire</th>
-      <th class="r">Montant</th><th class="r">Taux</th><th class="r">À verser</th><th>Statut</th><th></th>
+      <th class="r">Montant</th><th class="r">Taux</th><th class="r">À verser</th>${staff?'<th class="r">Profit</th>':''}<th>Statut</th><th></th>
     </tr></thead><tbody>
     ${list.map(t=>`<tr>
       <td>${fmtLocalDate(t.created_at, t.date)}<div class="sub">${fmtTime(t.created_at)}</div></td>
@@ -1761,7 +1772,7 @@ function txList(list){
       <td><span class="strong">${esc(t.beneficiaire)}</span><div class="sub">${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')}</div></td>
       <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div>${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED</div>`:''}</td>
       <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
-      <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>
+      <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>${staff?`<td class="r">${profitCell(t)}</td>`:''}
       <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}</td>
       <td><div class="actions">${txActions(t)}</div></td>
     </tr>`).join('')}
@@ -1774,6 +1785,7 @@ function txList(list){
       </div>
       <div class="meta" style="margin-top:6px;">${fmtDT(t.created_at)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
       <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}${t.methode_envoi?`, ${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED`:''}</div>
+      ${staff ? `<div class="profitline">Profit : ${profitCell(t)}</div>` : ''}
       <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
     </div>`).join('')}</div>`;
   return table + cards;
