@@ -508,7 +508,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
+  'Gain':'Earnings','(USD ou USDT).':'(USD or USDT).','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
   'Montant reçu corrigé':'Amount received corrected','Saisissez un montant valide':'Enter a valid amount',"Corrigez le montant ou la devise en cas d'erreur.":'Correct the amount or currency if there was a mistake.','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
   'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
@@ -538,6 +538,9 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(⚠ )?Attendu ≈ (.+) \$, reçu (.+) \(écart (.+) %\)$/, '$1Expected ≈ $2 $, received $3 (gap $4 %)'],
+  [/^L'agent a envoyé (.+) AED, soit environ$/, 'The agent sent $1 AED, about'],
+  [/^Attention : l'agent a envoyé environ (.+) \$ et vous indiquez (.+) \(écart (.+) %\)\. Avez-vous mélangé l'argent de plusieurs envois \? Confirmer quand même \?$/, 'Warning: the agent sent about $1 $ and you entered $2 (gap $3 %). Did you mix money from several transfers? Confirm anyway?'],
   [/^Déjà vendu sur cet envoi : (.+)\. Le nouveau montant ne peut pas être plus petit\.$/, 'Already sold on this transfer: $1. The new amount cannot be lower.'],
   [/^Impossible : (.+) ont déjà été vendus sur cet envoi$/, 'Not possible: $1 already sold on this transfer'],
   [/^Corriger le montant reçu : (.+) → (.+) \?$/, 'Correct the amount received: $1 → $2?'],
@@ -1039,6 +1042,18 @@ function vsBifPerAed(v){
   if(v.taux_vente) return { perAed: (+v.taux_vente) / (+v.taux_aed_usd || DEFAULT_AED_USD), frac: 1 }; // older transfers
   return null;
 }
+function vsExpectedUsd(v){ return (+v.montant_aed) / (+v.taux_aed_usd || DEFAULT_AED_USD); }
+/* Gap between what was received and what the agent declared, for USD/USDT only (null when not comparable) */
+function vsGap(v){
+  if(!v || !v.recu_montant || !/^(USD|USDT)$/.test(v.recu_devise||'')) return null;
+  const exp = vsExpectedUsd(v); if(!exp) return null;
+  return { exp, pct: ((+v.recu_montant) - exp) / exp * 100 };
+}
+function gapNote(v){
+  const g = vsGap(v); if(!g) return '';
+  const bad = Math.abs(g.pct) > 5;
+  return `<div class="sub ${bad?'cell-bad':''}">${bad?'⚠ ':''}Attendu ≈ ${fmt(g.exp)} $, reçu ${fmt(v.recu_montant)} ${esc(v.recu_devise)} (écart ${g.pct>0?'+':''}${fmt(g.pct,1)} %)</div>`;
+}
 function openModal(type, id){ state.modal = { type, id }; render(); }
 function closeModal(e){ if(!e || e.target.classList.contains('modal-bg')){ state.modal = null; render(); } }
 function modalHtml(){
@@ -1051,6 +1066,7 @@ function modalHtml(){
       <h2>${editing ? 'Modifier le montant reçu' : 'Confirmer la réception'}</h2>
       <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} du ${fmtDate(v.date)} : ${fmt(v.montant_aed)} AED déclarés${v.methode_envoi||v.moyen ? `, par ${esc(v.methode_envoi||v.moyen)}` : ''}.</p>
       <form id="recvForm" autocomplete="off">
+        <div class="note" style="margin-bottom:14px;">L'agent a envoyé ${fmt(v.montant_aed)} AED, soit environ <b>${fmt(vsExpectedUsd(v))} $</b> (USD ou USDT).</div>
         <div class="grid2">
           <div class="field"><label for="r-m">Montant reçu</label><input id="r-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal" value="${v.recu_montant ? esc(v.recu_montant) : ''}" placeholder="Ex. 1000"></div>
           <div class="field"><label for="r-d">Devise reçue</label><select id="r-d" name="devise" ${v.recu_montant && vsSoldQty(v) ? 'disabled' : ''}>${DEVISES_RECUES.map(d=>`<option ${ (v.recu_devise||'USDT')===d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
@@ -1085,6 +1101,10 @@ async function saveReception(id, montant, devise){
   if(!(montant > 0)){ toast('Saisissez un montant valide', 'bad'); document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
   if(montant + 0.001 < sold){ toast(`Impossible : ${fmt(sold)} ont déjà été vendus sur cet envoi`, 'bad'); document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
   devise = devise || (v && v.recu_devise);
+  if(v && /^(USD|USDT)$/.test(devise||'')){
+    const exp = vsExpectedUsd(v), pct = (montant - exp) / exp * 100;
+    if(Math.abs(pct) > 5 && !ask(`Attention : l'agent a envoyé environ ${fmt(exp)} $ et vous indiquez ${fmt(montant)} ${devise} (écart ${pct>0?'+':''}${fmt(pct,1)} %). Avez-vous mélangé l'argent de plusieurs envois ? Confirmer quand même ?`)){ document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
+  }
   if(editing && !ask(`Corriger le montant reçu : ${fmt(v.recu_montant)} ${v.recu_devise||''} → ${fmt(montant)} ${devise} ?`)){ document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
   const ok = await run(sb.from('versements').update({ statut:'RECU', recu_montant: montant, recu_devise: devise, confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), editing ? 'Montant reçu corrigé' : 'Réception confirmée');
   if(ok){ state.modal = null; render(); }
@@ -1103,7 +1123,7 @@ function salesBlock(v){
   if(v.statut!=='RECU') return '';
   if(!v.recu_montant) return v.taux_vente ? `<div class="sub">Ancien taux de vente : ${fmt(v.taux_vente)}</div>` : '';
   const sales = vsSales(v), sold = vsSoldQty(v), pct = Math.round(sold / (+v.recu_montant) * 100);
-  return `<div class="salebox">
+  return `<div class="salebox">${gapNote(v)}
     <div class="salebar"><span style="width:${Math.min(100,pct)}%"></span></div>
     <div class="sub">Reçu ${fmt(v.recu_montant)} ${esc(v.recu_devise||'')}, vendu ${fmt(sold)} (${pct} %), reste ${fmt(vsLeft(v))}</div>
     ${sales.length ? `<details class="linked"><summary>${sales.length} vente(s), ${fmt(vsNetBif(v),0)} BIF net</summary><ul>${sales.map(s=>`
