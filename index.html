@@ -508,7 +508,8 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
+  'Gain':'Earnings','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
+  'Montant reçu corrigé':'Amount received corrected','Saisissez un montant valide':'Enter a valid amount',"Corrigez le montant ou la devise en cas d'erreur.":'Correct the amount or currency if there was a mistake.','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
   'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
   'Enregistrer une vente':'Record a sale','Reçu sur':'Received on','Frais de vente (BIF)':'Sale fees (BIF)',
@@ -537,6 +538,9 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^Déjà vendu sur cet envoi : (.+)\. Le nouveau montant ne peut pas être plus petit\.$/, 'Already sold on this transfer: $1. The new amount cannot be lower.'],
+  [/^Impossible : (.+) ont déjà été vendus sur cet envoi$/, 'Not possible: $1 already sold on this transfer'],
+  [/^Corriger le montant reçu : (.+) → (.+) \?$/, 'Correct the amount received: $1 → $2?'],
   [/^(.+) BIF \((\d+)\/(\d+) vendues\)$/, '$1 BIF ($2/$3 sold)'],
   [/^(\d+) \/ (\d+) \((\d+) estimées?\)$/, '$1 / $2 ($3 estimated)'],
   [/^(\d+) \/ (\d+)( \(\d+ estimées?\))? transactions vendues$/, (m,a,b,c)=>`${a} / ${b}${c?c.replace(/estimées?/,'estimated'):''} sold transactions`],
@@ -1042,16 +1046,19 @@ function modalHtml(){
   const v = vsById(m.id); if(!v) return '';
   let body = '';
   if(m.type==='recv'){
+    const editing = !!v.recu_montant, sold = vsSoldQty(v);
     body = `
-      <h2>Confirmer la réception</h2>
+      <h2>${editing ? 'Modifier le montant reçu' : 'Confirmer la réception'}</h2>
       <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} du ${fmtDate(v.date)} : ${fmt(v.montant_aed)} AED déclarés${v.methode_envoi||v.moyen ? `, par ${esc(v.methode_envoi||v.moyen)}` : ''}.</p>
       <form id="recvForm" autocomplete="off">
         <div class="grid2">
           <div class="field"><label for="r-m">Montant reçu</label><input id="r-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal" value="${v.recu_montant ? esc(v.recu_montant) : ''}" placeholder="Ex. 1000"></div>
-          <div class="field"><label for="r-d">Devise reçue</label><select id="r-d" name="devise">${DEVISES_RECUES.map(d=>`<option ${ (v.recu_devise||'USDT')===d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+          <div class="field"><label for="r-d">Devise reçue</label><select id="r-d" name="devise" ${v.recu_montant && vsSoldQty(v) ? 'disabled' : ''}>${DEVISES_RECUES.map(d=>`<option ${ (v.recu_devise||'USDT')===d ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
         </div>
-        <p class="sub" style="margin:0 0 16px;">Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.</p>
-        <div class="actions" style="justify-content:flex-start;"><button class="btn good" type="submit">${ic('check')}Confirmer la réception</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+        <p class="sub" style="margin:0 0 16px;">${editing
+          ? (sold ? `Déjà vendu sur cet envoi : ${fmt(sold)} ${esc(v.recu_devise||'')}. Le nouveau montant ne peut pas être plus petit.` : 'Corrigez le montant ou la devise en cas d\'erreur.')
+          : 'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.'}</p>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn good" type="submit">${ic('check')}${editing ? 'Enregistrer la correction' : 'Confirmer la réception'}</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
       </form>`;
   } else {
     const left = vsLeft(v), dev = v.recu_devise || '';
@@ -1074,7 +1081,12 @@ function modalHtml(){
 }
 function lastSaleRate(dev){ const s = state.ventes.find(x=>x.devise===dev); return s ? +s.taux : ''; }
 async function saveReception(id, montant, devise){
-  const ok = await run(sb.from('versements').update({ statut:'RECU', recu_montant: montant, recu_devise: devise, confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Réception confirmée');
+  const v = vsById(id), sold = v ? vsSoldQty(v) : 0, editing = !!(v && v.recu_montant);
+  if(!(montant > 0)){ toast('Saisissez un montant valide', 'bad'); document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
+  if(montant + 0.001 < sold){ toast(`Impossible : ${fmt(sold)} ont déjà été vendus sur cet envoi`, 'bad'); document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
+  devise = devise || (v && v.recu_devise);
+  if(editing && !ask(`Corriger le montant reçu : ${fmt(v.recu_montant)} ${v.recu_devise||''} → ${fmt(montant)} ${devise} ?`)){ document.querySelector('#recvForm button[type=submit]').disabled = false; return; }
+  const ok = await run(sb.from('versements').update({ statut:'RECU', recu_montant: montant, recu_devise: devise, confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), editing ? 'Montant reçu corrigé' : 'Réception confirmée');
   if(ok){ state.modal = null; render(); }
 }
 async function saveSale(id, f){
@@ -1852,6 +1864,7 @@ function vsActions(v){
   const a = [];
   if(isStaff() && v.statut==='ENVOYE') a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Confirmer la réception</button>`);
   if(isStaff() && v.statut==='RECU' && !v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Saisir le montant reçu</button>`);
+  if(isStaff() && v.statut==='RECU' && v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
   if(isStaff() && v.statut==='RECU' && v.recu_montant && vsLeft(v) > 0) a.push(`<button class="btn gold sm" onclick="openModal('sale','${v.id}')">${ic('coins')}Vendre</button>`);
   if(isStaff() && v.statut==='RECU' && !vsSales(v).length) a.push(`<button class="btn ghost sm sq" onclick="unconfirmVersement('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
   if(isAdmin() || (isAgent() && v.statut==='ENVOYE')) a.push(`<button class="btn ghost sm sq" onclick="deleteVersement('${v.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
