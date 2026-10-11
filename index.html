@@ -1070,7 +1070,7 @@ function modalHtml(){
           <div class="field"><label for="s-q">Quantité vendue (${esc(dev)})</label><input id="s-q" name="quantite" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" max="${left}" required inputmode="decimal" value="${left}"></div>
           <div class="field"><label for="s-t">Prix de vente : 1 ${esc(dev)} = ? BIF</label><input id="s-t" name="taux" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required inputmode="decimal" value="${esc(lastSaleRate(dev))}" placeholder="Ex. 6000"></div>
           ${modeField('mode', 'banque', '', 's-mode').replace('>Mode de réception<','>Reçu sur<')}
-          <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="0" value="0" required inputmode="numeric"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
+          <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="0" value="0" required inputmode="decimal"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
         </div>
         <div class="gainline" id="saleSummary"></div>
         <div class="field"><label for="s-n">Note</label><input id="s-n" name="note" placeholder="Facultatif"></div>
@@ -1653,7 +1653,7 @@ function benBlock(i, b, canRemove, bif){
         <div class="field"><label>Nom du bénéficiaire</label><input name="b_nom" required placeholder="Ex. Nizigiyimana Anastase" value="${v('beneficiaire')}"></div>
         <div class="field"><label>Numéro</label><input name="b_tel" type="tel" inputmode="tel" required placeholder="Ex. 61104806" value="${v('beneficiaire_tel')}"></div>
         ${modeField('b_mode', 'b_banque', b ? b.mode_reception : '')}
-        <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="numeric" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
+        <div class="field"><label>Montant à recevoir (BIF)</label><input name="b_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="decimal" value="${b ? v('montant_bif') : (bif || '')}" data-touched="${b ? 1 : ''}"></div>
       </div>
     </div>`;
 }
@@ -1688,7 +1688,7 @@ function pageNew(edit){
           <div class="step final"><span>Total à verser</span><b id="cvBif">0 BIF</b></div>
         </div>
         <div class="convert-note" id="cvNote">Arrondi au multiple de 50 BIF inférieur.</div>
-        <div class="field" style="max-width:380px;"><label for="t-total">Total à verser en BIF</label><input id="t-total" name="total_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="numeric" value="${v('montant_bif')}" data-touched="${edit ? 1 : ''}"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+        <div class="field" style="max-width:380px;"><label for="t-total">Total à verser en BIF</label><input id="t-total" name="total_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="1" required inputmode="decimal" value="${v('montant_bif')}" data-touched="${edit ? 1 : ''}"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
         <div class="sep"></div>
         <div class="legend">${ic('phone')}${edit ? 'Bénéficiaire au Burundi' : 'Bénéficiaires au Burundi'}</div>
         <div id="benefs">${benBlock(0, edit, false)}</div>
@@ -2313,7 +2313,7 @@ function attachPageHandlers(){
       const q = parseNum(fd.get('quantite')), left = parseNum(saleForm.dataset.left);
       if(q > left + 0.001){ toast(`Il ne reste que ${fmt(left)} à vendre sur cet envoi`, 'bad'); return; }
       saleForm.querySelector('button[type=submit]').disabled = true;
-      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:joinMode(fd.get('mode'), fd.get('banque')), frais:parseNum(fd.get('frais'))||0, note:String(fd.get('note')||'').trim()||null });
+      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:joinMode(fd.get('mode'), fd.get('banque')), frais:Math.round(parseNum(fd.get('frais'))||0), note:String(fd.get('note')||'').trim()||null });
     };
   }
 
