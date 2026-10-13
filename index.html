@@ -235,6 +235,16 @@
 
   .profitline{font-size:13px;margin-top:6px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;}
   .profitline .sub{display:inline;}
+  .needs{display:flex;flex-direction:column;}
+  .need{border-bottom:1px solid var(--line);}
+  .need summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;cursor:pointer;}
+  .need summary::-webkit-details-marker{display:none;}
+  .need-k{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+  .need-k svg.i{color:var(--gold);}
+  .need-v{font-weight:800;white-space:nowrap;color:var(--brand);font-size:15px;}
+  .need ul{list-style:none;margin:0;padding:0 18px 12px 46px;font-size:13.5px;}
+  .need li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px dashed var(--line);}
+  .need.total{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--surface-2);border-bottom:0;}
   .agstats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 16px;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
   .agstats span{display:block;font-size:12px;color:var(--muted);font-weight:600;}
   .agstats b{font-size:14.5px;}
@@ -508,7 +518,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','(USD ou USDT).':'(USD or USDT).','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
+  'Gain':'Earnings','Argent à préparer par moyen de paiement':'Money to prepare per payout method','Transactions à payer':'Transactions to pay','Total à payer':'Total to pay','Non précisé':'Not specified','(USD ou USDT).':'(USD or USDT).','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
   'Montant reçu corrigé':'Amount received corrected','Saisissez un montant valide':'Enter a valid amount',"Corrigez le montant ou la devise en cas d'erreur.":'Correct the amount or currency if there was a mistake.','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
   'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
@@ -538,6 +548,8 @@ const EN = {
 };
 const EN_RX = [
   [/^Bonjour (.+)$/, 'Hello $1'],
+  [/^(\d+) bénéficiaires?$/, (m,a)=>`${a} beneficiar${a==='1'?'y':'ies'}`],
+  [/^Banque : (.+)$/, 'Bank: $1'],
   [/^(⚠ )?Attendu ≈ (.+) \$, reçu (.+) \(écart (.+) %\)$/, '$1Expected ≈ $2 $, received $3 (gap $4 %)'],
   [/^L'agent a envoyé (.+) AED, soit environ$/, 'The agent sent $1 AED, about'],
   [/^Attention : l'agent a envoyé environ (.+) \$ et vous indiquez (.+) \(écart (.+) %\)\. Avez-vous mélangé l'argent de plusieurs envois \? Confirmer quand même \?$/, 'Warning: the agent sent about $1 $ and you entered $2 (gap $3 %). Did you mix money from several transfers? Confirm anyway?'],
@@ -1633,6 +1645,35 @@ function dashboardAgent(){
     ${panel('Mes dernières transactions', 'list', txList(mine.slice(0,8)), { flush:true, right:`<button class="btn ghost sm" onclick="setPage('transactions')">Tout voir</button>` })}`;
 }
 
+
+/* Money Naomie needs on each payout channel to pay pending beneficiaries */
+function channelKey(m){
+  const sm = splitMode(m);
+  return sm.mode === 'Banque' && sm.banque ? 'Banque : ' + sm.banque.trim().toUpperCase() : (sm.mode || 'Non précisé');
+}
+function payoutNeeds(list){
+  const m = new Map();
+  list.filter(t=>t.statut==='EN_ATTENTE').forEach(t=>{
+    const k = channelKey(t.mode_reception);
+    if(!m.has(k)) m.set(k, { k, n:0, bif:0, items:[] });
+    const g = m.get(k); g.n++; g.bif += (+t.montant_bif||0); g.items.push(t);
+  });
+  return [...m.values()].sort((a,b)=>b.bif-a.bif);
+}
+function payoutNeedsPanel(list){
+  const groups = payoutNeeds(list);
+  if(!groups.length) return '';
+  const total = groups.reduce((a,g)=>a+g.bif,0), n = groups.reduce((a,g)=>a+g.n,0);
+  const body = `<div class="needs">${groups.map(g=>`
+    <details class="need">
+      <summary><span class="need-k">${ic(/^Banque/.test(g.k) ? 'wallet' : (/Cash/.test(g.k) ? 'coins' : 'phone'))}<b>${esc(g.k)}</b><span class="sub">${g.n} bénéficiaire${g.n>1?'s':''}</span></span><span class="need-v">${fmt(g.bif,0)} BIF</span></summary>
+      <ul>${g.items.map(t=>`<li><span>${esc(t.beneficiaire)} <span class="sub">${esc(t.beneficiaire_tel||'')}, agent ${esc(t.agent_nom)}</span></span><span class="strong">${fmt(t.montant_bif,0)} BIF</span></li>`).join('')}</ul>
+    </details>`).join('')}
+    <div class="need total"><span><b>Total à payer</b> <span class="sub">${n} bénéficiaire${n>1?'s':''}</span></span><span class="need-v">${fmt(total,0)} BIF</span></div>
+  </div>`;
+  return panel('Argent à préparer par moyen de paiement', 'wallet', body, { flush:true, cls:'flag-warn', right:`<span class="count">Transactions à payer</span>` });
+}
+
 function dashboardStaff(){
   const all = bilan(null); const T = totals(all);
   const aPayer = txAPayer();
@@ -1650,6 +1691,7 @@ function dashboardStaff(){
       ${kpi("Frais aujourd'hui", 'coins', fmt(sum(todayTx,'frais_aed')), 'AED', '', 'gold')}
       ${kpi('Argent encore chez les agents', 'wallet', fmt(T.reste||0), 'AED', 'Depuis le début', (T.reste||0)>0?'bad':'good')}
     </div>
+    ${payoutNeedsPanel(state.transactions)}
     ${pend.length && isAdmin() ? panel(`${pend.length} demande${pend.length>1?'s':''} d'accès en attente`, 'users', null, { cls:'flag-warn calm', right:`<button class="btn sm" onclick="setPage('users')">Voir les demandes</button>` }) : ''}
     ${aPayer.length
       ? `<h3 class="sectiontitle">${ic('hourglass')}Bénéficiaires à payer, agent par agent</h3>` + agentPanels(aPayer, 'tx', { cls:'flag-bad' })
@@ -1767,6 +1809,7 @@ function pageTransactions(){
       ${kpi('Frais', 'coins', fmt(sum(act,'frais_aed')), 'AED', '', 'gold')}
       ${kpi('Versé au Burundi', 'send', fmt(sum(act,'montant_bif'),0), 'BIF', '')}
     </div>
+    ${isStaff() ? payoutNeedsPanel(list) : ''}
     ${isStaff() && !f.agent
       ? agentPanels(list, 'tx', { emptyTitle:'Liste des transactions' })
       : panel('Liste des transactions', 'list', (isStaff() && list.length ? txGroupStats(list) : '') + txList(list), { flush:true, right:`<span class="count">${list.length} résultat${list.length>1?'s':''}</span>` })}`;
