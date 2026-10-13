@@ -1649,7 +1649,19 @@ function dashboardAgent(){
 /* Money Naomie needs on each payout channel to pay pending beneficiaries */
 function channelKey(m){
   const sm = splitMode(m);
-  return sm.mode === 'Banque' && sm.banque ? 'Banque : ' + sm.banque.trim().toUpperCase() : (sm.mode || 'Non précisé');
+  if(sm.mode === 'Banque' && sm.banque){
+    const b = sm.banque.trim().toUpperCase().replace(/\s+/g,' ');
+    // for COOPEC, the extra words are the branch (Matana, Giteranyi…): all COOPEC money is prepared together
+    if(/^COOPEC\b/.test(b)) return 'Banque : COOPEC';
+    return 'Banque : ' + b;
+  }
+  return sm.mode || 'Non précisé';
+}
+function channelBranch(m){
+  const sm = splitMode(m);
+  if(sm.mode !== 'Banque' || !sm.banque) return '';
+  const b = sm.banque.trim().replace(/\s+/g,' ');
+  return /^COOPEC\b/i.test(b) ? b.replace(/^COOPEC\s*[-–:,]?\s*/i,'') : '';
 }
 function payoutNeeds(list){
   const m = new Map();
@@ -1667,7 +1679,7 @@ function payoutNeedsPanel(list){
   const body = `<div class="needs">${groups.map(g=>`
     <details class="need">
       <summary><span class="need-k">${ic(/^Banque/.test(g.k) ? 'wallet' : (/Cash/.test(g.k) ? 'coins' : 'phone'))}<b>${esc(g.k)}</b><span class="sub">${g.n} bénéficiaire${g.n>1?'s':''}</span></span><span class="need-v">${fmt(g.bif,0)} BIF</span></summary>
-      <ul>${g.items.map(t=>`<li><span>${esc(t.beneficiaire)} <span class="sub">${esc(t.beneficiaire_tel||'')}, agent ${esc(t.agent_nom)}</span></span><span class="strong">${fmt(t.montant_bif,0)} BIF</span></li>`).join('')}</ul>
+      <ul>${g.items.map(t=>`<li><span>${esc(t.beneficiaire)} <span class="sub">${channelBranch(t.mode_reception) ? `${esc(channelBranch(t.mode_reception))}, ` : ''}${esc(t.beneficiaire_tel||'')}, agent ${esc(t.agent_nom)}</span></span><span class="strong">${fmt(t.montant_bif,0)} BIF</span></li>`).join('')}</ul>
     </details>`).join('')}
     <div class="need total"><span><b>Total à payer</b> <span class="sub">${n} bénéficiaire${n>1?'s':''}</span></span><span class="need-v">${fmt(total,0)} BIF</span></div>
   </div>`;
