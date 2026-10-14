@@ -245,6 +245,7 @@
   .need ul{list-style:none;margin:0;padding:0 18px 12px 46px;font-size:13.5px;}
   .need li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px dashed var(--line);}
   .need.total{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
+  .acct-acts{padding:0 18px 12px 46px;}
   .need-h{display:flex;align-items:center;gap:8px;padding:14px 18px 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);}
   .need-h svg.i{color:var(--gold);}
   .needs > .need:last-child{border-bottom:0;}
@@ -645,6 +646,43 @@ const EN_RX = [
   [/^Semaine du (\S+) au (\S+)$/, 'Week of $1 to $2'],
   [/^(.+), inscrit le (.+)$/, '$1, signed up $2'],
 ];
+
+Object.assign(EN, {
+  'Mes comptes':'My accounts','Comptes de Naomie':"Naomie's accounts",'Comptes':'Accounts','Comptes et soldes':'Accounts and balances',
+  "L'argent disponible sur chaque compte, calculé à partir des ventes, des paiements et des transferts.":'Money available on each account, computed from sales, payouts and transfers.',
+  'Transfert entre comptes':'Transfer between accounts','Entrée / sortie':'In / out','Ajouter un compte':'Add an account','Modifier le compte':'Edit account',
+  'Disponible':'Available','Total de tous les comptes':'All accounts together','À payer':'To pay','Bénéficiaires en attente':'Pending beneficiaries',
+  'Reste après paiement':'Left after paying','Il manque':'Missing','Si tout est payé':'If everything is paid','Vendre plus avant de tout payer':'Sell more before paying everything',
+  'Soldes par compte':'Balance per account','Total disponible':'Total available',
+  "Aucun compte pour le moment. Ajoutez chaque compte (Lumicash, BANCOBU, cash…) avec la somme qu'il contient aujourd'hui.":'No account yet. Add each account (Lumicash, BANCOBU, cash…) with the amount it holds today.',
+  "Chaque vente ajoute l'argent au compte où il est arrivé. Chaque bénéficiaire payé retire l'argent du compte utilisé, avec les frais. Pour déplacer de l'argent (par exemple de BANCOBU vers Lumicash), utilisez « Transfert entre comptes ».":'Each sale adds money to the account it arrived on. Each paid beneficiary takes money out of the account used, with fees. To move money (e.g. from BANCOBU to Lumicash), use “Transfer between accounts”.',
+  "Cette page n'est pas encore activée : l'administrateur doit exécuter le script 09_comptes_naomie.sql dans Supabase.":'This page is not active yet: the administrator must run the 09_comptes_naomie.sql script in Supabase.',
+  'Nom du compte':'Account name','Type':'Type','Banque':'Bank','Mobile':'Mobile','Cash':'Cash','Solde de départ (BIF)':'Starting balance (BIF)',
+  "Ce qu'il y a sur le compte au moment où vous l'ajoutez. Les ventes et paiements suivants s'ajoutent ou se retirent automatiquement.":'What the account holds when you add it. Later sales and payouts are added or taken out automatically.',
+  'Retirer ce compte':'Remove this account','Opération':'Operation',"Entrée d'argent":'Money in',"Sortie d'argent":'Money out',"Entrée ou sortie d'argent":'Money in or out',
+  'Depuis le compte':'From account','Vers le compte':'To account','Montant (BIF)':'Amount (BIF)','Frais (BIF)':'Fees (BIF)',
+  'Retirés du compte de départ en plus du montant.':'Taken from the source account on top of the amount.',
+  'Marquer comme payée':'Mark as paid','Payé depuis le compte':'Paid from account','Frais du paiement (BIF)':'Payout fees (BIF)',
+  "Frais de transfert payés par vous, s'il y en a.":'Transfer fees you paid, if any.','Confirmer le paiement':'Confirm payment',
+  "— Ne pas déduire d'un compte —":'— Do not deduct from an account —','Reçu sur le compte':'Received on account',
+  'Compte ajouté':'Account added','Compte modifié':'Account edited','Compte retiré':'Account removed','Opération enregistrée':'Operation saved',
+  'Opération supprimée':'Operation deleted','Supprimer cette opération ?':'Delete this operation?','Saisissez le nom du compte':'Enter the account name',
+  'Choisissez deux comptes différents':'Choose two different accounts','Solde de départ':'Starting balance','Enregistrer':'Save',
+});
+EN_RX.push(
+  [/^Vente (.+) × (.+?)(, envoi de (.+))?$/, (m,a,b,c,d)=>`Sale ${a} × ${b}${d?`, transfer from ${d}`:''}`],
+  [/^Payé à (.+?)(, frais (.+))?$/, (m,a,b,c)=>`Paid to ${a}${c?`, fees ${c}`:''}`],
+  [/^Transfert depuis (.+)$/, 'Transfer from $1'],
+  [/^Transfert vers (.+)$/, (m,a)=>'Transfer to ' + a.replace(', frais ', ', fees ')],
+  [/^Sortie d'argent(.*)$/, (m,a)=>'Money out' + a.replace(', frais ', ', fees ')],
+  [/^Entrée d'argent(.+)$/, 'Money in$1'],
+  [/^Solde de départ, (.+)$/, 'Starting balance, $1'],
+  [/^(\d+) comptes?$/, (m,a)=>`${a} account${a==='1'?'':'s'}`],
+  [/^Depuis (.+)$/, 'From $1'],
+  [/^(\d+) vente\(s\) et (\d+) paiement\(s\) enregistrés sans compte : ils ne comptent pas dans les soldes\.$/, '$1 sale(s) and $2 payout(s) recorded without an account: they are not counted in the balances.'],
+  [/^Retirer le compte (.+) \? Son historique est conservé\.$/, 'Remove account $1? Its history is kept.'],
+  [/^(.+) \((-?[\d\s  ,.]+) BIF\)$/, '$1 ($2 BIF)'],
+);
 function tr(s){
   if(LANG!=='en' || s==null) return s;
   const str = String(s), k = str.trim();
@@ -715,7 +753,7 @@ let state = {
   vsf:{ agent:'', periode:'all' },
   st:{ preset:'today', from:'', to:'', agent:'', group:'day' },
   pf:{ preset:'month', from:'', to:'', agent:'' },
-  paiements:[], ventes:[], modal:null,
+  paiements:[], ventes:[], comptes:[], mouvements:[], comptesErr:false, modal:null,
 };
 (function readHashError(){
   const m = INITIAL_HASH.match(/error_description=([^&]+)/);
@@ -879,12 +917,14 @@ async function afterLogin(session){
 
 /* ---------- Data ---------- */
 async function loadAll(){
-  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}, {data:ventes}] = await Promise.all([
+  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}, {data:ventes}, {data:comptes, error:e5}, {data:mvs}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
     sb.from('transactions').select('*').order('created_at',{ascending:false}),
     sb.from('versements').select('*').order('created_at',{ascending:false}),
     sb.from('paiements_agents').select('*').order('created_at',{ascending:false}),
     isAgent() ? Promise.resolve({ data: [] }) : sb.from('ventes').select('*').order('created_at',{ascending:false}),
+    isAgent() ? Promise.resolve({ data: [] }) : sb.from('comptes').select('*').order('nom'),
+    isAgent() ? Promise.resolve({ data: [] }) : sb.from('mouvements').select('*').order('created_at',{ascending:false}),
   ]);
   if(e1 || e2) toast('Chargement incomplet : ' + ((e1||e2).message), 'bad');
   state.profiles = profiles || [];
@@ -892,6 +932,9 @@ async function loadAll(){
   state.versements = vs || [];
   state.paiements = pays || [];
   state.ventes = ventes || [];
+  state.comptes = comptes || [];
+  state.mouvements = mvs || [];
+  state.comptesErr = !!e5;
   render();
 }
 async function refresh(){ await loadAll(); toast('Données à jour'); }
@@ -924,13 +967,16 @@ async function updateTransaction(id, fields){
   return run(sb.from('transactions').update(patch).eq('id', id), 'Transaction modifiée');
 }
 function markPayee(id){
+  if(!state.comptesErr && comptesActifs().length){ openModal('pay', id); return; }
   const t = state.transactions.find(x=>x.id===id);
   if(!ask(`Confirmer que ${t ? t.beneficiaire : 'le bénéficiaire'} a reçu ${t ? fmt(t.montant_bif,0)+' BIF' : 'son argent'} ?`)) return;
   run(sb.from('transactions').update({ statut:'PAYEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() }).eq('id', id), 'Transaction marquée payée');
 }
 function markAttente(id){
   if(!ask('Remettre cette transaction « à payer » ?')) return;
-  run(sb.from('transactions').update({ statut:'EN_ATTENTE', valide_par:null, valide_le:null }).eq('id', id), 'Transaction remise à payer');
+  const patch = { statut:'EN_ATTENTE', valide_par:null, valide_le:null };
+  if(!state.comptesErr){ patch.paye_depuis = null; patch.frais_paiement_bif = 0; }
+  run(sb.from('transactions').update(patch).eq('id', id), 'Transaction remise à payer');
 }
 function markAnnulee(id){
   if(!ask('Annuler cette transaction ? Elle ne comptera plus dans les totaux.')) return;
@@ -1073,6 +1119,10 @@ function openModal(type, id){ state.modal = { type, id }; render(); }
 function closeModal(e){ if(!e || e.target.classList.contains('modal-bg')){ state.modal = null; render(); } }
 function modalHtml(){
   const m = state.modal; if(!m) return '';
+  if(['acct','mv','pay'].includes(m.type)){
+    const b = modalComptes(m); if(!b) return '';
+    return `<div class="modal-bg" onclick="closeModal(event)"><div class="modal" role="dialog" aria-modal="true">${b}</div></div>`;
+  }
   const v = vsById(m.id); if(!v) return '';
   let body = '';
   if(m.type==='recv'){
@@ -1100,7 +1150,9 @@ function modalHtml(){
         <div class="grid2">
           <div class="field"><label for="s-q">Quantité vendue (${esc(dev)})</label><input id="s-q" name="quantite" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" max="${left}" required inputmode="decimal" value="${left}"></div>
           <div class="field"><label for="s-t">Prix de vente : 1 ${esc(dev)} = ? BIF</label><input id="s-t" name="taux" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required inputmode="decimal" value="${esc(lastSaleRate(dev))}" placeholder="Ex. 6000"></div>
-          ${modeField('mode', 'banque', '', 's-mode').replace('>Mode de réception<','>Reçu sur<')}
+          ${!state.comptesErr && comptesActifs().length
+            ? `<div class="field"><label for="s-c">Reçu sur le compte</label><select id="s-c" name="compte" required>${compteOptions(lastSaleCompte(), false)}</select></div>`
+            : modeField('mode', 'banque', '', 's-mode').replace('>Mode de réception<','>Reçu sur<')}
           <div class="field"><label for="s-f">Frais de vente (BIF)</label><input id="s-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="1" min="0" value="0" required inputmode="decimal"><span class="hint">Par exemple les frais du code agent Lumicash. Retirés avant de calculer le profit.</span></div>
         </div>
         <div class="gainline" id="saleSummary"></div>
@@ -1110,6 +1162,7 @@ function modalHtml(){
   }
   return `<div class="modal-bg" onclick="closeModal(event)"><div class="modal" role="dialog" aria-modal="true">${body}</div></div>`;
 }
+function lastSaleCompte(){ const s = state.ventes.find(x=>x.compte_id && compteById(x.compte_id) && compteById(x.compte_id).actif); return s ? s.compte_id : ''; }
 function lastSaleRate(dev){ const s = state.ventes.find(x=>x.devise===dev); return s ? +s.taux : ''; }
 async function saveReception(id, montant, devise){
   const v = vsById(id), sold = v ? vsSoldQty(v) : 0, editing = !!(v && v.recu_montant);
@@ -1126,7 +1179,9 @@ async function saveReception(id, montant, devise){
 }
 async function saveSale(id, f){
   const v = vsById(id);
-  const ok = await run(sb.from('ventes').insert({ versement_id:id, devise: v.recu_devise, quantite:f.quantite, taux:f.taux, mode_reception:f.mode, frais_bif:f.frais, note:f.note, saisi_par: state.profile.nom, date: today() }), 'Vente enregistrée');
+  const row = { versement_id:id, devise: v.recu_devise, quantite:f.quantite, taux:f.taux, mode_reception:f.mode, frais_bif:f.frais, note:f.note, saisi_par: state.profile.nom, date: today() };
+  if(f.compte){ const c = compteById(f.compte); row.compte_id = f.compte; row.mode_reception = c ? c.nom : f.mode; }
+  const ok = await run(sb.from('ventes').insert(row), 'Vente enregistrée');
   if(ok){ state.modal = null; render(); }
 }
 function deleteSale(id){
@@ -1418,6 +1473,210 @@ function agentPanels(list, kind, opts={}){
   }).join('');
 }
 
+/* ---------- Naomie's accounts (banks, mobile money, cash) ---------- */
+const COMPTE_TYPES = ['Banque','Mobile','Cash'];
+function comptesActifs(){ return state.comptes.filter(c=>c.actif); }
+function compteById(id){ return state.comptes.find(c=>c.id===id); }
+/* every movement of money on one account, newest first */
+function compteLines(c){
+  const L = [];
+  state.ventes.filter(s=>s.compte_id===c.id).forEach(s=>{
+    const v = vsById(s.versement_id);
+    L.push({ ts:s.created_at, d:s.date, label:`Vente ${fmt(s.quantite)} ${s.devise} × ${fmt(s.taux)}${v ? `, envoi de ${v.agent_nom}` : ''}`, amt:+s.net_bif||0 });
+  });
+  state.transactions.filter(t=>t.paye_depuis===c.id && t.statut==='PAYEE').forEach(t=>{
+    L.push({ ts:t.valide_le||t.created_at, d:t.date, label:`Payé à ${t.beneficiaire}${+t.frais_paiement_bif ? `, frais ${fmt(t.frais_paiement_bif,0)}` : ''}`, amt:-((+t.montant_bif||0)+(+t.frais_paiement_bif||0)) });
+  });
+  state.mouvements.forEach(m=>{
+    const de = compteById(m.compte_de), vers = compteById(m.compte_vers), note = m.note ? ` (${m.note})` : '';
+    if(m.compte_vers===c.id) L.push({ ts:m.created_at, d:m.date, mv:m.id, label: m.type==='TRANSFERT' ? `Transfert depuis ${de ? de.nom : '?'}${note}` : `Entrée d'argent${note}`, amt:+m.montant });
+    if(m.compte_de===c.id) L.push({ ts:m.created_at, d:m.date, mv:m.id, label: (m.type==='TRANSFERT' ? `Transfert vers ${vers ? vers.nom : '?'}` : `Sortie d'argent`) + (+m.frais ? `, frais ${fmt(m.frais,0)}` : '') + note, amt:-((+m.montant)+(+m.frais||0)) });
+  });
+  return L.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+}
+function compteSolde(c){ return (+c.solde_depart||0) + compteLines(c).reduce((a,l)=>a+l.amt,0); }
+function soldeTotal(){ return comptesActifs().reduce((a,c)=>a+compteSolde(c),0); }
+/* best guess of the account used to pay a beneficiary: same name as the payout channel, else the last one used */
+function guessCompte(t){
+  const cs = comptesActifs(); if(!cs.length) return '';
+  const norm = s => String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const sm = splitMode(t.mode_reception), key = norm(sm.banque || sm.mode);
+  const hit = key && (cs.find(c=>norm(c.nom)===key) || cs.find(c=>key.startsWith(norm(c.nom)) || norm(c.nom).startsWith(key)));
+  if(hit) return hit.id;
+  const last = state.transactions.filter(x=>x.paye_depuis && compteById(x.paye_depuis) && compteById(x.paye_depuis).actif)
+    .sort((a,b)=>String(b.valide_le).localeCompare(String(a.valide_le)))[0];
+  return last ? last.paye_depuis : '';
+}
+function compteOptions(sel, withNone){
+  return (withNone ? `<option value="">— Ne pas déduire d'un compte —</option>` : '') +
+    comptesActifs().map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.nom)} (${fmt(compteSolde(c),0)} BIF)</option>`).join('');
+}
+
+function pageComptes(){
+  if(state.comptesErr) return `<div class="pagehead"><div><h1>Comptes et soldes</h1></div></div>
+    <div class="msg bad">${ic('alert')}<span>Cette page n'est pas encore activée : l'administrateur doit exécuter le script 09_comptes_naomie.sql dans Supabase.</span></div>`;
+  const cs = state.comptes, actifs = comptesActifs();
+  const total = soldeTotal();
+  const aPayer = state.transactions.filter(t=>t.statut==='EN_ATTENTE').reduce((a,t)=>a+(+t.montant_bif||0),0);
+  const apres = total - aPayer;
+  const since = cs.length ? cs.map(c=>c.created_at).sort()[0] : null;
+  const sansCompteV = since ? state.ventes.filter(s=>!s.compte_id && s.created_at >= since).length : 0;
+  const sansCompteP = since ? state.transactions.filter(t=>t.statut==='PAYEE' && !t.paye_depuis && (t.valide_le||'') >= since).length : 0;
+  const acts = `<div class="actions">
+      ${actifs.length > 1 ? `<button class="btn gold" onclick="openModal('mv','TRANSFERT')">${ic('send')}Transfert entre comptes</button>` : ''}
+      ${actifs.length ? `<button class="btn ghost" onclick="openModal('mv','ENTREE')">${ic('plus')}Entrée / sortie</button>` : ''}
+      <button class="btn ${actifs.length ? 'ghost' : 'gold'}" onclick="openModal('acct','')">${ic('wallet')}Ajouter un compte</button>
+    </div>`;
+  const list = actifs.map(c=>{
+    const s = compteSolde(c), lines = compteLines(c);
+    return `<details class="need acct">
+      <summary><span class="need-k">${ic(c.type==='Mobile' ? 'phone' : (c.type==='Cash' ? 'coins' : 'wallet'))}<b>${esc(c.nom)}</b><span class="sub">${esc(c.type)}</span></span><span class="need-v ${s<0?'cell-bad':''}">${fmt(s,0)} BIF</span></summary>
+      <ul>
+        ${lines.slice(0,40).map(l=>`<li><span><span class="sub">${fmtLocalDate(l.ts, l.d)}</span> ${esc(l.label)}${l.mv ? ` <button class="linkbtn" onclick="deleteMouvement('${l.mv}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>` : ''}</span><span class="strong ${l.amt<0?'cell-bad':'cell-good'}">${l.amt>0?'+':''}${fmt(l.amt,0)}</span></li>`).join('')}
+        <li><span><span class="sub">${fmtLocalDate(c.created_at)}</span> Solde de départ</span><span class="strong">${fmt(c.solde_depart,0)}</span></li>
+      </ul>
+      <div class="actions acct-acts"><button class="btn ghost sm" onclick="openModal('acct','${c.id}')">${ic('edit')}Modifier</button></div>
+    </details>`;
+  }).join('');
+  const body = actifs.length ? `<div class="needs">${list}
+      <div class="need total"><span><b>Total disponible</b> <span class="sub">${actifs.length} compte${actifs.length>1?'s':''}</span></span><span class="need-v ${total<0?'cell-bad':''}">${fmt(total,0)} BIF</span></div></div>`
+    : emptyState('wallet', 'Aucun compte pour le moment. Ajoutez chaque compte (Lumicash, BANCOBU, cash…) avec la somme qu\'il contient aujourd\'hui.');
+  return `
+    <div class="pagehead"><div><h1>Comptes et soldes</h1><p>L'argent disponible sur chaque compte, calculé à partir des ventes, des paiements et des transferts.</p></div>${acts}</div>
+    <div class="kpis">
+      ${kpi('Disponible', 'wallet', fmt(total,0), 'BIF', 'Total de tous les comptes', '', true)}
+      ${kpi('À payer', 'hourglass', fmt(aPayer,0), 'BIF', 'Bénéficiaires en attente')}
+      ${kpi(apres >= 0 ? 'Reste après paiement' : 'Il manque', 'coins', fmt(Math.abs(apres),0), 'BIF', apres >= 0 ? 'Si tout est payé' : 'Vendre plus avant de tout payer', apres >= 0 ? 'cell-good' : 'cell-bad')}
+    </div>
+    ${sansCompteV || sansCompteP ? `<div class="msg bad">${ic('alert')}<span>${sansCompteV} vente(s) et ${sansCompteP} paiement(s) enregistrés sans compte : ils ne comptent pas dans les soldes.</span></div>` : ''}
+    ${panel('Soldes par compte', 'wallet', body, { flush:true })}
+    <div class="note" style="margin-top:14px;">Chaque vente ajoute l'argent au compte où il est arrivé. Chaque bénéficiaire payé retire l'argent du compte utilisé, avec les frais. Pour déplacer de l'argent (par exemple de BANCOBU vers Lumicash), utilisez « Transfert entre comptes ».</div>`;
+}
+
+function modalComptes(m){
+  if(m.type==='acct'){
+    const c = compteById(m.id);
+    return `
+      <h2>${c ? 'Modifier le compte' : 'Ajouter un compte'}</h2>
+      <form id="acctForm" autocomplete="off" data-id="${c ? c.id : ''}">
+        <div class="grid2">
+          <div class="field"><label for="a-n">Nom du compte</label><input id="a-n" name="nom" required placeholder="Ex. Lumicash, BANCOBU, Cash" value="${c ? esc(c.nom) : ''}"></div>
+          <div class="field"><label for="a-t">Type</label><select id="a-t" name="type">${COMPTE_TYPES.map(x=>`<option ${c && c.type===x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+          <div class="field"><label for="a-s">Solde de départ (BIF)</label><input id="a-s" name="solde" type="text" pattern="-?[0-9][0-9 .,]*" inputmode="decimal" required value="${c ? esc(c.solde_depart) : ''}" placeholder="Ex. 2500000"><span class="hint">Ce qu'il y a sur le compte au moment où vous l'ajoutez. Les ventes et paiements suivants s'ajoutent ou se retirent automatiquement.</span></div>
+        </div>
+        <div class="actions" style="justify-content:flex-start;">
+          <button class="btn gold" type="submit">${ic('check')}Enregistrer</button>
+          ${c ? `<button class="btn ghost" type="button" onclick="archiveCompte('${c.id}')">${ic('trash')}Retirer ce compte</button>` : ''}
+          <button class="btn ghost" type="button" onclick="closeModal()">Annuler</button>
+        </div>
+      </form>`;
+  }
+  if(m.type==='mv'){
+    const t = m.id || 'TRANSFERT';
+    return `
+      <h2>${t==='TRANSFERT' ? 'Transfert entre comptes' : 'Entrée ou sortie d\'argent'}</h2>
+      <form id="mvForm" autocomplete="off">
+        <div class="grid2">
+          <div class="field"><label for="m-t">Opération</label><select id="m-t" name="type">
+            <option value="TRANSFERT" ${t==='TRANSFERT'?'selected':''}>Transfert entre comptes</option>
+            <option value="ENTREE" ${t==='ENTREE'?'selected':''}>Entrée d'argent</option>
+            <option value="SORTIE" ${t==='SORTIE'?'selected':''}>Sortie d'argent</option></select></div>
+          <div class="field" data-for="de"><label for="m-de">Depuis le compte</label><select id="m-de" name="de">${compteOptions('', false)}</select></div>
+          <div class="field" data-for="vers"><label for="m-vers">Vers le compte</label><select id="m-vers" name="vers">${compteOptions(comptesActifs()[1] ? comptesActifs()[1].id : '', false)}</select></div>
+          <div class="field"><label for="m-m">Montant (BIF)</label><input id="m-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required placeholder="Ex. 1000000"></div>
+          <div class="field" data-for="de"><label for="m-f">Frais (BIF)</label><input id="m-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" value="0"><span class="hint">Retirés du compte de départ en plus du montant.</span></div>
+        </div>
+        <div class="field"><label for="m-n">Note</label><input id="m-n" name="note" placeholder="Ex. retrait pour payer COOPEC, dépôt cash…"></div>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Enregistrer</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  if(m.type==='pay'){
+    const t = state.transactions.find(x=>x.id===m.id); if(!t) return '';
+    return `
+      <h2>Marquer comme payée</h2>
+      <p class="sub" style="margin:0 0 16px;">${esc(t.beneficiaire)}, ${esc(t.mode_reception||'')} ${esc(t.beneficiaire_tel||'')} : <b>${fmt(t.montant_bif,0)} BIF</b>.</p>
+      <form id="payForm" autocomplete="off" data-id="${t.id}">
+        <div class="grid2">
+          <div class="field"><label for="p-c">Payé depuis le compte</label><select id="p-c" name="compte">${compteOptions(guessCompte(t), true)}</select></div>
+          <div class="field"><label for="p-f">Frais du paiement (BIF)</label><input id="p-f" name="frais" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" value="0"><span class="hint">Frais de transfert payés par vous, s'il y en a.</span></div>
+        </div>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn good" type="submit">${ic('check')}Confirmer le paiement</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  return '';
+}
+async function saveCompte(id, f){
+  if(!f.nom){ toast('Saisissez le nom du compte', 'bad'); return false; }
+  if(isNaN(f.solde_depart)){ toast('Saisissez un montant valide', 'bad'); return false; }
+  const q = id ? sb.from('comptes').update(f).eq('id', id) : sb.from('comptes').insert(f);
+  const ok = await run(q, id ? 'Compte modifié' : 'Compte ajouté');
+  if(ok){ state.modal = null; render(); }
+  return ok;
+}
+async function archiveCompte(id){
+  const c = compteById(id); if(!c) return;
+  if(!ask(`Retirer le compte ${c.nom} ? Son historique est conservé.`)) return;
+  const ok = await run(sb.from('comptes').update({ actif:false }).eq('id', id), 'Compte retiré');
+  if(ok){ state.modal = null; render(); }
+}
+async function saveMouvement(f){
+  if(!(f.montant > 0)){ toast('Saisissez un montant valide', 'bad'); return false; }
+  if(f.type==='TRANSFERT' && f.compte_de===f.compte_vers){ toast('Choisissez deux comptes différents', 'bad'); return false; }
+  const ok = await run(sb.from('mouvements').insert({ ...f, saisi_par: state.profile.nom, date: today() }), 'Opération enregistrée');
+  if(ok){ state.modal = null; render(); }
+  return ok;
+}
+function deleteMouvement(id){
+  if(!ask('Supprimer cette opération ?')) return;
+  run(sb.from('mouvements').delete().eq('id', id), 'Opération supprimée');
+}
+async function savePayment(id, compte, frais){
+  const patch = { statut:'PAYEE', valide_par: state.profile.nom, valide_le: new Date().toISOString() };
+  if(!state.comptesErr){ patch.paye_depuis = compte || null; patch.frais_paiement_bif = Math.round(frais||0); }
+  const ok = await run(sb.from('transactions').update(patch).eq('id', id), 'Transaction marquée payée');
+  if(ok){ state.modal = null; render(); }
+  return ok;
+}
+function attachComptesHandlers(){
+  const af = document.getElementById('acctForm');
+  if(af){
+    af.querySelector('[name=nom]').focus();
+    af.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(af), btn = af.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await saveCompte(af.dataset.id, { nom:String(fd.get('nom')).trim(), type:fd.get('type'), solde_depart:Math.round(parseNum(fd.get('solde'))) });
+      if(!ok) btn.disabled = false;
+    };
+  }
+  const mf = document.getElementById('mvForm');
+  if(mf){
+    const sync = ()=>{
+      const t = mf.querySelector('[name=type]').value;
+      mf.querySelectorAll('[data-for=de]').forEach(el=>el.hidden = t==='ENTREE');
+      mf.querySelectorAll('[data-for=vers]').forEach(el=>el.hidden = t==='SORTIE');
+      const h = mf.closest('.modal').querySelector('h2');
+      h.textContent = tr(t==='TRANSFERT' ? 'Transfert entre comptes' : 'Entrée ou sortie d\'argent');
+    };
+    mf.querySelector('[name=type]').onchange = sync; sync();
+    mf.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(mf), t = fd.get('type'), btn = mf.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await saveMouvement({ type:t, compte_de: t==='ENTREE' ? null : fd.get('de'), compte_vers: t==='SORTIE' ? null : fd.get('vers'),
+        montant: Math.round(parseNum(fd.get('montant'))), frais: t==='ENTREE' ? 0 : Math.round(parseNum(fd.get('frais'))||0), note:String(fd.get('note')||'').trim()||null });
+      if(!ok) btn.disabled = false;
+    };
+  }
+  const pf = document.getElementById('payForm');
+  if(pf){
+    pf.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(pf), btn = pf.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await savePayment(pf.dataset.id, fd.get('compte'), parseNum(fd.get('frais'))||0);
+      if(!ok) btn.disabled = false;
+    };
+  }
+}
+
 /* ---------- Navigation ---------- */
 function navItems(){
   const r = role();
@@ -1426,6 +1685,7 @@ function navItems(){
   items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
   items.push({ id:'versements', label: r==='AGENT' ? 'Envois à Naomie' : 'Fonds reçus de Dubaï', short: r==='AGENT' ? 'Envois' : 'Fonds', icon: r==='AGENT' ? 'send' : 'inbox', badge: r!=='AGENT' ? vsAConfirmer().length : 0 });
   items.push({ id:'stats', label: r==='AGENT' ? 'Mes statistiques' : 'Statistiques', short:'Stats', icon:'chart' });
+  if(r!=='AGENT') items.push({ id:'comptes', label: r==='BUJA' ? 'Mes comptes' : 'Comptes de Naomie', short:'Comptes', icon:'wallet' });
   items.push({ id:'profits', label: r==='AGENT' ? 'Mes gains' : 'Profits', short: r==='AGENT' ? 'Gains' : 'Profits', icon:'trend' });
   if(r==='ADMIN') items.push({ id:'users', label:'Utilisateurs', icon:'users', badge: pendingUsers().length });
   items.push({ id:'account', label:'Mon compte', icon:'user' });
@@ -1449,7 +1709,7 @@ function renderInner(){
 
   const items = navItems();
   const p = state.profile;
-  const tabIds = isBuja() ? ['dashboard','transactions','versements','stats'] : ['dashboard','transactions','new','stats'];
+  const tabIds = isBuja() ? ['dashboard','transactions','versements','comptes'] : ['dashboard','transactions','new','stats'];
   const tabs = tabIds.map(id=>items.find(i=>i.id===id)).filter(Boolean);
   const menuBadge = items.filter(i=>!tabIds.includes(i.id)).reduce((s,i)=>s+(i.badge||0),0);
   const menuActive = !tabIds.includes(state.page);
@@ -1605,6 +1865,7 @@ function renderPage(){
     case 'stats': return pageStats();
     case 'users': return isAdmin() ? pageUsers() : pageDashboard();
     case 'profits': return isAgent() ? pageGains() : pageProfits();
+    case 'comptes': return isAgent() ? pageDashboard() : pageComptes();
     case 'account': return pageAccount();
     default: return pageDashboard();
   }
@@ -1858,6 +2119,7 @@ function txActions(t){
   if(isAdmin() || (isAgent() && t.statut==='EN_ATTENTE')) a.push(`<button class="btn ghost sm" onclick="deleteTransaction('${t.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}Supprimer</button>`);
   return a.join('');
 }
+function paidFrom(t){ const c = isStaff() && t.statut==='PAYEE' && t.paye_depuis && compteById(t.paye_depuis); return c ? `<div class="sub">Depuis ${esc(c.nom)}${+t.frais_paiement_bif ? `, frais ${fmt(t.frais_paiement_bif,0)} BIF` : ''}</div>` : ''; }
 function statusPill(map, s){ const st = map[s] || { label:s, cls:'', icon:'clock' }; return `<span class="pill ${st.cls}">${ic(st.icon)}${st.label}</span>`; }
 /* Profit of one transaction as shown in lists (staff only) */
 function profitCell(t){
@@ -1881,7 +2143,7 @@ function txList(list){
       <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div>${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED</div>`:''}</td>
       <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
       <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>${staff?`<td class="r">${profitCell(t)}</td>`:''}
-      <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}</td>
+      <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}${paidFrom(t)}</td>
       <td><div class="actions">${txActions(t)}</div></td>
     </tr>`).join('')}
     </tbody></table></div>`;
@@ -1894,6 +2156,7 @@ function txList(list){
       <div class="meta" style="margin-top:6px;">${fmtDT(t.created_at)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
       <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}${t.methode_envoi?`, ${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED`:''}</div>
       ${staff ? `<div class="profitline">Profit : ${profitCell(t)}</div>` : ''}
+      ${paidFrom(t)}
       <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
     </div>`).join('')}</div>`;
   return table + cards;
@@ -2384,6 +2647,7 @@ function attachPageHandlers(){
     };
   }
 
+  attachComptesHandlers();
   const recvForm = document.getElementById('recvForm');
   if(recvForm){
     recvForm.querySelector('[name=montant]').focus();
@@ -2409,7 +2673,7 @@ function attachPageHandlers(){
       const q = parseNum(fd.get('quantite')), left = parseNum(saleForm.dataset.left);
       if(q > left + 0.001){ toast(`Il ne reste que ${fmt(left)} à vendre sur cet envoi`, 'bad'); return; }
       saleForm.querySelector('button[type=submit]').disabled = true;
-      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:joinMode(fd.get('mode'), fd.get('banque')), frais:Math.round(parseNum(fd.get('frais'))||0), note:String(fd.get('note')||'').trim()||null });
+      saveSale(state.modal.id, { quantite:q, taux:parseNum(fd.get('taux')), mode:joinMode(fd.get('mode'), fd.get('banque')), compte:fd.get('compte')||null, frais:Math.round(parseNum(fd.get('frais'))||0), note:String(fd.get('note')||'').trim()||null });
     };
   }
 
