@@ -522,7 +522,7 @@ const EN = {
   'Aucun paiement pour le moment.':'No payments yet.','Aucun gain en attente.':'No pending earnings.','Votre part des frais sur chaque transaction':'Your share of fees on each transaction',
   "Encaissé moins frais d'envoi et envois confirmés":'Collected minus transfer fees and confirmed transfers',
   "Encaissé moins frais d'envoi et envoyé":'Collected minus transfer fees and sent',"Frais d'envoi AED":'Transfer fee AED','Frais envoi':'Transfer fee',
-  'Gain':'Earnings','Argent à préparer par moyen de paiement':'Money to prepare per payout method','Transactions à payer':'Transactions to pay','Total à payer':'Total to pay','Par agent':'By agent','Non précisé':'Not specified','(USD ou USDT).':'(USD or USDT).','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
+  'Gain':'Earnings','Argent à préparer par moyen de paiement':'Money to prepare per payout method','Transactions à payer':'Transactions to pay','Total à payer':'Total to pay','Argent collecté par agent':'Money collected per agent','Par agent':'By agent','Non précisé':'Not specified','(USD ou USDT).':'(USD or USDT).','Modifier le reçu':'Edit received','Modifier le montant reçu':'Edit amount received','Enregistrer la correction':'Save correction',
   'Montant reçu corrigé':'Amount received corrected','Saisissez un montant valide':'Enter a valid amount',"Corrigez le montant ou la devise en cas d'erreur.":'Correct the amount or currency if there was a mistake.','Pas encore envoyé':'Not sent yet','estimé':'estimated','Profit :':'Profit:','Profit par agent':'Profit by agent','Profit jour par jour':'Profit day by day','Vendues / transactions':'Sold / transactions',
   'Part Pax des frais':'Pax share of fees','Jour':'Day',"Seules les transactions dont l'envoi a été vendu par Naomie ont un profit. « Estimée » : envoi vendu en partie.":'Only transactions whose transfer Naomie has sold have a profit. “Estimated”: transfer partly sold.','Quelle banque ou microfinance ?':'Which bank or microfinance?','Ex. BANCOBU, KCB, COOPEC…':'E.g. BANCOBU, KCB, COOPEC…','Déjà payé':'Already paid','À confirmer':'To confirm','Bénéficiaires à payer, agent par agent':'Beneficiaries to pay, agent by agent','Liste':'List','Confirmer la réception':'Confirm receipt','Montant reçu':'Amount received','Devise reçue':'Currency received',
   'Indiquez ce qui est réellement arrivé (USDT, shillings kényans…). Vous enregistrerez ensuite chaque vente séparément.':'Enter what actually arrived (USDT, Kenyan shillings…). You will then record each sale separately.',
@@ -2256,7 +2256,7 @@ function bilanList(list, compact){
   if(!list.length) return emptyState('users', 'Aucun agent actif pour le moment.');
   const T = totals(list);
   const table = `<div class="only-desk tblwrap"><table><thead><tr>
-      <th>Agent</th><th class="r">Clients</th><th class="r">Argent clients</th><th class="r">Frais</th><th class="r">Total encaissé</th>
+      <th>Agent</th><th class="r">Transactions</th><th class="r">Argent clients</th><th class="r">Frais</th><th class="r">Total encaissé</th>
       ${compact?'':'<th class="r">Versé au Burundi</th>'}
       <th class="r">Envoyé à Naomie</th>${compact?'':'<th class="r">Envoi à confirmer</th>'}<th class="r">Reste chez l'agent</th>
     </tr></thead><tbody>
@@ -2277,7 +2277,7 @@ function bilanList(list, compact){
       <div class="row"><div class="name">${esc(a.nom)}</div><div class="${a.reste>0?'cell-bad':'cell-good'}">${fmt(a.reste)} AED</div></div>
       <div class="meta">Reste chez l'agent${a.aPayer?`, ${a.aPayer} à payer`:''}</div>
       <div class="mini">
-        <div><span>Clients</span><b>${a.n}</b></div>
+        <div><span>Transactions</span><b>${a.n}</b></div>
         <div><span>Argent clients</span><b>${fmt(a.aed)} AED</b></div>
         <div><span>Frais</span><b class="cell-gold">${fmt(a.frais)} AED</b></div>
         <div><span>Envoyé à Naomie</span><b class="cell-good">${fmt(a.envoye)} AED</b></div>
@@ -2359,8 +2359,8 @@ function pageStats(){
       ${kpi('Écart de la période', 'wallet', fmt(aed+frais-sum(tx,'frais_envoi_aed')-envoye), 'AED', "Encaissé moins frais d'envoi et envoyé", (aed+frais-sum(tx,'frais_envoi_aed')-envoye)>0?'bad':'good')}
       ${kpi('Moyenne par transaction', 'chart', fmt(tx.length ? aed/tx.length : 0), 'AED', '')}
     </div>
-    ${panel(`Détail par ${gLabel}`, 'calendar', detail, { flush:true })}
-    ${isStaff() && !s.agent ? panel('Par agent', 'users', bilanList(bilan(range), false), { flush:true, right:`<span class="count">${rangeText}</span>` }) : ''}`;
+    ${isStaff() && !s.agent ? panel('Argent collecté par agent', 'users', bilanList(bilan(range), false), { flush:true, right:`<span class="count">${rangeText}</span>` }) : ''}
+    ${panel(`Détail par ${gLabel}`, 'calendar', detail, { flush:true })}`;
 }
 function exportCsv(list, name){
   if(!list.length){ toast('Rien à exporter sur cette sélection', 'bad'); return; }
