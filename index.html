@@ -246,6 +246,9 @@
   .need li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px dashed var(--line);}
   .need.total{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
   .acct-acts{padding:0 18px 12px 46px;}
+  .valby{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);}
+  .valby svg.i{width:14px;height:14px;color:var(--gold);flex:none;}
+  .valby b{color:var(--ink);}
   .need-h{display:flex;align-items:center;gap:8px;padding:14px 18px 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);}
   .need-h svg.i{color:var(--gold);}
   .needs > .need:last-child{border-bottom:0;}
@@ -667,9 +670,10 @@ Object.assign(EN, {
   "— Ne pas déduire d'un compte —":'— Do not deduct from an account —','Reçu sur le compte':'Received on account',
   'Compte ajouté':'Account added','Compte modifié':'Account edited','Compte retiré':'Account removed','Opération enregistrée':'Operation saved',
   'Opération supprimée':'Operation deleted','Supprimer cette opération ?':'Delete this operation?','Saisissez le nom du compte':'Enter the account name',
-  'Choisissez deux comptes différents':'Choose two different accounts','Solde de départ':'Starting balance','Enregistrer':'Save',
+  'Choisissez deux comptes différents':'Choose two different accounts','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
+  [/^Payée par$/, 'Paid by'], [/^Annulée par$/, 'Cancelled by'], [/^le (\d.+)$/, (m,a)=>'on ' + a.replace(' à ',' at ')],
   [/^Vente (.+) × (.+?)(, envoi de (.+))?$/, (m,a,b,c,d)=>`Sale ${a} × ${b}${d?`, transfer from ${d}`:''}`],
   [/^Payé à (.+?)(, frais (.+))?$/, (m,a,b,c)=>`Paid to ${a}${c?`, fees ${c}`:''}`],
   [/^Transfert depuis (.+)$/, 'Transfer from $1'],
@@ -2119,6 +2123,11 @@ function txActions(t){
   if(isAdmin() || (isAgent() && t.statut==='EN_ATTENTE')) a.push(`<button class="btn ghost sm" onclick="deleteTransaction('${t.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}Supprimer</button>`);
   return a.join('');
 }
+function validatedBy(t){
+  if(!t.valide_par || t.statut==='EN_ATTENTE') return '';
+  const verb = t.statut==='ANNULEE' ? 'Annulée par' : 'Payée par';
+  return `<div class="valby">${ic('user')}<span>${verb} <b>${esc(t.valide_par)}</b>${t.valide_le ? ` le ${fmtDT(t.valide_le)}` : ''}</span></div>`;
+}
 function paidFrom(t){ const c = isStaff() && t.statut==='PAYEE' && t.paye_depuis && compteById(t.paye_depuis); return c ? `<div class="sub">Depuis ${esc(c.nom)}${+t.frais_paiement_bif ? `, frais ${fmt(t.frais_paiement_bif,0)} BIF` : ''}</div>` : ''; }
 function statusPill(map, s){ const st = map[s] || { label:s, cls:'', icon:'clock' }; return `<span class="pill ${st.cls}">${ic(st.icon)}${st.label}</span>`; }
 /* Profit of one transaction as shown in lists (staff only) */
@@ -2143,7 +2152,7 @@ function txList(list){
       <td class="r">${fmt(t.montant_aed)} AED<div class="sub">+ ${fmt(t.frais_aed)} AED de frais</div>${t.methode_envoi?`<div class="sub">${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED</div>`:''}</td>
       <td class="r">${fmt(t.taux_usd_bif)}<div class="sub">÷ ${fmt(t.taux_aed_usd,4)}</div></td>
       <td class="r bif">${fmt(t.montant_bif,0)} BIF</td>${staff?`<td class="r">${profitCell(t)}</td>`:''}
-      <td>${statusPill(TX_STATUTS, t.statut)}${t.valide_par?`<div class="sub">${esc(t.valide_par)}, ${fmtDT(t.valide_le)}</div>`:''}${paidFrom(t)}</td>
+      <td>${statusPill(TX_STATUTS, t.statut)}${validatedBy(t)}${paidFrom(t)}</td>
       <td><div class="actions">${txActions(t)}</div></td>
     </tr>`).join('')}
     </tbody></table></div>`;
@@ -2156,7 +2165,7 @@ function txList(list){
       <div class="meta" style="margin-top:6px;">${fmtDT(t.created_at)}, client ${esc(t.client)}${staff?`, agent ${esc(t.agent_nom)}`:''}</div>
       <div class="meta">${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais, taux ${fmt(t.taux_usd_bif)}${t.methode_envoi?`, ${esc(t.methode_envoi)} −${fmt(t.frais_envoi_aed)} AED`:''}</div>
       ${staff ? `<div class="profitline">Profit : ${profitCell(t)}</div>` : ''}
-      ${paidFrom(t)}
+      ${validatedBy(t)}${paidFrom(t)}
       <div class="foot">${statusPill(TX_STATUTS, t.statut)}<div class="actions">${txActions(t)}</div></div>
     </div>`).join('')}</div>`;
   return table + cards;
@@ -2364,12 +2373,13 @@ function pageStats(){
 }
 function exportCsv(list, name){
   if(!list.length){ toast('Rien à exporter sur cette sélection', 'bad'); return; }
-  const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['methode_envoi',"Méthode d'envoi"],['frais_envoi_aed',"Frais d'envoi AED"],['statut','Statut'],['valide_par','Validé par']];
+  const cols = [['date','Date'],['agent_nom','Agent'],['client','Client'],['client_tel','Tél. client'],['beneficiaire','Bénéficiaire'],['beneficiaire_tel','Numéro bénéficiaire'],['mode_reception','Mode'],['montant_aed','Montant AED'],['frais_aed','Frais AED'],['taux_aed_usd','Taux AED/USD'],['taux_usd_bif','Taux USD/BIF'],['montant_usd','Montant USD'],['montant_bif','Montant BIF'],['methode_envoi',"Méthode d'envoi"],['frais_envoi_aed',"Frais d'envoi AED"],['statut','Statut'],['valide_par','Validé par'],['valide_le','Validé le']];
   const cell = v => { const s = String(v ?? '').replace(/"/g,'""'); return /[;"\n]/.test(s) ? `"${s}"` : s; };
   const num = v => String(v ?? '').replace('.', ',');
   const lines = [cols.map(c=>cell(tr(c[1]))).join(';')].concat(list.map(t=>cols.map(([k])=>{
     if(k==='statut') return cell(tr((TX_STATUTS[t.statut]||{}).label || t.statut));
     if(/montant|frais|taux/.test(k)) return num(t[k]);
+    if(k==='valide_le') return cell(t[k] ? fmtDT(t[k]) : '');
     return cell(t[k]);
   }).join(';')));
   const blob = new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
