@@ -251,6 +251,7 @@
   .chezmoi b{font-size:16px;}
   .chezmoi .sub{flex-basis:100%;}
   .gainline .warnline{color:var(--bad);font-weight:800;}
+  .toomuch .linkbtn{margin-left:6px;font-weight:800;color:inherit;text-decoration:underline;}
   .valby{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);}
   .valby svg.i{width:14px;height:14px;color:var(--gold);flex:none;}
   .valby b{color:var(--ink);}
@@ -685,10 +686,12 @@ Object.assign(EN, {
   "Tout ce que vous avez encaissé, moins les frais d'envoi et tout ce que vous avez déjà envoyé.":'Everything you collected, minus send fees and everything already sent.',
   "Toutes vos transactions sont déjà couvertes par un envoi. Vous pouvez quand même envoyer l'argent encore chez vous.":'All your transactions are already covered by a transfer. You can still send the money still with you.',
   'Encore chez moi':'Still with me','Encaissé moins frais et envois':'Collected minus fees and transfers','Saisissez le montant envoyé':'Enter the amount sent',
-  'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
+  'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Envoyer maintenant':'Send now','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
   [/^Argent encore chez vous :$/, 'Money still with you:'],
+  [/^Vous avez (.+) AED chez vous\.$/, 'You have $1 AED with you.'],
+  [/^C'est plus de (.+) AED : pensez à envoyer l'argent à Naomie\.$/, "That is more than $1 AED: remember to send the money to Naomie."],
   [/^Après cet envoi, il restera (.+) AED chez vous\.$/, 'After this transfer, $1 AED will be left with you.'],
   [/^Attention : vous envoyez (.+) AED de plus que l'argent chez vous\.$/, 'Warning: you are sending $1 AED more than the money you have.'],
   [/^(\d+) transaction\(s\) : (.+) AED − (.+) AED de frais d'envoi = (.+) AED à envoyer\.$/, '$1 transaction(s): $2 AED − $3 AED send fees = $4 AED to send.'],
@@ -1922,6 +1925,7 @@ function dashboardAgent(){
       <div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>${longToday()}</p></div>
       <div class="actions desk-only"><button class="btn gold" onclick="setPage('new')">${ic('plus')}Nouvelle transaction</button></div>
     </div>
+    ${tooMuchBanner()}
     <div class="kpis">
       ${kpi('Reste chez moi', 'wallet', fmt(me.reste), 'AED', "Encaissé moins frais d'envoi et envois confirmés", me.reste>0?'bad':'good', true)}
       ${kpi('Clients servis', 'users', me.n, '', `${me.aPayer} en attente de paiement`)}
@@ -2046,6 +2050,7 @@ function pageNew(edit){
     <div class="pagehead"><div>${edit
       ? `<h1>Modifier la transaction</h1><p>Transaction de ${esc(edit.agent_nom)} du ${fmtDate(edit.date)}.</p>`
       : `<h1>Nouvelle transaction</h1><p>Enregistrez un client reçu à Dubaï. Un client peut envoyer à plusieurs bénéficiaires.</p>`}</div></div>
+    ${edit ? '' : tooMuchBanner()}
     ${edit && edit.statut!=='EN_ATTENTE' ? `<div class="msg bad" style="max-width:820px;">${ic('alert')}<span>Cette transaction est déjà marquée « ${TX_STATUTS[edit.statut].label} ». Si vous changez le montant en BIF, vérifiez avec Naomie ce qui a réellement été versé.</span></div>` : ''}
     <section class="panel" style="max-width:820px;"><div class="panel-b">
       <form id="txForm" autocomplete="off" data-edit="${edit ? edit.id : ''}">
@@ -2117,6 +2122,7 @@ function pageTransactions(){
       <p>${isAgent() ? 'Le statut passe à « Payée » quand Bujumbura a payé le bénéficiaire.' : 'Marquez chaque transaction « Payée » dès que le bénéficiaire a reçu son argent.'}</p></div>
       <div class="actions"><button class="btn ghost" onclick="exportCsv(filteredTx(), 'transactions')">${ic('download')}Exporter</button></div>
     </div>
+    ${tooMuchBanner()}
     <div class="filters">
       <div class="search">${ic('search')}<input data-bind="txf.q" value="${esc(f.q)}" placeholder="Rechercher un nom ou un numéro" type="search"></div>
       ${isStaff() ? `<select data-bind="txf.agent" aria-label="Agent">${agentOptions(f.agent)}</select>` : ''}
@@ -2208,6 +2214,7 @@ function pageVersements(){
       <h1>${isAgent() ? 'Envois à Naomie' : 'Fonds reçus de Dubaï'}</h1>
       <p>${isAgent() ? "Déclarez chaque somme envoyée à Bujumbura. Naomie confirme à la réception." : "Confirmez ce que vous avez réellement reçu, puis enregistrez chaque vente."}</p>
     </div></div>
+    ${tooMuchBanner()}
     ${isAgent() ? panel('Déclarer un envoi', 'send', `
       <form id="vsForm" autocomplete="off" data-chezmoi="${chezMoi()}">
         <div class="chezmoi">${ic('wallet')}<span>Argent encore chez vous : <b>${fmt(chezMoi())} AED</b></span><span class="sub">Tout ce que vous avez encaissé, moins les frais d'envoi et tout ce que vous avez déjà envoyé.</span></div>
@@ -2243,6 +2250,14 @@ function pageVersements(){
 }
 /* money still with the logged-in agent: collected − send fees − everything already sent (confirmed or not) */
 function chezMoi(){ const me = bilan(null, state.profile.id)[0]; return me ? Math.round((me.reste - me.envoyeAttente)*100)/100 : 0; }
+/* reminder to the agent when he keeps too much money without sending it to Naomie */
+const SEUIL_ENVOI = 4200;
+function tooMuchBanner(){
+  if(!isAgent()) return '';
+  const c = chezMoi();
+  if(c <= SEUIL_ENVOI) return '';
+  return `<div class="msg bad toomuch">${ic('alert')}<span><b>Vous avez ${fmt(c)} AED chez vous.</b> C'est plus de ${fmt(SEUIL_ENVOI)} AED : pensez à envoyer l'argent à Naomie.${state.page!=='versements' ? ` <button class="linkbtn" onclick="setPage('versements')">Envoyer maintenant</button>` : ''}</span></div>`;
+}
 function openTxForVersement(){ return state.transactions.filter(t=>t.agent_id===state.profile.id && !t.versement_id && t.statut!=='ANNULEE'); }
 function amountToSend(t){ return (+t.montant_aed) + (+t.frais_aed) - (+t.frais_envoi_aed||0); }
 function linkedTx(v){ return state.transactions.filter(t=>t.versement_id===v.id); }
