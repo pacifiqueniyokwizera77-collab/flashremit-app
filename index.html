@@ -246,6 +246,11 @@
   .need li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px dashed var(--line);}
   .need.total{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);}
   .acct-acts{padding:0 18px 12px 46px;}
+  .chezmoi{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:12px 14px;margin:0 0 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);}
+  .chezmoi svg.i{color:var(--gold);}
+  .chezmoi b{font-size:16px;}
+  .chezmoi .sub{flex-basis:100%;}
+  .gainline .warnline{color:var(--bad);font-weight:800;}
   .valby{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);}
   .valby svg.i{width:14px;height:14px;color:var(--gold);flex:none;}
   .valby b{color:var(--ink);}
@@ -372,7 +377,9 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_AED_USD = 3.66;   // 1 USD = 3,66 AED
 const BIF_ROUND_STEP = 50;      // montant BIF arrondi au multiple de 50 inférieur
 const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash à Bujumbura'];
-const METHODES_ENVOI = ['Binance','M-Pesa','Autre'];
+const METHODES_ENVOI = ['Binance','M-Pesa (BOTIM)','M-Pesa (DUPAY)','Autre'];
+/* fixed transfer fee of each sending method, taken directly from the money sent */
+const FRAIS_METHODE = { 'Binance':2, 'M-Pesa (BOTIM)':10.5, 'M-Pesa (DUPAY)':15.75 };
 const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï' };
 
 /* ---------- Language (FR / EN) ---------- */
@@ -670,9 +677,22 @@ Object.assign(EN, {
   "— Ne pas déduire d'un compte —":'— Do not deduct from an account —','Reçu sur le compte':'Received on account',
   'Compte ajouté':'Account added','Compte modifié':'Account edited','Compte retiré':'Account removed','Opération enregistrée':'Operation saved',
   'Opération supprimée':'Operation deleted','Supprimer cette opération ?':'Delete this operation?','Saisissez le nom du compte':'Enter the account name',
-  'Choisissez deux comptes différents':'Choose two different accounts','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
+  'Choisissez deux comptes différents':'Choose two different accounts',
+  'Frais payés par le client (AED)':'Fees paid by the client (AED)',
+  "Ce que le client vous paie en plus. Les frais d'envoi (Binance, M-Pesa) se saisissent dans « Envois à Naomie ».":'What the client pays you on top. Send fees (Binance, M-Pesa) are entered in “Transfers to Naomie”.',
+  "Frais d'envoi (AED)":'Send fees (AED)','Fixés selon la méthode : Binance 2, BOTIM 10,5, DUPAY 15,75 AED. Retirés des frais collectés, pas de l\'argent des clients.':"Fixed by method: Binance 2, BOTIM 10.5, DUPAY 15.75 AED. Taken from the fees collected, not from the clients' money.",
+  'Ce qui part réellement vers Naomie. Si vous envoyez moins, le reste reste compté chez vous.':'What actually leaves for Naomie. If you send less, the rest is still counted as with you.',
+  "Tout ce que vous avez encaissé, moins les frais d'envoi et tout ce que vous avez déjà envoyé.":'Everything you collected, minus send fees and everything already sent.',
+  "Toutes vos transactions sont déjà couvertes par un envoi. Vous pouvez quand même envoyer l'argent encore chez vous.":'All your transactions are already covered by a transfer. You can still send the money still with you.',
+  'Encore chez moi':'Still with me','Encaissé moins frais et envois':'Collected minus fees and transfers','Saisissez le montant envoyé':'Enter the amount sent',
+  'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
+  [/^Argent encore chez vous :$/, 'Money still with you:'],
+  [/^Après cet envoi, il restera (.+) AED chez vous\.$/, 'After this transfer, $1 AED will be left with you.'],
+  [/^Attention : vous envoyez (.+) AED de plus que l'argent chez vous\.$/, 'Warning: you are sending $1 AED more than the money you have.'],
+  [/^(\d+) transaction\(s\) : (.+) AED − (.+) AED de frais d'envoi = (.+) AED à envoyer\.$/, '$1 transaction(s): $2 AED − $3 AED send fees = $4 AED to send.'],
+  [/^Frais collectés (.+) − frais d'envoi (.+) = (.+) AED, gain de l'agent (.+) AED\.$/, 'Fees collected $1 − send fees $2 = $3 AED, agent earnings $4 AED.'],
   [/^Payée par$/, 'Paid by'], [/^Annulée par$/, 'Cancelled by'], [/^le (\d.+)$/, (m,a)=>'on ' + a.replace(' à ',' at ')],
   [/^Vente (.+) × (.+?)(, envoi de (.+))?$/, (m,a,b,c,d)=>`Sale ${a} × ${b}${d?`, transfer from ${d}`:''}`],
   [/^Payé à (.+?)(, frais (.+))?$/, (m,a,b,c)=>`Paid to ${a}${c?`, fees ${c}`:''}`],
@@ -1077,6 +1097,8 @@ function bilan(range, agentId){
   state.versements.filter(v=>inRange(v.date, range) && (!agentId || v.agent_id===agentId)).forEach(v=>{
     const a = ensure(v.agent_id, v.agent_nom);
     if(v.statut==='RECU') a.envoye += +v.montant_aed; else a.envoyeAttente += +v.montant_aed;
+    // a send that covers no transaction (rest of earlier money): its fee is not spread on any transaction
+    if(+v.frais_envoi_aed > 0 && !state.transactions.some(t=>t.versement_id===v.id)) a.fraisEnvoi += +v.frais_envoi_aed;
   });
   return Object.values(map)
     .map(a=>({ ...a, encaisse: a.aed + a.frais, reste: a.aed + a.frais - a.fraisEnvoi - a.envoye }))
@@ -2036,7 +2058,7 @@ function pageNew(edit){
         <div class="legend">${ic('coins')}Montant payé et taux</div>
         <div class="grid2">
           <div class="field"><label for="t-aed">Montant payé par le client (AED)</label><input id="t-aed" name="montant_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal" placeholder="Ex. 1000" value="${v('montant_aed')}"><span class="hint">Montant total à envoyer, sans les frais.</span></div>
-          <div class="field"><label for="t-frais">Frais de transfert reçus (AED)</label><input id="t-frais" name="frais_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"></div>
+          <div class="field"><label for="t-frais">Frais payés par le client (AED)</label><input id="t-frais" name="frais_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0" required inputmode="decimal" value="${edit ? v('frais_aed') : 0}"><span class="hint">Ce que le client vous paie en plus. Les frais d'envoi (Binance, M-Pesa) se saisissent dans « Envois à Naomie ».</span></div>
           <div class="field"><label for="t-au">Taux dirham : 1 $ = ? AED</label><input id="t-au" name="taux_aed_usd" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.0001" min="0.0001" required value="${esc(r.aedUsd)}" inputmode="decimal"></div>
           <div class="field"><label for="t-ub">Taux du jour : 1 $ = ? BIF</label><input id="t-ub" name="taux_usd_bif" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required value="${esc(r.usdBif)}" inputmode="decimal" placeholder="Ex. 5950"></div>
         </div>
@@ -2187,18 +2209,19 @@ function pageVersements(){
       <p>${isAgent() ? "Déclarez chaque somme envoyée à Bujumbura. Naomie confirme à la réception." : "Confirmez ce que vous avez réellement reçu, puis enregistrez chaque vente."}</p>
     </div></div>
     ${isAgent() ? panel('Déclarer un envoi', 'send', `
-      <form id="vsForm" autocomplete="off">
+      <form id="vsForm" autocomplete="off" data-chezmoi="${chezMoi()}">
+        <div class="chezmoi">${ic('wallet')}<span>Argent encore chez vous : <b>${fmt(chezMoi())} AED</b></span><span class="sub">Tout ce que vous avez encaissé, moins les frais d'envoi et tout ce que vous avez déjà envoyé.</span></div>
         <div class="legend-row"><div class="legend">${ic('list')}Transactions couvertes par cet envoi</div>
           ${openTxForVersement().length > 1 ? `<div class="actions"><button type="button" class="linkbtn" data-check="all">Tout cocher</button><button type="button" class="linkbtn" data-check="none">Tout décocher</button></div>` : ''}</div>
         ${openTxForVersement().length ? `<div class="checklist">${openTxForVersement().map(t=>`
           <label class="checkrow"><input type="checkbox" name="tx" value="${t.id}" checked data-gross="${(+t.montant_aed)+(+t.frais_aed)}" data-frais="${+t.frais_aed||0}" data-fe="${+t.frais_envoi_aed||0}">
             <span><b>${esc(t.beneficiaire)}</b><span class="sub">${fmtDate(t.date)}, ${fmt(t.montant_aed)} AED + ${fmt(t.frais_aed)} AED de frais</span></span>
             <span class="strong">${fmt((+t.montant_aed)+(+t.frais_aed))} AED</span></label>`).join('')}</div>`
-          : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi.</div>`}
+          : `<div class="note" style="margin-bottom:14px;">Toutes vos transactions sont déjà couvertes par un envoi. Vous pouvez quand même envoyer l'argent encore chez vous.</div>`}
         <div class="grid3">
-          <div class="field"><label for="v-meth">Méthode d'envoi</label><select id="v-meth" name="methode">${METHODES_ENVOI.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
-          <div class="field"><label for="v-fe">Frais de transfert de cet envoi (AED)</label><input id="v-fe" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0" value="0" required inputmode="decimal"><span class="hint">Ce que coûte l'envoi (Binance, M-Pesa…). Ils sont retirés des frais collectés, pas de l'argent des clients, avant le partage en deux.</span></div>
-          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" step="0.01" min="0.01" required inputmode="decimal"><span class="hint">Calculé automatiquement, modifiable si besoin.</span></div>
+          <div class="field"><label for="v-meth">Méthode d'envoi</label><select id="v-meth" name="methode">${METHODES_ENVOI.map(m=>`<option value="${m}">${m}${FRAIS_METHODE[m]!=null ? ` (${fmt(FRAIS_METHODE[m])} AED)` : ''}</option>`).join('')}</select></div>
+          <div class="field"><label for="v-fe">Frais d'envoi (AED)</label><input id="v-fe" name="frais" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" value="${FRAIS_METHODE[METHODES_ENVOI[0]]}" required inputmode="decimal" readonly><span class="hint">Fixés selon la méthode : Binance 2, BOTIM 10,5, DUPAY 15,75 AED. Retirés des frais collectés, pas de l'argent des clients.</span></div>
+          <div class="field"><label for="v-m">Montant envoyé (AED)</label><input id="v-m" name="montant_aed" type="text" pattern="[0-9][0-9 .,]*" autocomplete="off" required inputmode="decimal"><span class="hint">Ce qui part réellement vers Naomie. Si vous envoyez moins, le reste reste compté chez vous.</span></div>
         </div>
         <div class="gainline" id="vsSummary"></div>
         <div class="field"><label for="v-n">Note</label><input id="v-n" name="note" placeholder="Facultatif"></div>
@@ -2213,11 +2236,13 @@ function pageVersements(){
       ${kpi('Envoyé, à confirmer', 'hourglass', fmt(att), 'AED', '')}
       ${isStaff()
         ? kpi('Reste à vendre', 'wallet', stockText(), '', 'Argent reçu pas encore vendu')
-        : kpi("Nombre d'envois", 'list', list.length, '', '')}
+        : kpi('Encore chez moi', 'wallet', fmt(chezMoi()), 'AED', 'Encaissé moins frais et envois', chezMoi()>0.004?'bad':'good')}
       ${isStaff() ? kpi('Ventes nettes', 'coins', fmt(state.ventes.filter(x=>list.some(v=>v.id===x.versement_id)).reduce((a,x)=>a+(+x.net_bif),0),0), 'BIF', `Frais de vente : ${fmt(state.ventes.filter(x=>list.some(v=>v.id===x.versement_id)).reduce((a,x)=>a+(+x.frais_bif),0),0)} BIF`, 'gold') : ''}
     </div>
     ${isStaff() && !state.vsf.agent ? agentPanels(list, 'vs', { emptyTitle:'Historique des envois' }) : panel('Historique des envois', 'inbox', (isStaff() && list.length ? vsGroupStats(list) : '') + vsList(list), { flush:true })}`;
 }
+/* money still with the logged-in agent: collected − send fees − everything already sent (confirmed or not) */
+function chezMoi(){ const me = bilan(null, state.profile.id)[0]; return me ? Math.round((me.reste - me.envoyeAttente)*100)/100 : 0; }
 function openTxForVersement(){ return state.transactions.filter(t=>t.agent_id===state.profile.id && !t.versement_id && t.statut!=='ANNULEE'); }
 function amountToSend(t){ return (+t.montant_aed) + (+t.frais_aed) - (+t.frais_envoi_aed||0); }
 function linkedTx(v){ return state.transactions.filter(t=>t.versement_id===v.id); }
@@ -2621,22 +2646,39 @@ function attachPageHandlers(){
     const fee = vsForm.querySelector('[name=frais]');
     let amtTouched = false;
     amt.addEventListener('input', ()=>{ amtTouched = true; });
+    const meth = vsForm.querySelector('[name=methode]');
+    const chez = +vsForm.dataset.chezmoi || 0;
+    const setFee = ()=>{
+      const fixed = FRAIS_METHODE[meth.value];
+      if(fixed != null){ fee.value = String(fixed).replace('.', NUMLOCALE()==='fr-FR' ? ',' : '.'); fee.readOnly = true; }
+      else { fee.readOnly = false; if(!fee.value) fee.value = 0; }
+    };
     const recompute = ()=>{
       const checked = [...vsForm.querySelectorAll('[name=tx]:checked')];
       const n = checked.length;
       const gross = checked.reduce((a,c)=>a+(+c.dataset.gross||0),0);
-      const f = parseNum(fee.value)||0;
-      const perTx = checked.reduce((a,c)=>a+(+c.dataset.fe||0),0);
-      const deduct = f>0 ? f : perTx;
+      const deduct = parseNum(fee.value)||0;
       const frais = checked.reduce((a,c)=>a+(+c.dataset.frais||0),0);
       const total = Math.round((gross - deduct)*100)/100;
       if(!amtTouched) amt.value = total>0 ? total : '';
+      const sent = parseNum(amt.value)||0;
+      // what stays with the agent after this send: money already with him + newly covered clients − fee − amount sent
+      const left = Math.round((chez - deduct - sent)*100)/100;
       const box = document.getElementById('vsSummary');
-      box.textContent = n ? tr(`${n} transaction(s) : ${fmt(gross)} AED − ${fmt(deduct)} AED de frais d'envoi = ${fmt(total)} AED.`)
-        + ' ' + tr(`Frais collectés ${fmt(frais)} − frais de transfert ${fmt(deduct)} = ${fmt(frais-deduct)} AED, gain de l'agent ${fmt((frais-deduct)/2)} AED.`) : '';
+      const lines = [];
+      if(n) lines.push(tr(`${n} transaction(s) : ${fmt(gross)} AED − ${fmt(deduct)} AED de frais d'envoi = ${fmt(total)} AED à envoyer.`));
+      if(n) lines.push(tr(`Frais collectés ${fmt(frais)} − frais d'envoi ${fmt(deduct)} = ${fmt(frais-deduct)} AED, gain de l'agent ${fmt((frais-deduct)/2)} AED.`));
+      if(sent) lines.push(left > 0.004 ? tr(`Après cet envoi, il restera ${fmt(left)} AED chez vous.`)
+        : left < -0.004 ? tr(`Attention : vous envoyez ${fmt(-left)} AED de plus que l'argent chez vous.`)
+        : tr(`Après cet envoi, il ne restera rien chez vous.`));
+      const warnLast = sent > 0 && Math.abs(left) > 0.004;
+      box.innerHTML = lines.map((l,i)=>`<div${warnLast && i===lines.length-1 ? ' class="warnline"' : ''}>${esc(l)}</div>`).join('');
     };
     vsForm.querySelectorAll('[name=tx]').forEach(cb=>cb.addEventListener('change', recompute));
+    meth.addEventListener('change', ()=>{ setFee(); recompute(); });
     fee.addEventListener('input', recompute);
+    amt.addEventListener('input', recompute);
+    setFee();
     vsForm.querySelectorAll('[data-check]').forEach(b=>b.onclick = ()=>{
       vsForm.querySelectorAll('[name=tx]').forEach(cb=>{ cb.checked = b.dataset.check==='all'; });
       recompute();
@@ -2646,6 +2688,7 @@ function attachPageHandlers(){
       e.preventDefault();
       const fd = new FormData(vsForm);
       const btn = vsForm.querySelector('button[type=submit]'); btn.disabled = true;
+      if(!(parseNum(fd.get('montant_aed')) > 0)){ toast('Saisissez le montant envoyé', 'bad'); btn.disabled = false; return; }
       const ok = await addVersement({
         montant_aed: parseNum(fd.get('montant_aed')),
         moyen: fd.get('methode') || null,
