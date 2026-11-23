@@ -252,6 +252,16 @@
   .chezmoi .sub{flex-basis:100%;}
   .gainline .warnline{color:var(--bad);font-weight:800;}
   .toomuch .linkbtn{margin-left:6px;font-weight:800;color:inherit;text-decoration:underline;}
+  .kenya{display:grid;gap:3px;margin:6px 0 2px;padding:8px 10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:12.5px;}
+  .kenya > div:first-child{display:flex;gap:6px;align-items:flex-start;}
+  .kenya svg.i{width:14px;height:14px;color:var(--gold);flex:none;margin-top:2px;}
+  .kenya.wait{display:flex;gap:6px;align-items:center;color:var(--muted);}
+  .cards.kcards{display:grid;gap:10px;padding:12px;}
+  @media (min-width:900px){ .cards.kcards{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .kcard .foot{margin-top:8px;}
+  .convert-mini{display:grid;gap:6px;margin:4px 0 16px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);}
+  .convert-mini .big{font-size:20px;color:var(--ink);}
+  .convert-mini:empty{display:none;}
   .valby{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);}
   .valby svg.i{width:14px;height:14px;color:var(--gold);flex:none;}
   .valby b{color:var(--ink);}
@@ -381,7 +391,7 @@ const MODES_RECEPTION = ['Lumicash','Ecocash','Mobile Money','Banque','Cash à B
 const METHODES_ENVOI = ['Binance','M-Pesa (BOTIM)','M-Pesa (DUPAY)','Autre'];
 /* fixed transfer fee of each sending method, taken directly from the money sent */
 const FRAIS_METHODE = { 'Binance':2, 'M-Pesa (BOTIM)':10.5, 'M-Pesa (DUPAY)':15.75 };
-const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï' };
+const ROLES = { ADMIN:'Administrateur', BUJA:'Validation Bujumbura', AGENT:'Agent Dubaï', KENYA:'Kenya (achat KES)' };
 
 /* ---------- Language (FR / EN) ---------- */
 let LANG = (()=>{ try{ return localStorage.getItem('pax_lang') === 'en' ? 'en' : 'fr'; }catch(e){ return 'fr'; } })();
@@ -659,6 +669,20 @@ const EN_RX = [
 ];
 
 Object.assign(EN, {
+  'Kenya (achat KES)':'Kenya (KES buyer)','Validé par Caleb':'Validated by Caleb','Envois M-Pesa':'M-Pesa transfers','Envois':'Transfers',
+  'Envois M-Pesa des agents de Dubaï. Saisissez ce que vous avez reçu, puis envoyez les francs à Naomie.':'M-Pesa transfers from the Dubai agents. Enter what you received, then send the francs to Naomie.',
+  'À valider':'To validate','Envoyé à Naomie, en attente de sa confirmation':'Sent to Naomie, awaiting her confirmation','Confirmé par Naomie':'Confirmed by Naomie',
+  'Aucun envoi à valider.':'No transfer to validate.','Rien en attente.':'Nothing pending.','Aucun envoi confirmé pour le moment.':'No confirmed transfer yet.',
+  'Tous exacts':'All exact','Valider la réception':'Validate receipt','Valider la réception au Kenya':'Validate receipt in Kenya','Valider':'Validate',
+  'AED reçus':'AED received',"L'équivalent en dirhams de ce que vous avez reçu.":'The dirham equivalent of what you received.',
+  'Shillings reçus (KES)':'Shillings received (KES)','Taux du moment : 1 KES = ? BIF':'Current rate: 1 KES = ? BIF',
+  'Saisissez les shillings et le taux pour voir le montant à envoyer à Naomie.':'Enter the shillings and the rate to see the amount to send to Naomie.',
+  "Confirmer l'argent reçu de Caleb":'Confirm the money received from Caleb',"Confirmer l'argent de Caleb":"Confirm Caleb's money",
+  'Montant reçu de Caleb (BIF)':'Amount received from Caleb (BIF)','Saisissez les AED, les shillings et le taux':'Enter the AED, the shillings and the rate',
+  'Envoi validé, montant transmis à Naomie':'Transfer validated, amount passed to Naomie','Saisissez le montant reçu':'Enter the amount received',
+  'Chez Caleb au Kenya : en attente de sa validation':'With Caleb in Kenya: awaiting his validation',
+});
+Object.assign(EN, {
   'Mes comptes':'My accounts','Comptes de Naomie':"Naomie's accounts",'Comptes':'Accounts','Comptes et soldes':'Accounts and balances',
   "L'argent disponible sur chaque compte, calculé à partir des ventes, des paiements et des transferts.":'Money available on each account, computed from sales, payouts and transfers.',
   'Transfert entre comptes':'Transfer between accounts','Entrée / sortie':'In / out','Ajouter un compte':'Add an account','Modifier le compte':'Edit account',
@@ -689,6 +713,26 @@ Object.assign(EN, {
   'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Envoyer maintenant':'Send now','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
+  [/^Caleb : (.+) AED reçus →$/, 'Caleb: $1 AED received →'],
+  [/^× (.+) =$/, '× $1 ='],
+  [/^Reçu au Kenya par (.+) : (.+) AED$/, 'Received in Kenya by $1: $2 AED'],
+  [/^⚠ Vous avez déclaré (.+) AED \(écart (.+) AED\)$/, '⚠ You declared $1 AED (gap $2 AED)'],
+  [/^envoyés à Naomie$/, 'sent to Naomie'],
+  [/^Validé par (.+) le (.+)$/, (m,a,b)=>`Validated by ${a} on ${b.replace(' à ',' at ')}`],
+  [/^✓ Naomie a reçu (.+) BIF : montant exact$/, '✓ Naomie received $1 BIF: exact amount'],
+  [/^⚠ Naomie a reçu (.+) BIF : écart (.+) BIF$/, '⚠ Naomie received $1 BIF: gap $2 BIF'],
+  [/^⚠ L'agent a déclaré (.+) AED, Caleb a reçu (.+) AED \(écart (.+) AED\)$/, '⚠ The agent declared $1 AED, Caleb received $2 AED (gap $3 AED)'],
+  [/^À envoyer à Naomie : (.+) KES × (.+) =$/, 'To send to Naomie: $1 KES × $2 ='],
+  [/^⚠ L'agent a annoncé (.+) AED : écart (.+) AED\.$/, '⚠ The agent announced $1 AED: gap $2 AED.'],
+  [/^✓ Montant exact : (.+) BIF\.$/, '✓ Exact amount: $1 BIF.'],
+  [/^⚠ Écart de (.+) BIF par rapport aux (.+) BIF annoncés par Caleb\.$/, '⚠ Gap of $1 BIF compared with the $2 BIF announced by Caleb.'],
+  [/^(\d+) en attente de sa confirmation$/, '$1 awaiting her confirmation'],
+  [/^(\d+) avec un écart$/, '$1 with a gap'],
+  [/^(.+) AED annoncés$/, '$1 AED announced'],
+  [/^Envoi de (.+) du (.+) : (.+) AED annoncés par (.+)\.$/, 'Transfer from $1 on $2: $3 AED announced via $4.'],
+  [/^Envoi de (.+) : Caleb a obtenu (.+) KES × (.+) et doit vous envoyer$/, 'Transfer from $1: Caleb got $2 KES × $3 and must send you'],
+  [/^Valider : (.+) KES × (.+) = (.+) BIF à envoyer à Naomie \?$/, 'Validate: $1 KES × $2 = $3 BIF to send to Naomie?'],
+  [/^Le montant reçu \((.+) BIF\) n'est pas celui annoncé par Caleb \((.+) BIF\)\. Confirmer quand même \?$/, 'The amount received ($1 BIF) is not the one announced by Caleb ($2 BIF). Confirm anyway?'],
   [/^Argent encore chez vous :$/, 'Money still with you:'],
   [/^Vous avez (.+) AED chez vous\.$/, 'You have $1 AED with you.'],
   [/^C'est plus de (.+) AED : pensez à envoyer l'argent à Naomie\.$/, "That is more than $1 AED: remember to send the money to Naomie."],
@@ -799,6 +843,7 @@ const TX_STATUTS = {
 };
 const VS_STATUTS = {
   ENVOYE:{ label:'À confirmer', cls:'envoye', icon:'hourglass' },
+  KENYA:{ label:'Validé par Caleb', cls:'envoye', icon:'send' },
   RECU:{ label:'Reçu', cls:'payee', icon:'check' },
 };
 
@@ -946,12 +991,12 @@ async function afterLogin(session){
 async function loadAll(){
   const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}, {data:ventes}, {data:comptes, error:e5}, {data:mvs}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
-    sb.from('transactions').select('*').order('created_at',{ascending:false}),
+    isKenya() ? Promise.resolve({ data: [] }) : sb.from('transactions').select('*').order('created_at',{ascending:false}),
     sb.from('versements').select('*').order('created_at',{ascending:false}),
-    sb.from('paiements_agents').select('*').order('created_at',{ascending:false}),
-    isAgent() ? Promise.resolve({ data: [] }) : sb.from('ventes').select('*').order('created_at',{ascending:false}),
-    isAgent() ? Promise.resolve({ data: [] }) : sb.from('comptes').select('*').order('nom'),
-    isAgent() ? Promise.resolve({ data: [] }) : sb.from('mouvements').select('*').order('created_at',{ascending:false}),
+    isKenya() ? Promise.resolve({ data: [] }) : sb.from('paiements_agents').select('*').order('created_at',{ascending:false}),
+    isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('ventes').select('*').order('created_at',{ascending:false}),
+    isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('comptes').select('*').order('nom'),
+    isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('mouvements').select('*').order('created_at',{ascending:false}),
   ]);
   if(e1 || e2) toast('Chargement incomplet : ' + ((e1||e2).message), 'bad');
   state.profiles = profiles || [];
@@ -1032,7 +1077,7 @@ function deleteVersement(id){
 async function activateUser(id){
   const sel = document.getElementById('role-'+id);
   const r = sel ? sel.value : 'AGENT';
-  const ok = await run(sb.from('profiles').update({ statut:'actif', role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : 'Burundi' }).eq('id', id));
+  const ok = await run(sb.from('profiles').update({ statut:'actif', role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : r==='KENYA' ? 'Kenya' : 'Burundi' }).eq('id', id));
   if(!ok) return;
   await sb.rpc('admin_confirm_user', { target:id });
   const p = profileById(id);
@@ -1044,7 +1089,7 @@ function refuseUser(id){
   run(sb.from('profiles').update({ statut:'inactif' }).eq('id', id), 'Demande refusée');
 }
 function setUserRole(id, r){
-  run(sb.from('profiles').update({ role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : 'Burundi' }).eq('id', id), 'Rôle mis à jour');
+  run(sb.from('profiles').update({ role:r, can_edit: r==='ADMIN', pays: r==='AGENT' ? 'Dubaï' : r==='KENYA' ? 'Kenya' : 'Burundi' }).eq('id', id), 'Rôle mis à jour');
 }
 function toggleUserStatut(id){
   const p = profileById(id); if(!p) return;
@@ -1080,7 +1125,7 @@ async function resetUserPassword(id){
 
 /* ---------- Calculations ---------- */
 function txAPayer(){ return state.transactions.filter(t=>t.statut==='EN_ATTENTE'); }
-function vsAConfirmer(){ return state.versements.filter(v=>v.statut==='ENVOYE'); }
+function vsAConfirmer(){ return state.versements.filter(v=>v.statut==='KENYA' || (v.statut==='ENVOYE' && !viaKenya(v))); }
 function pendingUsers(){ return state.profiles.filter(p=>p.statut==='en_attente'); }
 function activeTx(range, agentId){
   return state.transactions.filter(t=>t.statut!=='ANNULEE' && inRange(t.date, range) && (!agentId || t.agent_id===agentId));
@@ -1148,6 +1193,10 @@ function openModal(type, id){ state.modal = { type, id }; render(); }
 function closeModal(e){ if(!e || e.target.classList.contains('modal-bg')){ state.modal = null; render(); } }
 function modalHtml(){
   const m = state.modal; if(!m) return '';
+  if(['kenya','kenyarecv'].includes(m.type)){
+    const b = modalKenya(m); if(!b) return '';
+    return `<div class="modal-bg" onclick="closeModal(event)"><div class="modal" role="dialog" aria-modal="true">${b}</div></div>`;
+  }
   if(['acct','mv','pay'].includes(m.type)){
     const b = modalComptes(m); if(!b) return '';
     return `<div class="modal-bg" onclick="closeModal(event)"><div class="modal" role="dialog" aria-modal="true">${b}</div></div>`;
@@ -1706,9 +1755,144 @@ function attachComptesHandlers(){
   }
 }
 
+/* ---------- Kenya step: Caleb buys the shillings of M-Pesa sends ---------- */
+function isKenya(){ return role()==='KENYA'; }
+function isMpesa(v){ return /^m-?pesa/i.test(v.methode_envoi || v.moyen || ''); }
+/* the Kenya step applies once a Kenya user is active (staff can see profiles); Caleb himself always has it */
+function kenyaActive(){ return isKenya() || state.profiles.some(p=>p.role==='KENYA' && p.statut==='actif'); }
+function viaKenya(v){ return isMpesa(v) && (v.kenya_kes != null || (v.statut==='ENVOYE' && kenyaActive())); }
+function lastKenyaRate(){ const v = state.versements.filter(x=>x.kenya_taux).sort((a,b)=>String(b.kenya_le).localeCompare(String(a.kenya_le)))[0]; return v ? +v.kenya_taux : ''; }
+function kenyaGapBif(v){ return (v.kenya_bif_recu != null && v.kenya_bif != null) ? (+v.kenya_bif_recu) - (+v.kenya_bif) : null; }
+function kenyaBlock(v){
+  if(v.kenya_kes == null){
+    return viaKenya(v) && v.statut==='ENVOYE' ? `<div class="kenya wait">${ic('hourglass')}<span>Chez Caleb au Kenya : en attente de sa validation</span></div>` : '';
+  }
+  const gap = kenyaGapBif(v), aedGap = (+v.kenya_aed) - (+v.montant_aed);
+  if(isAgent()) return `<div class="kenya"><div>${ic('check')}<span>Reçu au Kenya par ${esc(v.kenya_par||'Caleb')} : ${fmt(v.kenya_aed)} AED</span></div>${Math.abs(aedGap) > 0.004 ? `<div class="cell-bad">⚠ Vous avez déclaré ${fmt(v.montant_aed)} AED (écart ${aedGap>0?'+':''}${fmt(aedGap)} AED)</div>` : ''}</div>`;
+  return `<div class="kenya">
+    <div>${ic('send')}<span>Caleb : ${fmt(v.kenya_aed)} AED reçus → <b>${fmt(v.kenya_kes)} KES</b> × ${fmt(v.kenya_taux,4)} = <b>${fmt(v.kenya_bif,0)} BIF</b> envoyés à Naomie</span></div>
+    ${Math.abs(aedGap) > 0.004 ? `<div class="cell-bad">⚠ L'agent a déclaré ${fmt(v.montant_aed)} AED, Caleb a reçu ${fmt(v.kenya_aed)} AED (écart ${aedGap>0?'+':''}${fmt(aedGap)} AED)</div>` : ''}
+    <div class="sub">Validé par ${esc(v.kenya_par||'Caleb')} le ${fmtDT(v.kenya_le)}</div>
+    ${gap == null ? '' : gap === 0
+      ? `<div class="cell-good">✓ Naomie a reçu ${fmt(v.kenya_bif_recu,0)} BIF : montant exact</div>`
+      : `<div class="cell-bad">⚠ Naomie a reçu ${fmt(v.kenya_bif_recu,0)} BIF : écart ${gap>0?'+':''}${fmt(gap,0)} BIF</div>`}
+  </div>`;
+}
+
+function pageKenya(){
+  const list = state.versements.filter(isMpesa);
+  const todo = list.filter(v=>v.statut==='ENVOYE');
+  const sent = list.filter(v=>v.statut==='KENYA');
+  const done = list.filter(v=>v.statut==='RECU' && v.kenya_kes != null);
+  const bad = done.filter(v=>kenyaGapBif(v));
+  const row = v => `
+    <div class="tcard kcard">
+      <div class="row"><div style="min-width:0;"><div class="name">${esc(v.agent_nom)}</div>
+        <div class="meta">${fmtDT(v.created_at)}, ${esc(v.methode_envoi||v.moyen||'')}${v.note?`, ${esc(v.note)}`:''}</div></div>
+        <div class="bif">${fmt(v.montant_aed)} AED</div></div>
+      ${kenyaBlock(v)}
+      <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">
+        ${v.statut==='ENVOYE' ? `<button class="btn gold sm" onclick="openModal('kenya','${v.id}')">${ic('check')}Valider la réception</button>` : ''}
+        ${v.statut==='KENYA' ? `<button class="btn ghost sm" onclick="openModal('kenya','${v.id}')">${ic('edit')}Modifier</button>` : ''}
+      </div></div>
+    </div>`;
+  const block = (arr, empty) => arr.length ? `<div class="cards kcards">${arr.map(row).join('')}</div>` : emptyState('inbox', empty);
+  return `
+    <div class="pagehead"><div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>Envois M-Pesa des agents de Dubaï. Saisissez ce que vous avez reçu, puis envoyez les francs à Naomie.</p></div></div>
+    <div class="kpis">
+      ${kpi('À valider', 'hourglass', todo.length, '', `${fmt(sum(todo,'montant_aed'))} AED annoncés`, todo.length ? 'bad' : '', true)}
+      ${kpi('Envoyé à Naomie', 'send', fmt(sent.reduce((a,v)=>a+(+v.kenya_bif||0),0),0), 'BIF', `${sent.length} en attente de sa confirmation`)}
+      ${kpi('Confirmé par Naomie', 'check', done.length, '', bad.length ? `${bad.length} avec un écart` : 'Tous exacts', bad.length ? 'bad' : 'good')}
+    </div>
+    ${panel('À valider', 'inbox', block(todo, 'Aucun envoi à valider.'), { flush:true, cls: todo.length ? 'flag-warn' : '' })}
+    ${panel('Envoyé à Naomie, en attente de sa confirmation', 'send', block(sent, 'Rien en attente.'), { flush:true })}
+    ${panel('Confirmé par Naomie', 'check', block(done.slice(0,30), 'Aucun envoi confirmé pour le moment.'), { flush:true })}`;
+}
+
+function modalKenya(m){
+  const v = vsById(m.id); if(!v) return '';
+  if(m.type==='kenya'){
+    return `
+      <h2>Valider la réception au Kenya</h2>
+      <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} du ${fmtDT(v.created_at)} : ${fmt(v.montant_aed)} AED annoncés par ${esc(v.methode_envoi||v.moyen||'M-Pesa')}.</p>
+      <form id="kenyaForm" autocomplete="off" data-id="${v.id}" data-declared="${+v.montant_aed}">
+        <div class="grid2">
+          <div class="field"><label for="k-aed">AED reçus</label><input id="k-aed" name="aed" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(v.kenya_aed ?? v.montant_aed)}"><span class="hint">L'équivalent en dirhams de ce que vous avez reçu.</span></div>
+          <div class="field"><label for="k-kes">Shillings reçus (KES)</label><input id="k-kes" name="kes" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(v.kenya_kes ?? '')}" placeholder="Ex. 35000"></div>
+          <div class="field"><label for="k-taux">Taux du moment : 1 KES = ? BIF</label><input id="k-taux" name="taux" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(v.kenya_taux ?? lastKenyaRate())}" placeholder="Ex. 23,5"></div>
+        </div>
+        <div class="convert-mini" id="kSummary"></div>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Valider</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  if(m.type==='kenyarecv'){
+    return `
+      <h2>Confirmer l'argent reçu de Caleb</h2>
+      <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} : Caleb a obtenu ${fmt(v.kenya_kes)} KES × ${fmt(v.kenya_taux,4)} et doit vous envoyer <b>${fmt(v.kenya_bif,0)} BIF</b>.</p>
+      <form id="kenyaRecvForm" autocomplete="off" data-id="${v.id}" data-expected="${+v.kenya_bif}">
+        <div class="field" style="max-width:340px;"><label for="kr-bif">Montant reçu de Caleb (BIF)</label><input id="kr-bif" name="bif" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(v.kenya_bif_recu ?? v.kenya_bif)}"></div>
+        <div class="convert-mini" id="krSummary"></div>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn good" type="submit">${ic('check')}Confirmer la réception</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  return '';
+}
+function attachKenyaHandlers(){
+  const kf = document.getElementById('kenyaForm');
+  if(kf){
+    const declared = +kf.dataset.declared;
+    const upd = ()=>{
+      const fd = new FormData(kf), aed = parseNum(fd.get('aed'))||0, kes = parseNum(fd.get('kes'))||0, t = parseNum(fd.get('taux'))||0;
+      const bif = Math.round(kes * t), gap = Math.round((aed - declared)*100)/100;
+      const out = [];
+      out.push(kes && t ? `<div>${esc(tr(`À envoyer à Naomie : ${fmt(kes)} KES × ${fmt(t,4)} =`))} <b class="big">${fmt(bif,0)} BIF</b></div>`
+                       : `<div class="sub">${esc(tr('Saisissez les shillings et le taux pour voir le montant à envoyer à Naomie.'))}</div>`);
+      if(aed && Math.abs(gap) > 0.004) out.push(`<div class="cell-bad">${esc(tr(`⚠ L'agent a annoncé ${fmt(declared)} AED : écart ${gap>0?'+':''}${fmt(gap)} AED.`))}</div>`);
+      document.getElementById('kSummary').innerHTML = out.join('');
+    };
+    kf.addEventListener('input', upd); upd();
+    (kf.querySelector('[name=kes]').value ? kf.querySelector('[name=taux]') : kf.querySelector('[name=kes]')).focus();
+    kf.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(kf), aed = parseNum(fd.get('aed')), kes = parseNum(fd.get('kes')), t = parseNum(fd.get('taux'));
+      if(!(aed>0 && kes>0 && t>0)){ toast('Saisissez les AED, les shillings et le taux', 'bad'); return; }
+      if(!ask(`Valider : ${fmt(kes)} KES × ${fmt(t,4)} = ${fmt(Math.round(kes*t),0)} BIF à envoyer à Naomie ?`)) return;
+      const btn = kf.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await run(sb.rpc('kenya_confirm', { p_id: kf.dataset.id, p_aed: aed, p_kes: kes, p_taux: t }), 'Envoi validé, montant transmis à Naomie');
+      if(ok){ state.modal = null; render(); } else btn.disabled = false;
+    };
+  }
+  const rf = document.getElementById('kenyaRecvForm');
+  if(rf){
+    const exp = +rf.dataset.expected;
+    const upd = ()=>{
+      const b = Math.round(parseNum(rf.querySelector('[name=bif]').value)||0), d = b - exp;
+      document.getElementById('krSummary').innerHTML = !b ? '' : d === 0
+        ? `<div class="cell-good">${esc(tr(`✓ Montant exact : ${fmt(b,0)} BIF.`))}</div>`
+        : `<div class="cell-bad">${esc(tr(`⚠ Écart de ${d>0?'+':''}${fmt(d,0)} BIF par rapport aux ${fmt(exp,0)} BIF annoncés par Caleb.`))}</div>`;
+    };
+    rf.addEventListener('input', upd); upd();
+    rf.querySelector('[name=bif]').focus();
+    rf.onsubmit = async (e)=>{
+      e.preventDefault();
+      const b = Math.round(parseNum(rf.querySelector('[name=bif]').value)||0);
+      if(!(b>0)){ toast('Saisissez le montant reçu', 'bad'); return; }
+      if(b !== exp && !ask(`Le montant reçu (${fmt(b,0)} BIF) n'est pas celui annoncé par Caleb (${fmt(exp,0)} BIF). Confirmer quand même ?`)) return;
+      const btn = rf.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await run(sb.rpc('naomie_confirm_kenya', { p_id: rf.dataset.id, p_bif: b }), 'Réception confirmée');
+      if(ok){ state.modal = null; render(); } else btn.disabled = false;
+    };
+  }
+}
+function unconfirmKenya(id){
+  if(!ask('Annuler la confirmation de réception ?')) return;
+  run(sb.rpc('naomie_unconfirm_kenya', { p_id: id }), 'Confirmation annulée');
+}
+
 /* ---------- Navigation ---------- */
 function navItems(){
   const r = role();
+  if(r==='KENYA') return [{ id:'dashboard', label:'Envois M-Pesa', short:'Envois', icon:'inbox', badge: state.versements.filter(v=>v.statut==='ENVOYE' && isMpesa(v)).length }, { id:'account', label:'Mon compte', icon:'user' }];
   const items = [{ id:'dashboard', label:'Accueil', icon:'home' }];
   if(r!=='BUJA') items.push({ id:'new', label:'Nouvelle transaction', short:'Nouvelle', icon:'plus' });
   items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
@@ -1738,7 +1922,7 @@ function renderInner(){
 
   const items = navItems();
   const p = state.profile;
-  const tabIds = isBuja() ? ['dashboard','transactions','versements','comptes'] : ['dashboard','transactions','new','stats'];
+  const tabIds = isKenya() ? ['dashboard','account'] : isBuja() ? ['dashboard','transactions','versements','comptes'] : ['dashboard','transactions','new','stats'];
   const tabs = tabIds.map(id=>items.find(i=>i.id===id)).filter(Boolean);
   const menuBadge = items.filter(i=>!tabIds.includes(i.id)).reduce((s,i)=>s+(i.badge||0),0);
   const menuActive = !tabIds.includes(state.page);
@@ -1886,6 +2070,7 @@ function attachAuthHandlers(){
 
 /* ---------- Pages ---------- */
 function renderPage(){
+  if(isKenya()) return state.page==='account' ? pageAccount() : pageKenya();
   switch(state.page){
     case 'new': return isBuja() ? pageDashboard() : pageNew();
     case 'edit': { const t = isAdmin() && state.transactions.find(x=>x.id===state.editId); return t ? pageNew(t) : pageTransactions(); }
@@ -2270,11 +2455,17 @@ function linkedDetails(v){
 function vsFeeText(v){ return (+v.frais_envoi_aed>0) ? `${esc(v.methode_envoi||v.moyen||'')} −${fmt(v.frais_envoi_aed)} AED` : esc(v.moyen||''); }
 function vsActions(v){
   const a = [];
-  if(isStaff() && v.statut==='ENVOYE') a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Confirmer la réception</button>`);
-  if(isStaff() && v.statut==='RECU' && !v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Saisir le montant reçu</button>`);
-  if(isStaff() && v.statut==='RECU' && v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
-  if(isStaff() && v.statut==='RECU' && v.recu_montant && vsLeft(v) > 0) a.push(`<button class="btn gold sm" onclick="openModal('sale','${v.id}')">${ic('coins')}Vendre</button>`);
-  if(isStaff() && v.statut==='RECU' && !vsSales(v).length) a.push(`<button class="btn ghost sm sq" onclick="unconfirmVersement('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
+  const k = v.kenya_kes != null;
+  if(isStaff() && v.statut==='ENVOYE' && (!viaKenya(v) || isAdmin())) a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Confirmer la réception</button>`);
+  if(isStaff() && v.statut==='KENYA') a.push(`<button class="btn good sm" onclick="openModal('kenyarecv','${v.id}')">${ic('check')}Confirmer l'argent de Caleb</button>`);
+  if(isStaff() && v.statut==='RECU' && k){
+    a.push(`<button class="btn ghost sm" onclick="openModal('kenyarecv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
+    a.push(`<button class="btn ghost sm sq" onclick="unconfirmKenya('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
+  }
+  if(isStaff() && v.statut==='RECU' && !k && !v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Saisir le montant reçu</button>`);
+  if(isStaff() && v.statut==='RECU' && !k && v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
+  if(isStaff() && v.statut==='RECU' && !k && v.recu_montant && vsLeft(v) > 0) a.push(`<button class="btn gold sm" onclick="openModal('sale','${v.id}')">${ic('coins')}Vendre</button>`);
+  if(isStaff() && v.statut==='RECU' && !k && !vsSales(v).length) a.push(`<button class="btn ghost sm sq" onclick="unconfirmVersement('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
   if(isAdmin() || (isAgent() && v.statut==='ENVOYE')) a.push(`<button class="btn ghost sm sq" onclick="deleteVersement('${v.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
   return a.join('');
 }
@@ -2286,14 +2477,14 @@ function vsList(list){
     </tr></thead><tbody>
     ${list.map(v=>`<tr>
       <td>${fmtLocalDate(v.created_at, v.date)}<div class="sub">${fmtTime(v.created_at)}</div></td>${staff?`<td>${esc(v.agent_nom)}</td>`:''}
-      <td class="r strong">${fmt(v.montant_aed)} AED${linkedDetails(v)}</td><td style="min-width:200px;">${salesBlock(v) || '<span class="sub">—</span>'}</td><td>${vsFeeText(v)}${v.note?`<div class="sub">${esc(v.note)}</div>`:''}</td>
+      <td class="r strong">${fmt(v.montant_aed)} AED${linkedDetails(v)}</td><td style="min-width:220px;">${v.kenya_kes != null ? kenyaBlock(v) : (kenyaBlock(v) + (salesBlock(v) || (kenyaBlock(v) ? '' : '<span class="sub">—</span>')))}</td><td>${vsFeeText(v)}${v.note?`<div class="sub">${esc(v.note)}</div>`:''}</td>
       <td>${statusPill(VS_STATUTS, v.statut)}${v.confirme_par?`<div class="sub">${esc(v.confirme_par)}, ${fmtDT(v.confirme_le)}</div>`:''}</td>
       <td><div class="actions">${vsActions(v)}</div></td>
     </tr>`).join('')}
     </tbody></table></div>`;
   const cards = `<div class="cards">${list.map(v=>`
     <div class="tcard">
-      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDT(v.created_at)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div>${salesBlock(v)}${+v.frais_envoi_aed>0?`<div class="meta">${vsFeeText(v)}</div>`:''}${linkedDetails(v)}</div>
+      <div class="row"><div><div class="name">${staff?esc(v.agent_nom):esc(v.moyen||'Envoi')}</div><div class="meta">${fmtDT(v.created_at)}${staff&&v.moyen?`, ${esc(v.moyen)}`:''}${v.note?`, ${esc(v.note)}`:''}</div>${kenyaBlock(v)}${v.kenya_kes != null ? '' : salesBlock(v)}${+v.frais_envoi_aed>0?`<div class="meta">${vsFeeText(v)}</div>`:''}${linkedDetails(v)}</div>
       <div class="bif">${fmt(v.montant_aed)} AED</div></div>
       <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">${vsActions(v)}</div></div>
     </div>`).join('')}</div>`;
@@ -2716,6 +2907,7 @@ function attachPageHandlers(){
   }
 
   attachComptesHandlers();
+  attachKenyaHandlers();
   const recvForm = document.getElementById('recvForm');
   if(recvForm){
     recvForm.querySelector('[name=montant]').focus();
