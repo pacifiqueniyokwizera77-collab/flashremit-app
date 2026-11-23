@@ -262,6 +262,13 @@
   .convert-mini{display:grid;gap:6px;margin:4px 0 16px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);}
   .convert-mini .big{font-size:20px;color:var(--ink);}
   .convert-mini:empty{display:none;}
+  .ledger{list-style:none;margin:0;padding:0;}
+  .ledger li{display:flex;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);}
+  .ledger li.pend{background:var(--surface-2);}
+  .ledger-l{display:grid;gap:2px;min-width:0;}
+  .ledger-l .pill{justify-self:start;margin-top:4px;}
+  .ledger-r{display:grid;gap:6px;justify-items:end;align-content:start;text-align:right;white-space:nowrap;}
+  .ledger-r .strong{font-size:16px;}
   .valby{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);}
   .valby svg.i{width:14px;height:14px;color:var(--gold);flex:none;}
   .valby b{color:var(--ink);}
@@ -669,6 +676,29 @@ const EN_RX = [
 ];
 
 Object.assign(EN, {
+  'Compte à zéro':'Account at zero','Vous devez à Pax':'You owe Pax','Pax vous doit':'Pax owes you',
+  'Shillings reçus, pas encore rendus en francs':'Shillings received, not yet returned in francs','Payé par Caleb avant de recevoir les shillings':'Paid by Caleb before receiving the shillings','Rien à régler':'Nothing to settle',
+  'Remis à Naomie':'Given to Naomie','Pax a donné à Caleb':'Pax gave Caleb','Caleb a remis à Pax':'Caleb gave Pax',
+  '✓ Naomie a reçu le montant exact':'✓ Naomie received the exact amount','Aucune opération pour le moment.':'No operation yet.',
+  'À confirmer':'To confirm','Confirmer':'Confirm','En attente de confirmation':'Awaiting confirmation','Par Naomie ou un admin':'By Naomie or an admin',
+  "+ = ce que Caleb doit en plus à Pax. − = ce que Caleb a rendu ou payé pour Pax. Les opérations « À confirmer » ne comptent qu'après confirmation par Naomie ou un admin.":'+ = what Caleb owes Pax on top. − = what Caleb returned or paid for Pax. Operations “To confirm” only count once Naomie or an admin confirms them.',
+  'Envois M-Pesa des agents de Dubaï et votre compte avec Pax.':'M-Pesa transfers from the Dubai agents and your account with Pax.',
+  "J'ai envoyé à Naomie":'I sent to Naomie',"J'ai payé un bénéficiaire":'I paid a beneficiary','Envois à valider':'Transfers to validate','Mon compte avec Pax':'My account with Pax',
+  'Shillings achetés au Kenya, argent remis à Naomie et bénéficiaires payés par Caleb.':'Shillings bought in Kenya, money given to Naomie and beneficiaries paid by Caleb.',
+  'Caleb a remis à Naomie':'Caleb gave Naomie','Ajustement':'Adjustment','Saisi par Caleb':'Entered by Caleb','Envois chez Caleb':'Transfers with Caleb','Historique du compte':'Account history',
+  "Pour un bénéficiaire que Caleb a payé à votre demande, ouvrez la transaction et cliquez sur « Payée par Caleb » : elle passe en payée et le montant est déduit de ce que Caleb doit.":'For a beneficiary Caleb paid at your request, open the transaction and click “Paid by Caleb”: it becomes paid and the amount is deducted from what Caleb owes.',
+  "J'ai envoyé de l'argent à Naomie":'I sent money to Naomie',"Caleb a remis de l'argent à Naomie":'Caleb gave money to Naomie','Montant envoyé (BIF)':'Amount sent (BIF)',
+  "Naomie confirmera le montant reçu. Il sera déduit de votre compte après sa confirmation.":'Naomie will confirm the amount received. It is deducted from your account after her confirmation.',
+  'Enregistré comme reçu par Naomie.':'Recorded as received by Naomie.',"J'ai payé un bénéficiaire pour Pax":'I paid a beneficiary for Pax','Montant payé (BIF)':'Amount paid (BIF)',
+  'Déduit de votre compte après confirmation par Naomie ou un admin.':'Deducted from your account after confirmation by Naomie or an admin.',
+  'Montant reçu (BIF)':'Amount received (BIF)','Ajustement du compte de Caleb':"Adjustment of Caleb's account",
+  "Pax a donné de l'argent à Caleb (il doit plus)":'Pax gave money to Caleb (he owes more)',"Caleb a remis de l'argent à Pax (il doit moins)":'Caleb gave money to Pax (he owes less)',
+  "Ce montant s'ajoute à ce que vous devez à Pax.":'This amount is added to what you owe Pax.','Saisissez les shillings et le taux pour voir la valeur en francs.':'Enter the shillings and the rate to see the value in francs.',
+  'Saisissez le montant':'Enter the amount','Enregistré, en attente de confirmation':'Saved, awaiting confirmation','Enregistré':'Saved','Ajustement enregistré':'Adjustment saved',
+  'Paiement confirmé':'Payment confirmed','Transaction payée par Caleb':'Transaction paid by Caleb','Payée par Caleb':'Paid by Caleb','Validation annulée':'Validation cancelled','Envoi validé':'Transfer validated',
+  'Annuler la validation':'Cancel the validation','Caleb':'Caleb',
+});
+Object.assign(EN, {
   'Kenya (achat KES)':'Kenya (KES buyer)','Validé par Caleb':'Validated by Caleb','Envois M-Pesa':'M-Pesa transfers','Envois':'Transfers',
   'Envois M-Pesa des agents de Dubaï. Saisissez ce que vous avez reçu, puis envoyez les francs à Naomie.':'M-Pesa transfers from the Dubai agents. Enter what you received, then send the francs to Naomie.',
   'À valider':'To validate','Envoyé à Naomie, en attente de sa confirmation':'Sent to Naomie, awaiting her confirmation','Confirmé par Naomie':'Confirmed by Naomie',
@@ -713,6 +743,21 @@ Object.assign(EN, {
   'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Envoyer maintenant':'Send now','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
+  [/^(.+) doit à Pax$/, '$1 owes Pax'], [/^Pax doit à (.+)$/, 'Pax owes $1'], [/^Compte de (.+)$/, "$1's account"],
+  [/^Payé à (.+)$/, 'Paid to $1'],
+  [/^Shillings de (.+) : (.+) KES × (.+)$/, 'Shillings from $1: $2 KES × $3'],
+  [/^(.+) AED reçus, validé par (.+)$/, '$1 AED received, validated by $2'],
+  [/^Saisi par (.+), confirmé par (.+)$/, 'Entered by $1, confirmed by $2'], [/^Saisi par (.+)$/, 'Entered by $1'],
+  [/^⚠ Annoncé (.+) BIF, Naomie a reçu (.+) BIF \(écart (.+)\)$/, '⚠ Announced $1 BIF, Naomie received $2 BIF (gap $3)'],
+  [/^Vendu à Caleb : (.+) AED reçus →$/, 'Sold to Caleb: $1 AED received →'],
+  [/^Validé par (.+) le (.+), ajouté au compte de Caleb$/, (m,a,b)=>`Validated by ${a} on ${b.replace(' à ',' at ')}, added to Caleb's account`],
+  [/^Valeur en francs : (.+) KES × (.+) =$/, 'Value in francs: $1 KES × $2 ='],
+  [/^Valider : (.+) KES × (.+) = (.+) BIF \?$/, 'Validate: $1 KES × $2 = $3 BIF?'],
+  [/^Caleb a annoncé$/, 'Caleb announced'], [/^le (.+), (.+)\.$/, (m,a,b)=>`on ${a.replace(' à ',' at ')}, ${b}.`],
+  [/^(.+) AED pas encore validés$/, '$1 AED not yet validated'],
+  [/^Confirmer que Caleb a payé (.+) BIF à (.+) \?$/, 'Confirm that Caleb paid $1 BIF to $2?'],
+  [/^Confirmer que (.+) a payé (.+) BIF à (.+) \? Le montant sera déduit de ce qu'il doit\.$/, 'Confirm that $1 paid $2 BIF to $3? The amount will be deducted from what he owes.'],
+  [/^Annuler la validation de Caleb pour cet envoi \? La vente des shillings sera supprimée\.$/, "Cancel Caleb's validation for this transfer? The shilling sale will be deleted."],
   [/^Caleb : (.+) AED reçus →$/, 'Caleb: $1 AED received →'],
   [/^× (.+) =$/, '× $1 ='],
   [/^Reçu au Kenya par (.+) : (.+) AED$/, 'Received in Kenya by $1: $2 AED'],
@@ -824,7 +869,7 @@ let state = {
   vsf:{ agent:'', periode:'all' },
   st:{ preset:'today', from:'', to:'', agent:'', group:'day' },
   pf:{ preset:'month', from:'', to:'', agent:'' },
-  paiements:[], ventes:[], comptes:[], mouvements:[], comptesErr:false, modal:null,
+  paiements:[], ventes:[], comptes:[], mouvements:[], calebMv:[], comptesErr:false, modal:null,
 };
 (function readHashError(){
   const m = INITIAL_HASH.match(/error_description=([^&]+)/);
@@ -989,7 +1034,7 @@ async function afterLogin(session){
 
 /* ---------- Data ---------- */
 async function loadAll(){
-  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}, {data:ventes}, {data:comptes, error:e5}, {data:mvs}] = await Promise.all([
+  const [{data:profiles}, {data:txs, error:e1}, {data:vs, error:e2}, {data:pays}, {data:ventes}, {data:comptes, error:e5}, {data:mvs}, {data:cmv}] = await Promise.all([
     sb.from('profiles').select('*').order('nom'),
     isKenya() ? Promise.resolve({ data: [] }) : sb.from('transactions').select('*').order('created_at',{ascending:false}),
     sb.from('versements').select('*').order('created_at',{ascending:false}),
@@ -997,6 +1042,7 @@ async function loadAll(){
     isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('ventes').select('*').order('created_at',{ascending:false}),
     isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('comptes').select('*').order('nom'),
     isAgent() || isKenya() ? Promise.resolve({ data: [] }) : sb.from('mouvements').select('*').order('created_at',{ascending:false}),
+    isAgent() ? Promise.resolve({ data: [] }) : sb.from('caleb_mouvements').select('*').order('created_at',{ascending:false}),
   ]);
   if(e1 || e2) toast('Chargement incomplet : ' + ((e1||e2).message), 'bad');
   state.profiles = profiles || [];
@@ -1006,6 +1052,7 @@ async function loadAll(){
   state.ventes = ventes || [];
   state.comptes = comptes || [];
   state.mouvements = mvs || [];
+  state.calebMv = cmv || [];
   state.comptesErr = !!e5;
   render();
 }
@@ -1048,7 +1095,13 @@ function markAttente(id){
   if(!ask('Remettre cette transaction « à payer » ?')) return;
   const patch = { statut:'EN_ATTENTE', valide_par:null, valide_le:null };
   if(!state.comptesErr){ patch.paye_depuis = null; patch.frais_paiement_bif = 0; }
-  run(sb.from('transactions').update(patch).eq('id', id), 'Transaction remise à payer');
+  (async ()=>{
+    if(state.calebMv.some(m=>m.transaction_id===id)){
+      const { error } = await sb.from('caleb_mouvements').delete().eq('transaction_id', id);
+      if(error){ toast(error.message, 'bad'); return; }
+    }
+    run(sb.from('transactions').update(patch).eq('id', id), 'Transaction remise à payer');
+  })();
 }
 function markAnnulee(id){
   if(!ask('Annuler cette transaction ? Elle ne comptera plus dans les totaux.')) return;
@@ -1193,7 +1246,7 @@ function openModal(type, id){ state.modal = { type, id }; render(); }
 function closeModal(e){ if(!e || e.target.classList.contains('modal-bg')){ state.modal = null; render(); } }
 function modalHtml(){
   const m = state.modal; if(!m) return '';
-  if(['kenya','kenyarecv'].includes(m.type)){
+  if(['kenya','cmnaomie','cmbenef','cmconf','cmajust'].includes(m.type)){
     const b = modalKenya(m); if(!b) return '';
     return `<div class="modal-bg" onclick="closeModal(event)"><div class="modal" role="dialog" aria-modal="true">${b}</div></div>`;
   }
@@ -1755,63 +1808,140 @@ function attachComptesHandlers(){
   }
 }
 
-/* ---------- Kenya step: Caleb buys the shillings of M-Pesa sends ---------- */
+/* ---------- Kenya step: Caleb buys the shillings of M-Pesa sends, running account in BIF ---------- */
 function isKenya(){ return role()==='KENYA'; }
 function isMpesa(v){ return /^m-?pesa/i.test(v.methode_envoi || v.moyen || ''); }
 /* the Kenya step applies once a Kenya user is active (staff can see profiles); Caleb himself always has it */
 function kenyaActive(){ return isKenya() || state.profiles.some(p=>p.role==='KENYA' && p.statut==='actif'); }
+function calebName(){ const p = state.profiles.find(x=>x.role==='KENYA' && x.statut==='actif'); return isKenya() ? state.profile.nom : (p ? p.nom : 'Caleb'); }
 function viaKenya(v){ return isMpesa(v) && (v.kenya_kes != null || (v.statut==='ENVOYE' && kenyaActive())); }
 function lastKenyaRate(){ const v = state.versements.filter(x=>x.kenya_taux).sort((a,b)=>String(b.kenya_le).localeCompare(String(a.kenya_le)))[0]; return v ? +v.kenya_taux : ''; }
-function kenyaGapBif(v){ return (v.kenya_bif_recu != null && v.kenya_bif != null) ? (+v.kenya_bif_recu) - (+v.kenya_bif) : null; }
+function calebSends(){ return state.versements.filter(v=>v.kenya_kes != null); }
+/* + Caleb owes Pax, − Pax owes Caleb (BIF) */
+function cmEffect(m){
+  if(m.statut!=='OK') return 0;
+  if(m.type==='AJUST') return +m.montant;
+  if(m.type==='NAOMIE') return -(+(m.montant_recu ?? m.montant));
+  return -(+m.montant);
+}
+function calebSolde(){ return calebSends().reduce((a,v)=>a+(+v.kenya_bif||0),0) + state.calebMv.reduce((a,m)=>a+cmEffect(m),0); }
+function calebPending(){ return state.calebMv.filter(m=>m.statut==='ATTENTE'); }
+function soldeLabel(s){
+  if(Math.abs(s) < 1) return 'Compte à zéro';
+  if(isKenya()) return s > 0 ? 'Vous devez à Pax' : 'Pax vous doit';
+  return s > 0 ? `${calebName()} doit à Pax` : `Pax doit à ${calebName()}`;
+}
+function soldeKpi(){
+  const s = calebSolde();
+  return kpi(soldeLabel(s), 'wallet', fmt(Math.abs(s),0), 'BIF',
+    s > 0 ? 'Shillings reçus, pas encore rendus en francs' : s < 0 ? 'Payé par Caleb avant de recevoir les shillings' : 'Rien à régler',
+    s > 0 ? 'bad' : s < 0 ? 'gold' : 'good', true);
+}
+function cmLabel(m){
+  if(m.type==='NAOMIE') return `Remis à Naomie`;
+  if(m.type==='BENEF') return `Payé à ${m.beneficiaire || 'un bénéficiaire'}${m.beneficiaire_tel ? ' ' + m.beneficiaire_tel : ''}`;
+  return +m.montant > 0 ? 'Pax a donné à Caleb' : 'Caleb a remis à Pax';
+}
+/* account history: validated sends and movements, newest first */
+function calebLines(){
+  const L = [];
+  calebSends().forEach(v=>L.push({ ts:v.kenya_le, kind:'send', v, label:`Shillings de ${v.agent_nom} : ${fmt(v.kenya_kes)} KES × ${fmt(v.kenya_taux,4)}`, amt:+v.kenya_bif }));
+  state.calebMv.forEach(m=>L.push({ ts:m.created_at, kind:'mv', m, label:cmLabel(m), amt: m.statut==='OK' ? cmEffect(m) : (m.type==='AJUST' ? +m.montant : -(+m.montant)) }));
+  return L.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+}
+function cmGapNote(m){
+  if(m.type!=='NAOMIE' || m.statut!=='OK' || m.montant_recu == null) return '';
+  const d = (+m.montant_recu) - (+m.montant);
+  return d === 0 ? `<div class="cell-good">✓ Naomie a reçu le montant exact</div>`
+    : `<div class="cell-bad">⚠ Annoncé ${fmt(m.montant,0)} BIF, Naomie a reçu ${fmt(m.montant_recu,0)} BIF (écart ${d>0?'+':''}${fmt(d,0)})</div>`;
+}
+function cmActions(m){
+  const a = [];
+  if(isStaff() && m.statut==='ATTENTE'){
+    a.push(m.type==='NAOMIE'
+      ? `<button class="btn good sm" onclick="openModal('cmconf','${m.id}')">${ic('check')}Confirmer la réception</button>`
+      : `<button class="btn good sm" onclick="confirmCalebBenef('${m.id}')">${ic('check')}Confirmer</button>`);
+  }
+  if(isStaff() && m.statut==='OK' && m.type==='NAOMIE') a.push(`<button class="btn ghost sm" onclick="openModal('cmconf','${m.id}')">${ic('edit')}Modifier</button>`);
+  if((isKenya() && m.statut==='ATTENTE') || (isStaff() && (m.type!=='AJUST' || isAdmin()) && !m.transaction_id))
+    a.push(`<button class="btn ghost sm sq" onclick="deleteCalebMv('${m.id}')" title="Supprimer" aria-label="Supprimer">${ic('trash')}</button>`);
+  return a.join('');
+}
+function calebHistory(limit){
+  const L = calebLines().slice(0, limit || 60);
+  if(!L.length) return emptyState('wallet', 'Aucune opération pour le moment.');
+  return `<ul class="ledger">${L.map(l=>{
+    const pend = l.kind==='mv' && l.m.statut==='ATTENTE';
+    return `<li class="${pend?'pend':''}">
+      <div class="ledger-l"><span class="sub">${fmtDT(l.ts)}</span><b>${esc(l.label)}</b>
+        ${l.kind==='send' ? `<span class="sub">${fmt(l.v.kenya_aed)} AED reçus, validé par ${esc(l.v.kenya_par||'Caleb')}</span>` : ''}
+        ${l.kind==='mv' && l.m.note ? `<span class="sub">${esc(l.m.note)}</span>` : ''}
+        ${l.kind==='mv' && l.m.saisi_par ? `<span class="sub">Saisi par ${esc(l.m.saisi_par)}${l.m.confirme_par && l.m.confirme_par!==l.m.saisi_par ? `, confirmé par ${esc(l.m.confirme_par)}` : ''}</span>` : ''}
+        ${pend ? `<span class="pill envoye">${ic('hourglass')}À confirmer</span>` : ''}
+        ${l.kind==='mv' ? cmGapNote(l.m) : ''}
+      </div>
+      <div class="ledger-r"><span class="strong ${pend ? 'sub' : l.amt>0 ? 'cell-bad' : 'cell-good'}">${l.amt>0?'+':'−'}${fmt(Math.abs(l.amt),0)}</span>
+        ${l.kind==='mv' ? `<div class="actions">${cmActions(l.m)}</div>` : ''}</div>
+    </li>`; }).join('')}</ul>
+    <div class="note" style="margin:0;border-radius:0;">+ = ce que Caleb doit en plus à Pax. − = ce que Caleb a rendu ou payé pour Pax. Les opérations « À confirmer » ne comptent qu'après confirmation par Naomie ou un admin.</div>`;
+}
 function kenyaBlock(v){
   if(v.kenya_kes == null){
     return viaKenya(v) && v.statut==='ENVOYE' ? `<div class="kenya wait">${ic('hourglass')}<span>Chez Caleb au Kenya : en attente de sa validation</span></div>` : '';
   }
-  const gap = kenyaGapBif(v), aedGap = (+v.kenya_aed) - (+v.montant_aed);
+  const aedGap = (+v.kenya_aed) - (+v.montant_aed);
   if(isAgent()) return `<div class="kenya"><div>${ic('check')}<span>Reçu au Kenya par ${esc(v.kenya_par||'Caleb')} : ${fmt(v.kenya_aed)} AED</span></div>${Math.abs(aedGap) > 0.004 ? `<div class="cell-bad">⚠ Vous avez déclaré ${fmt(v.montant_aed)} AED (écart ${aedGap>0?'+':''}${fmt(aedGap)} AED)</div>` : ''}</div>`;
   return `<div class="kenya">
-    <div>${ic('send')}<span>Caleb : ${fmt(v.kenya_aed)} AED reçus → <b>${fmt(v.kenya_kes)} KES</b> × ${fmt(v.kenya_taux,4)} = <b>${fmt(v.kenya_bif,0)} BIF</b> envoyés à Naomie</span></div>
+    <div>${ic('send')}<span>Vendu à Caleb : ${fmt(v.kenya_aed)} AED reçus →</span></div>
+    <div><b>${fmt(v.kenya_kes)} KES × ${fmt(v.kenya_taux,4)} = ${fmt(v.kenya_bif,0)} BIF</b></div>
     ${Math.abs(aedGap) > 0.004 ? `<div class="cell-bad">⚠ L'agent a déclaré ${fmt(v.montant_aed)} AED, Caleb a reçu ${fmt(v.kenya_aed)} AED (écart ${aedGap>0?'+':''}${fmt(aedGap)} AED)</div>` : ''}
-    <div class="sub">Validé par ${esc(v.kenya_par||'Caleb')} le ${fmtDT(v.kenya_le)}</div>
-    ${gap == null ? '' : gap === 0
-      ? `<div class="cell-good">✓ Naomie a reçu ${fmt(v.kenya_bif_recu,0)} BIF : montant exact</div>`
-      : `<div class="cell-bad">⚠ Naomie a reçu ${fmt(v.kenya_bif_recu,0)} BIF : écart ${gap>0?'+':''}${fmt(gap,0)} BIF</div>`}
+    <div class="sub">Validé par ${esc(v.kenya_par||'Caleb')} le ${fmtDT(v.kenya_le)}, ajouté au compte de Caleb</div>
   </div>`;
 }
 
 function pageKenya(){
   const list = state.versements.filter(isMpesa);
   const todo = list.filter(v=>v.statut==='ENVOYE');
-  const sent = list.filter(v=>v.statut==='KENYA');
-  const done = list.filter(v=>v.statut==='RECU' && v.kenya_kes != null);
-  const bad = done.filter(v=>kenyaGapBif(v));
+  const pend = calebPending();
   const row = v => `
     <div class="tcard kcard">
       <div class="row"><div style="min-width:0;"><div class="name">${esc(v.agent_nom)}</div>
         <div class="meta">${fmtDT(v.created_at)}, ${esc(v.methode_envoi||v.moyen||'')}${v.note?`, ${esc(v.note)}`:''}</div></div>
         <div class="bif">${fmt(v.montant_aed)} AED</div></div>
-      ${kenyaBlock(v)}
-      <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions">
-        ${v.statut==='ENVOYE' ? `<button class="btn gold sm" onclick="openModal('kenya','${v.id}')">${ic('check')}Valider la réception</button>` : ''}
-        ${v.statut==='KENYA' ? `<button class="btn ghost sm" onclick="openModal('kenya','${v.id}')">${ic('edit')}Modifier</button>` : ''}
-      </div></div>
+      <div class="foot">${statusPill(VS_STATUTS, v.statut)}<div class="actions"><button class="btn gold sm" onclick="openModal('kenya','${v.id}')">${ic('check')}Valider la réception</button></div></div>
     </div>`;
-  const block = (arr, empty) => arr.length ? `<div class="cards kcards">${arr.map(row).join('')}</div>` : emptyState('inbox', empty);
   return `
-    <div class="pagehead"><div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>Envois M-Pesa des agents de Dubaï. Saisissez ce que vous avez reçu, puis envoyez les francs à Naomie.</p></div></div>
+    <div class="pagehead"><div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>Envois M-Pesa des agents de Dubaï et votre compte avec Pax.</p></div>
+      <div class="actions"><button class="btn gold" onclick="openModal('cmnaomie','')">${ic('send')}J'ai envoyé à Naomie</button><button class="btn ghost" onclick="openModal('cmbenef','')">${ic('user')}J'ai payé un bénéficiaire</button></div></div>
     <div class="kpis">
-      ${kpi('À valider', 'hourglass', todo.length, '', `${fmt(sum(todo,'montant_aed'))} AED annoncés`, todo.length ? 'bad' : '', true)}
-      ${kpi('Envoyé à Naomie', 'send', fmt(sent.reduce((a,v)=>a+(+v.kenya_bif||0),0),0), 'BIF', `${sent.length} en attente de sa confirmation`)}
-      ${kpi('Confirmé par Naomie', 'check', done.length, '', bad.length ? `${bad.length} avec un écart` : 'Tous exacts', bad.length ? 'bad' : 'good')}
+      ${soldeKpi()}
+      ${kpi('À valider', 'hourglass', todo.length, '', `${fmt(sum(todo,'montant_aed'))} AED annoncés`, todo.length ? 'bad' : '')}
+      ${kpi('En attente de confirmation', 'clock', pend.length, '', 'Par Naomie ou un admin')}
     </div>
-    ${panel('À valider', 'inbox', block(todo, 'Aucun envoi à valider.'), { flush:true, cls: todo.length ? 'flag-warn' : '' })}
-    ${panel('Envoyé à Naomie, en attente de sa confirmation', 'send', block(sent, 'Rien en attente.'), { flush:true })}
-    ${panel('Confirmé par Naomie', 'check', block(done.slice(0,30), 'Aucun envoi confirmé pour le moment.'), { flush:true })}`;
+    ${panel('Envois à valider', 'inbox', todo.length ? `<div class="cards kcards">${todo.map(row).join('')}</div>` : emptyState('inbox', 'Aucun envoi à valider.'), { flush:true, cls: todo.length ? 'flag-warn' : '' })}
+    ${panel('Mon compte avec Pax', 'wallet', calebHistory(), { flush:true, right:`<span class="count">${esc(soldeLabel(calebSolde()))} <b>${fmt(Math.abs(calebSolde()),0)} BIF</b></span>` })}`;
+}
+function pageCaleb(){
+  const pend = calebPending();
+  const waiting = state.versements.filter(v=>isMpesa(v) && v.statut==='ENVOYE');
+  return `
+    <div class="pagehead"><div><h1>Compte de ${esc(calebName())}</h1><p>Shillings achetés au Kenya, argent remis à Naomie et bénéficiaires payés par Caleb.</p></div>
+      <div class="actions">
+        <button class="btn ghost" onclick="openModal('cmnaomie','')">${ic('send')}Caleb a remis à Naomie</button>
+        ${isAdmin() ? `<button class="btn ghost" onclick="openModal('cmajust','')">${ic('edit')}Ajustement</button>` : ''}
+      </div></div>
+    <div class="kpis">
+      ${soldeKpi()}
+      ${kpi('À confirmer', 'hourglass', pend.length, '', 'Saisi par Caleb', pend.length ? 'bad' : '')}
+      ${kpi('Envois chez Caleb', 'send', waiting.length, '', `${fmt(sum(waiting,'montant_aed'))} AED pas encore validés`)}
+    </div>
+    ${panel('Historique du compte', 'wallet', calebHistory(), { flush:true })}
+    <div class="note" style="margin-top:14px;">Pour un bénéficiaire que Caleb a payé à votre demande, ouvrez la transaction et cliquez sur « Payée par Caleb » : elle passe en payée et le montant est déduit de ce que Caleb doit.</div>`;
 }
 
 function modalKenya(m){
-  const v = vsById(m.id); if(!v) return '';
   if(m.type==='kenya'){
+    const v = vsById(m.id); if(!v) return '';
     return `
       <h2>Valider la réception au Kenya</h2>
       <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} du ${fmtDT(v.created_at)} : ${fmt(v.montant_aed)} AED annoncés par ${esc(v.methode_envoi||v.moyen||'M-Pesa')}.</p>
@@ -1825,14 +1955,54 @@ function modalKenya(m){
         <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Valider</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
       </form>`;
   }
-  if(m.type==='kenyarecv'){
+  if(m.type==='cmnaomie'){
+    return `
+      <h2>${isKenya() ? "J'ai envoyé de l'argent à Naomie" : 'Caleb a remis de l\'argent à Naomie'}</h2>
+      <p class="sub" style="margin:0 0 16px;">${esc(soldeLabel(calebSolde()))} : <b>${fmt(Math.abs(calebSolde()),0)} BIF</b>.</p>
+      <form id="cmForm" data-type="NAOMIE" autocomplete="off">
+        <div class="field" style="max-width:340px;"><label for="cm-m">Montant envoyé (BIF)</label><input id="cm-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${calebSolde() > 0 ? Math.round(calebSolde()) : ''}"></div>
+        <div class="field"><label for="cm-n">Note</label><input id="cm-n" name="note" placeholder="Ex. Lumicash, BANCOBU…"></div>
+        <p class="sub" style="margin:0 0 14px;">${isKenya() ? "Naomie confirmera le montant reçu. Il sera déduit de votre compte après sa confirmation." : 'Enregistré comme reçu par Naomie.'}</p>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Enregistrer</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  if(m.type==='cmbenef'){
+    return `
+      <h2>J'ai payé un bénéficiaire pour Pax</h2>
+      <form id="cmForm" data-type="BENEF" autocomplete="off">
+        <div class="grid2">
+          <div class="field"><label for="cm-b">Nom du bénéficiaire</label><input id="cm-b" name="beneficiaire" required></div>
+          <div class="field"><label for="cm-t">Numéro</label><input id="cm-t" name="tel" type="tel" inputmode="tel" placeholder="Facultatif"></div>
+          <div class="field"><label for="cm-m">Montant payé (BIF)</label><input id="cm-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required></div>
+        </div>
+        <div class="field"><label for="cm-n">Note</label><input id="cm-n" name="note" placeholder="Ex. à la demande de Pacifique"></div>
+        <p class="sub" style="margin:0 0 14px;">Déduit de votre compte après confirmation par Naomie ou un admin.</p>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Enregistrer</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  if(m.type==='cmconf'){
+    const x = state.calebMv.find(y=>y.id===m.id); if(!x) return '';
     return `
       <h2>Confirmer l'argent reçu de Caleb</h2>
-      <p class="sub" style="margin:0 0 16px;">Envoi de ${esc(v.agent_nom)} : Caleb a obtenu ${fmt(v.kenya_kes)} KES × ${fmt(v.kenya_taux,4)} et doit vous envoyer <b>${fmt(v.kenya_bif,0)} BIF</b>.</p>
-      <form id="kenyaRecvForm" autocomplete="off" data-id="${v.id}" data-expected="${+v.kenya_bif}">
-        <div class="field" style="max-width:340px;"><label for="kr-bif">Montant reçu de Caleb (BIF)</label><input id="kr-bif" name="bif" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(v.kenya_bif_recu ?? v.kenya_bif)}"></div>
-        <div class="convert-mini" id="krSummary"></div>
+      <p class="sub" style="margin:0 0 16px;">Caleb a annoncé <b>${fmt(x.montant,0)} BIF</b> le ${fmtDT(x.created_at)}${x.note?`, ${esc(x.note)}`:''}.</p>
+      <form id="cmConfForm" autocomplete="off" data-id="${x.id}" data-expected="${+x.montant}">
+        <div class="field" style="max-width:340px;"><label for="cc-bif">Montant reçu (BIF)</label><input id="cc-bif" name="bif" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required value="${esc(x.montant_recu ?? x.montant)}"></div>
+        <div class="convert-mini" id="ccSummary"></div>
         <div class="actions" style="justify-content:flex-start;"><button class="btn good" type="submit">${ic('check')}Confirmer la réception</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
+      </form>`;
+  }
+  if(m.type==='cmajust'){
+    return `
+      <h2>Ajustement du compte de Caleb</h2>
+      <form id="cmAjForm" autocomplete="off">
+        <div class="grid2">
+          <div class="field"><label for="aj-d">Opération</label><select id="aj-d" name="dir">
+            <option value="1">Pax a donné de l'argent à Caleb (il doit plus)</option>
+            <option value="-1">Caleb a remis de l'argent à Pax (il doit moins)</option></select></div>
+          <div class="field"><label for="aj-m">Montant (BIF)</label><input id="aj-m" name="montant" type="text" pattern="[0-9][0-9 .,]*" inputmode="decimal" required></div>
+        </div>
+        <div class="field"><label for="aj-n">Note</label><input id="aj-n" name="note" required placeholder="Ex. cash donné à Nairobi, correction…"></div>
+        <div class="actions" style="justify-content:flex-start;"><button class="btn gold" type="submit">${ic('check')}Enregistrer</button><button class="btn ghost" type="button" onclick="closeModal()">Annuler</button></div>
       </form>`;
   }
   return '';
@@ -1845,48 +2015,86 @@ function attachKenyaHandlers(){
       const fd = new FormData(kf), aed = parseNum(fd.get('aed'))||0, kes = parseNum(fd.get('kes'))||0, t = parseNum(fd.get('taux'))||0;
       const bif = Math.round(kes * t), gap = Math.round((aed - declared)*100)/100;
       const out = [];
-      out.push(kes && t ? `<div>${esc(tr(`À envoyer à Naomie : ${fmt(kes)} KES × ${fmt(t,4)} =`))} <b class="big">${fmt(bif,0)} BIF</b></div>`
-                       : `<div class="sub">${esc(tr('Saisissez les shillings et le taux pour voir le montant à envoyer à Naomie.'))}</div>`);
+      out.push(kes && t ? `<div>${esc(tr(`Valeur en francs : ${fmt(kes)} KES × ${fmt(t,4)} =`))} <b class="big">${fmt(bif,0)} BIF</b></div><div class="sub">${esc(tr('Ce montant s\'ajoute à ce que vous devez à Pax.'))}</div>`
+                       : `<div class="sub">${esc(tr('Saisissez les shillings et le taux pour voir la valeur en francs.'))}</div>`);
       if(aed && Math.abs(gap) > 0.004) out.push(`<div class="cell-bad">${esc(tr(`⚠ L'agent a annoncé ${fmt(declared)} AED : écart ${gap>0?'+':''}${fmt(gap)} AED.`))}</div>`);
       document.getElementById('kSummary').innerHTML = out.join('');
     };
     kf.addEventListener('input', upd); upd();
-    (kf.querySelector('[name=kes]').value ? kf.querySelector('[name=taux]') : kf.querySelector('[name=kes]')).focus();
     kf.onsubmit = async (e)=>{
       e.preventDefault();
       const fd = new FormData(kf), aed = parseNum(fd.get('aed')), kes = parseNum(fd.get('kes')), t = parseNum(fd.get('taux'));
       if(!(aed>0 && kes>0 && t>0)){ toast('Saisissez les AED, les shillings et le taux', 'bad'); return; }
-      if(!ask(`Valider : ${fmt(kes)} KES × ${fmt(t,4)} = ${fmt(Math.round(kes*t),0)} BIF à envoyer à Naomie ?`)) return;
+      if(!ask(`Valider : ${fmt(kes)} KES × ${fmt(t,4)} = ${fmt(Math.round(kes*t),0)} BIF ?`)) return;
       const btn = kf.querySelector('button[type=submit]'); btn.disabled = true;
-      const ok = await run(sb.rpc('kenya_confirm', { p_id: kf.dataset.id, p_aed: aed, p_kes: kes, p_taux: t }), 'Envoi validé, montant transmis à Naomie');
+      const ok = await run(sb.rpc('kenya_confirm', { p_id: kf.dataset.id, p_aed: aed, p_kes: kes, p_taux: t }), 'Envoi validé');
       if(ok){ state.modal = null; render(); } else btn.disabled = false;
     };
   }
-  const rf = document.getElementById('kenyaRecvForm');
-  if(rf){
-    const exp = +rf.dataset.expected;
+  const cf = document.getElementById('cmForm');
+  if(cf){
+    cf.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(cf), type = cf.dataset.type, montant = Math.round(parseNum(fd.get('montant'))||0);
+      if(!(montant > 0)){ toast('Saisissez le montant', 'bad'); return; }
+      const row = { type, montant, note: String(fd.get('note')||'').trim() || null, saisi_par: state.profile.nom, date: today() };
+      if(type==='BENEF'){ row.beneficiaire = String(fd.get('beneficiaire')||'').trim(); row.beneficiaire_tel = String(fd.get('tel')||'').trim() || null; }
+      if(isKenya()){ row.statut = 'ATTENTE'; }
+      else { row.statut = 'OK'; row.confirme_par = state.profile.nom; row.confirme_le = new Date().toISOString(); if(type==='NAOMIE') row.montant_recu = montant; }
+      const btn = cf.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await run(sb.from('caleb_mouvements').insert(row), isKenya() ? 'Enregistré, en attente de confirmation' : 'Enregistré');
+      if(ok){ state.modal = null; render(); } else btn.disabled = false;
+    };
+  }
+  const cc = document.getElementById('cmConfForm');
+  if(cc){
+    const exp = +cc.dataset.expected;
     const upd = ()=>{
-      const b = Math.round(parseNum(rf.querySelector('[name=bif]').value)||0), d = b - exp;
-      document.getElementById('krSummary').innerHTML = !b ? '' : d === 0
+      const b = Math.round(parseNum(cc.querySelector('[name=bif]').value)||0), d = b - exp;
+      document.getElementById('ccSummary').innerHTML = !b ? '' : d === 0
         ? `<div class="cell-good">${esc(tr(`✓ Montant exact : ${fmt(b,0)} BIF.`))}</div>`
         : `<div class="cell-bad">${esc(tr(`⚠ Écart de ${d>0?'+':''}${fmt(d,0)} BIF par rapport aux ${fmt(exp,0)} BIF annoncés par Caleb.`))}</div>`;
     };
-    rf.addEventListener('input', upd); upd();
-    rf.querySelector('[name=bif]').focus();
-    rf.onsubmit = async (e)=>{
+    cc.addEventListener('input', upd); upd();
+    cc.onsubmit = async (e)=>{
       e.preventDefault();
-      const b = Math.round(parseNum(rf.querySelector('[name=bif]').value)||0);
+      const b = Math.round(parseNum(cc.querySelector('[name=bif]').value)||0);
       if(!(b>0)){ toast('Saisissez le montant reçu', 'bad'); return; }
       if(b !== exp && !ask(`Le montant reçu (${fmt(b,0)} BIF) n'est pas celui annoncé par Caleb (${fmt(exp,0)} BIF). Confirmer quand même ?`)) return;
-      const btn = rf.querySelector('button[type=submit]'); btn.disabled = true;
-      const ok = await run(sb.rpc('naomie_confirm_kenya', { p_id: rf.dataset.id, p_bif: b }), 'Réception confirmée');
+      const btn = cc.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await run(sb.from('caleb_mouvements').update({ statut:'OK', montant_recu:b, confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', cc.dataset.id), 'Réception confirmée');
+      if(ok){ state.modal = null; render(); } else btn.disabled = false;
+    };
+  }
+  const af = document.getElementById('cmAjForm');
+  if(af){
+    af.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(af), m = Math.round(parseNum(fd.get('montant'))||0);
+      if(!(m > 0)){ toast('Saisissez le montant', 'bad'); return; }
+      const btn = af.querySelector('button[type=submit]'); btn.disabled = true;
+      const ok = await run(sb.from('caleb_mouvements').insert({ type:'AJUST', montant: m * (+fd.get('dir')), note: String(fd.get('note')||'').trim() || null, statut:'OK', saisi_par: state.profile.nom, confirme_par: state.profile.nom, confirme_le: new Date().toISOString(), date: today() }), 'Ajustement enregistré');
       if(ok){ state.modal = null; render(); } else btn.disabled = false;
     };
   }
 }
+function confirmCalebBenef(id){
+  const m = state.calebMv.find(x=>x.id===id); if(!m) return;
+  if(!ask(`Confirmer que Caleb a payé ${fmt(m.montant,0)} BIF à ${m.beneficiaire || 'ce bénéficiaire'} ?`)) return;
+  run(sb.from('caleb_mouvements').update({ statut:'OK', confirme_par: state.profile.nom, confirme_le: new Date().toISOString() }).eq('id', id), 'Paiement confirmé');
+}
+function deleteCalebMv(id){
+  if(!ask('Supprimer cette opération ?')) return;
+  run(sb.from('caleb_mouvements').delete().eq('id', id), 'Opération supprimée');
+}
+function txPaidByCaleb(id){
+  const t = state.transactions.find(x=>x.id===id); if(!t) return;
+  if(!ask(`Confirmer que ${calebName()} a payé ${fmt(t.montant_bif,0)} BIF à ${t.beneficiaire} ? Le montant sera déduit de ce qu'il doit.`)) return;
+  run(sb.rpc('tx_paid_by_caleb', { p_tx: id, p_note: null }), 'Transaction payée par Caleb');
+}
 function unconfirmKenya(id){
-  if(!ask('Annuler la confirmation de réception ?')) return;
-  run(sb.rpc('naomie_unconfirm_kenya', { p_id: id }), 'Confirmation annulée');
+  if(!ask('Annuler la validation de Caleb pour cet envoi ? La vente des shillings sera supprimée.')) return;
+  run(sb.rpc('kenya_unconfirm', { p_id: id }), 'Validation annulée');
 }
 
 /* ---------- Navigation ---------- */
@@ -1897,6 +2105,7 @@ function navItems(){
   if(r!=='BUJA') items.push({ id:'new', label:'Nouvelle transaction', short:'Nouvelle', icon:'plus' });
   items.push({ id:'transactions', label: r==='AGENT' ? 'Mes transactions' : 'Transactions', short:'Transactions', icon:'list', badge: r!=='AGENT' ? txAPayer().length : 0 });
   items.push({ id:'versements', label: r==='AGENT' ? 'Envois à Naomie' : 'Fonds reçus de Dubaï', short: r==='AGENT' ? 'Envois' : 'Fonds', icon: r==='AGENT' ? 'send' : 'inbox', badge: r!=='AGENT' ? vsAConfirmer().length : 0 });
+  if(r!=='AGENT' && kenyaActive()) items.push({ id:'caleb', label:`Compte de ${calebName()}`, short:'Caleb', icon:'send', badge: calebPending().length });
   items.push({ id:'stats', label: r==='AGENT' ? 'Mes statistiques' : 'Statistiques', short:'Stats', icon:'chart' });
   if(r!=='AGENT') items.push({ id:'comptes', label: r==='BUJA' ? 'Mes comptes' : 'Comptes de Naomie', short:'Comptes', icon:'wallet' });
   items.push({ id:'profits', label: r==='AGENT' ? 'Mes gains' : 'Profits', short: r==='AGENT' ? 'Gains' : 'Profits', icon:'trend' });
@@ -2080,6 +2289,7 @@ function renderPage(){
     case 'users': return isAdmin() ? pageUsers() : pageDashboard();
     case 'profits': return isAgent() ? pageGains() : pageProfits();
     case 'comptes': return isAgent() ? pageDashboard() : pageComptes();
+    case 'caleb': return isStaff() ? pageCaleb() : pageDashboard();
     case 'account': return pageAccount();
     default: return pageDashboard();
   }
@@ -2330,6 +2540,7 @@ function txActions(t){
   if(isAdmin()) a.push(`<button class="btn ghost sm" onclick="editTransaction('${t.id}')" title="Modifier" aria-label="Modifier">${ic('edit')}Modifier</button>`);
   if(isStaff() && t.statut==='EN_ATTENTE'){
     a.push(`<button class="btn good sm" onclick="markPayee('${t.id}')">${ic('check')}Payée</button>`);
+    if(kenyaActive()) a.push(`<button class="btn ghost sm" onclick="txPaidByCaleb('${t.id}')">${ic('send')}Payée par Caleb</button>`);
     a.push(`<button class="btn ghost sm" onclick="markAnnulee('${t.id}')">Annuler</button>`);
   }
   if(isStaff() && t.statut!=='EN_ATTENTE') a.push(`<button class="btn ghost sm sq" onclick="markAttente('${t.id}')" title="Remettre à payer" aria-label="Remettre à payer">${ic('undo')}</button>`);
@@ -2457,10 +2668,9 @@ function vsActions(v){
   const a = [];
   const k = v.kenya_kes != null;
   if(isStaff() && v.statut==='ENVOYE' && (!viaKenya(v) || isAdmin())) a.push(`<button class="btn good sm" onclick="confirmVersement('${v.id}')">${ic('check')}Confirmer la réception</button>`);
-  if(isStaff() && v.statut==='KENYA') a.push(`<button class="btn good sm" onclick="openModal('kenyarecv','${v.id}')">${ic('check')}Confirmer l'argent de Caleb</button>`);
-  if(isStaff() && v.statut==='RECU' && k){
-    a.push(`<button class="btn ghost sm" onclick="openModal('kenyarecv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
-    a.push(`<button class="btn ghost sm sq" onclick="unconfirmKenya('${v.id}')" title="Annuler la confirmation" aria-label="Annuler la confirmation">${ic('undo')}</button>`);
+  if(isAdmin() && k){
+    a.push(`<button class="btn ghost sm" onclick="openModal('kenya','${v.id}')">${ic('edit')}Modifier</button>`);
+    a.push(`<button class="btn ghost sm sq" onclick="unconfirmKenya('${v.id}')" title="Annuler la validation" aria-label="Annuler la validation">${ic('undo')}</button>`);
   }
   if(isStaff() && v.statut==='RECU' && !k && !v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Saisir le montant reçu</button>`);
   if(isStaff() && v.statut==='RECU' && !k && v.recu_montant) a.push(`<button class="btn ghost sm" onclick="openModal('recv','${v.id}')">${ic('edit')}Modifier le reçu</button>`);
