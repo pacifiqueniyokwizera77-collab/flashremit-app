@@ -676,7 +676,7 @@ const EN_RX = [
 ];
 
 Object.assign(EN, {
-  'Compte à zéro':'Account at zero','Vous devez à Pax':'You owe Pax','Pax vous doit':'Pax owes you',
+  'Compte à zéro':'Account at zero','Je dois à Pax':'I owe Pax',"Caleb a avancé de l'argent pour Pax":'Caleb advanced money for Pax','Pax me doit':'Pax owes me','Rien à rendre':'Nothing to return','Rien à payer':'Nothing to pay','Voir le compte':'See the account','Vous devez à Pax':'You owe Pax','Pax vous doit':'Pax owes you',
   'Shillings reçus, pas encore rendus en francs':'Shillings received, not yet returned in francs','Payé par Caleb avant de recevoir les shillings':'Paid by Caleb before receiving the shillings','Rien à régler':'Nothing to settle',
   'Remis à Naomie':'Given to Naomie','Pax a donné à Caleb':'Pax gave Caleb','Caleb a remis à Pax':'Caleb gave Pax',
   '✓ Naomie a reçu le montant exact':'✓ Naomie received the exact amount','Aucune opération pour le moment.':'No operation yet.',
@@ -743,6 +743,11 @@ Object.assign(EN, {
   'Après cet envoi, il ne restera rien chez vous.':'After this transfer, nothing will be left with you.','Envoyer maintenant':'Send now','Validé le':'Validated on','Solde de départ':'Starting balance','Enregistrer':'Save',
 });
 EN_RX.push(
+  [/^(\d+) opération\(s\), par Naomie ou un admin$/, '$1 operation(s), by Naomie or an admin'],
+  [/^(\d+) opération\(s\) saisie\(s\) par Caleb$/, '$1 operation(s) entered by Caleb'],
+  [/^(\d+) opération\(s\) de Caleb à confirmer\.$/, '$1 operation(s) from Caleb to confirm.'],
+  [/^Pax doit à (.+) : (.+) BIF\.$/, 'Pax owes $1: $2 BIF.'],
+  [/^(.+) doit à Pax : (.+) BIF\.$/, '$1 owes Pax: $2 BIF.'],
   [/^(.+) doit à Pax$/, '$1 owes Pax'], [/^Pax doit à (.+)$/, 'Pax owes $1'], [/^Compte de (.+)$/, "$1's account"],
   [/^Payé à (.+)$/, 'Paid to $1'],
   [/^Shillings de (.+) : (.+) KES × (.+)$/, 'Shillings from $1: $2 KES × $3'],
@@ -1831,11 +1836,22 @@ function soldeLabel(s){
   if(isKenya()) return s > 0 ? 'Vous devez à Pax' : 'Pax vous doit';
   return s > 0 ? `${calebName()} doit à Pax` : `Pax doit à ${calebName()}`;
 }
+/* both directions always shown: what Caleb owes Pax and what Pax owes Caleb (one of them is 0) */
 function soldeKpi(){
-  const s = calebSolde();
-  return kpi(soldeLabel(s), 'wallet', fmt(Math.abs(s),0), 'BIF',
-    s > 0 ? 'Shillings reçus, pas encore rendus en francs' : s < 0 ? 'Payé par Caleb avant de recevoir les shillings' : 'Rien à régler',
-    s > 0 ? 'bad' : s < 0 ? 'gold' : 'good', true);
+  const s = calebSolde(), owes = Math.max(0, Math.round(s)), owed = Math.max(0, Math.round(-s));
+  const k = isKenya();
+  return kpi(k ? 'Je dois à Pax' : `${calebName()} doit à Pax`, 'wallet', fmt(owes,0), 'BIF',
+      owes ? 'Shillings reçus, pas encore rendus en francs' : 'Rien à rendre', owes ? 'bad' : 'good', owes > 0)
+    + kpi(k ? 'Pax me doit' : `Pax doit à ${calebName()}`, 'coins', fmt(owed,0), 'BIF',
+      owed ? "Caleb a avancé de l'argent pour Pax" : 'Rien à payer', owed ? 'gold' : 'good', owed > 0);
+}
+function pendingBif(){ return calebPending().reduce((a,m)=>a+(+m.montant||0),0); }
+/* one line for the staff dashboard */
+function calebDashLine(){
+  if(!kenyaActive()) return '';
+  const s = calebSolde(), n = calebPending().length;
+  if(Math.abs(s) < 1 && !n) return '';
+  return `<div class="msg ${s < 0 ? 'bad' : ''} toomuch" style="cursor:pointer;" onclick="setPage('caleb')">${ic('wallet')}<span><b>${esc(soldeLabel(s))} : ${fmt(Math.abs(s),0)} BIF.</b>${n ? ` ${n} opération(s) de Caleb à confirmer.` : ''} <button class="linkbtn">Voir le compte</button></span></div>`;
 }
 function cmLabel(m){
   if(m.type==='NAOMIE') return `Remis à Naomie`;
@@ -1916,7 +1932,7 @@ function pageKenya(){
     <div class="kpis">
       ${soldeKpi()}
       ${kpi('À valider', 'hourglass', todo.length, '', `${fmt(sum(todo,'montant_aed'))} AED annoncés`, todo.length ? 'bad' : '')}
-      ${kpi('En attente de confirmation', 'clock', pend.length, '', 'Par Naomie ou un admin')}
+      ${kpi('En attente de confirmation', 'clock', fmt(pendingBif(),0), 'BIF', `${pend.length} opération(s), par Naomie ou un admin`)}
     </div>
     ${panel('Envois à valider', 'inbox', todo.length ? `<div class="cards kcards">${todo.map(row).join('')}</div>` : emptyState('inbox', 'Aucun envoi à valider.'), { flush:true, cls: todo.length ? 'flag-warn' : '' })}
     ${panel('Mon compte avec Pax', 'wallet', calebHistory(), { flush:true, right:`<span class="count">${esc(soldeLabel(calebSolde()))} <b>${fmt(Math.abs(calebSolde()),0)} BIF</b></span>` })}`;
@@ -1932,7 +1948,7 @@ function pageCaleb(){
       </div></div>
     <div class="kpis">
       ${soldeKpi()}
-      ${kpi('À confirmer', 'hourglass', pend.length, '', 'Saisi par Caleb', pend.length ? 'bad' : '')}
+      ${kpi('À confirmer', 'hourglass', fmt(pendingBif(),0), 'BIF', `${pend.length} opération(s) saisie(s) par Caleb`, pend.length ? 'bad' : '')}
       ${kpi('Envois chez Caleb', 'send', waiting.length, '', `${fmt(sum(waiting,'montant_aed'))} AED pas encore validés`)}
     </div>
     ${panel('Historique du compte', 'wallet', calebHistory(), { flush:true })}
@@ -2404,6 +2420,7 @@ function dashboardStaff(){
       <div><h1>Bonjour ${esc(firstName(state.profile.nom))}</h1><p>${longToday()}</p></div>
       ${isAdmin() ? `<div class="actions desk-only"><button class="btn gold" onclick="setPage('new')">${ic('plus')}Nouvelle transaction</button></div>` : ''}
     </div>
+    ${calebDashLine()}
     <div class="kpis">
       ${kpi('À payer au Burundi', 'hourglass', aPayer.length, '', fmt(sum(aPayer,'montant_bif'),0)+' BIF', aPayer.length?'bad':'good', true)}
       ${kpi("Transactions aujourd'hui", 'calendar', todayTx.length, '', fmt(sum(todayTx,'montant_aed'))+' AED')}
